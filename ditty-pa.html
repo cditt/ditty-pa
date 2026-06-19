@@ -496,12 +496,12 @@ function callClaude(prompt, callback) {
   var body = {
     model: 'claude-sonnet-4-6',
     max_tokens: 4000,
-    tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }],
     messages: [{ role: 'user', content: prompt }]
   };
   fetch(PROXY_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': S.apiKey, 'anthropic-version': '2023-06-01' },
+    headers: { 'Content-Type': 'application/json', 'x-api-key': S.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'web-search-2025-03-05' },
     body: JSON.stringify(body)
   })
   .then(function(r) { return r.json(); })
