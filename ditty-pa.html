@@ -476,13 +476,12 @@ function callClaude(prompt, mcpServers, callback) {
     messages: [{ role: 'user', content: prompt }]
   };
 
-  fetch('https://api.anthropic.com/v1/messages', {
+  fetch('https://ditty-pa-proxy.hddittemore.workers.dev', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': S.apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-calls': 'true'
+      'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify(body)
   })
