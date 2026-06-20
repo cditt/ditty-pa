@@ -8,516 +8,361 @@
 <meta name="apple-mobile-web-app-title" content="Ditty PA">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f0a500">
-<meta name="description" content="Personal Command Center">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" href="favicon.ico">
 <title>Ditty PA</title>
 <style>
 :root {
-  --bg:#0d0d0d; --s1:#1a1a1a; --s2:#222; --s3:#2c2c2c;
-  --border:#333; --accent:#f0a500; --danger:#e03c3c;
-  --ok:#2ecc71; --text:#f0f0f0; --t2:#999; --t3:#555;
-  --r:16px; --rl:22px; --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bot: env(safe-area-inset-bottom, 0px);
+  --bg:#0d0d0d; --s1:#161616; --s2:#1f1f1f; --s3:#282828;
+  --border:#2a2a2a; --accent:#f0a500; --danger:#e03c3c;
+  --ok:#27ae60; --text:#f0f0f0; --t2:#888; --t3:#444;
+  --r:14px; --rl:20px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --sat: env(safe-area-inset-top,0px);
+  --sab: env(safe-area-inset-bottom,0px);
 }
-*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;-webkit-font-smoothing:antialiased;}
+button{font-family:var(--font);cursor:pointer;border:none;background:none;}
+input,textarea{font-family:var(--font);}
 
-html {
-  height: 100%;
-  background: var(--bg);
-}
+/* APP SHELL */
+#app{display:flex;flex-direction:column;height:100dvh;height:100vh;padding-top:var(--sat);}
+.top-bar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;background:var(--s1);border-bottom:1px solid var(--border);}
+.top-logo{display:flex;align-items:center;gap:10px;}
+.top-wordmark{font-size:18px;font-weight:900;letter-spacing:2px;color:var(--text);text-transform:uppercase;}
+.top-right{display:flex;align-items:center;gap:8px;}
+.gpill{height:30px;padding:0 12px;border-radius:15px;font-size:11px;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;gap:5px;}
+.gpill-on{background:#122010;color:var(--ok);}
+.gpill-off{background:#2a1010;color:var(--danger);}
+.top-icon{width:38px;height:38px;border-radius:19px;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
 
-body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 17px;
-  line-height: 1.5;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-  padding-top: var(--safe-top);
-  padding-bottom: var(--safe-bot);
-}
-
-/* ── LOGO SVG ── */
-.logo-mark {
-  display: block;
-}
-
-/* ── SCREEN MANAGER ── */
-.screen { display:none; flex-direction:column; height:100%; overflow:hidden; }
-.screen.active { display:flex; }
-
-/* ── SETUP SCREEN ── */
-#setup {
-  justify-content: center;
-  align-items: center;
-  padding: 40px 28px;
-  overflow-y: auto;
-}
-.setup-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 48px;
-}
-.setup-wordmark {
-  font-size: 34px;
-  font-weight: 900;
-  letter-spacing: 3px;
-  color: var(--text);
-  margin-top: 16px;
-  text-transform: uppercase;
-}
-.setup-tagline {
-  font-size: 14px;
-  letter-spacing: 2px;
-  color: var(--t3);
-  text-transform: uppercase;
-  margin-top: 6px;
-}
-.field-wrap { width: 100%; margin-bottom: 16px; }
-.field-lbl { font-size: 12px; font-weight: 800; color: var(--t3); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
-.field-inp {
-  width: 100%;
-  background: var(--s2);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r);
-  padding: 16px 18px;
-  color: var(--text);
-  font-size: 17px;
-  outline: none;
-  font-family: var(--font);
-  transition: border-color 0.15s;
-}
-.field-inp:focus { border-color: var(--accent); }
-
-/* ── BUTTONS ── */
-.btn {
-  width: 100%;
-  min-height: 56px;
-  border: none;
-  border-radius: var(--r);
-  font-size: 16px;
-  font-weight: 800;
-  font-family: var(--font);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  transition: opacity 0.15s, transform 0.1s;
-}
-.btn:active { opacity: 0.8; transform: scale(0.98); }
-.btn:disabled { opacity: 0.4; pointer-events: none; }
-.btn-accent { background: var(--accent); color: #000; margin-bottom: 14px; }
-.btn-google { background: #fff; color: #111; letter-spacing: 0.3px; text-transform: none; font-size: 16px; margin-bottom: 0; }
-.btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--t2); }
-.btn-danger { background: transparent; border: 1.5px solid var(--danger); color: var(--danger); }
-
-/* ── APP SHELL ── */
-#app { flex-direction: column; }
-
-/* HEADER */
-.app-header {
-  flex-shrink: 0;
-  background: var(--s1);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.header-brand { display: flex; align-items: center; gap: 10px; }
-.header-wordmark { font-size: 20px; font-weight: 900; letter-spacing: 2px; color: var(--text); text-transform: uppercase; }
-.header-date { font-size: 13px; color: var(--t3); font-weight: 500; }
-.header-actions { display: flex; align-items: center; gap: 8px; }
-.gpill {
-  height: 32px; padding: 0 12px;
-  border-radius: 16px; border: none;
-  font-size: 12px; font-weight: 800; letter-spacing: 0.5px;
-  cursor: pointer; font-family: var(--font);
-  display: flex; align-items: center; gap: 5px;
-}
-.gpill-on { background: #162a1e; color: var(--ok); }
-.gpill-off { background: #2a1616; color: var(--danger); }
-.hbtn {
-  width: 40px; height: 40px;
-  border-radius: 20px;
-  background: var(--s2); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 18px;
-}
-
-/* TABS */
-.tab-strip {
-  flex-shrink: 0;
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--s1);
-  border-bottom: 1px solid var(--border);
-}
-.tab-item {
-  flex: 1; height: 46px;
-  border-radius: var(--r);
-  background: var(--s2);
-  border: 1.5px solid var(--border);
-  color: var(--t2);
-  font-size: 14px;
-  font-weight: 800;
-  font-family: var(--font);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  gap: 5px;
-  letter-spacing: 0.3px;
-  transition: all 0.15s;
-}
-.tab-item:active { opacity: 0.7; }
-.tab-item.on { background: var(--accent); color: #000; border-color: var(--accent); }
-
-/* SCROLL AREA */
-.scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding: 16px;
-  padding-bottom: 96px;
-}
-
-/* GEN BUTTON */
-.gen-btn {
-  width: 100%; height: 58px;
-  background: var(--accent); color: #000;
-  border: none; border-radius: var(--rl);
-  font-size: 17px; font-weight: 900;
-  font-family: var(--font);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  margin-bottom: 16px;
-  letter-spacing: 0.5px; text-transform: uppercase;
-  transition: opacity 0.15s, transform 0.1s;
-}
-.gen-btn:active { opacity: 0.85; transform: scale(0.98); }
-.gen-btn:disabled { background: var(--s2); color: var(--t3); pointer-events: none; }
-
-/* EMPTY */
-.empty {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 64px 24px; color: var(--t3); text-align: center;
-}
-.empty svg { margin-bottom: 20px; opacity: 0.4; }
-.empty p { font-size: 17px; }
-
-/* LOADING */
-.load-card {
-  background: var(--s1); border: 1px solid var(--border);
-  border-radius: var(--rl); padding: 40px 24px; text-align: center;
-}
-.spinner {
-  width: 42px; height: 42px;
-  border: 3px solid var(--s3); border-top-color: var(--accent);
-  border-radius: 50%; animation: spin 0.75s linear infinite;
-  margin: 0 auto 20px;
-}
-@keyframes spin { to { transform:rotate(360deg); } }
-.load-title { font-size: 19px; font-weight: 700; margin-bottom: 18px; }
-.load-step { font-size: 15px; color: var(--t3); padding: 5px 0; }
-.load-step.act { color: var(--accent); font-weight: 600; }
-.load-step.done { color: var(--ok); }
-.load-step.done::before { content: '✓  '; }
-
-/* BRIEF CARDS */
-.bcard {
-  background: var(--s1); border: 1px solid var(--border);
-  border-radius: var(--rl); margin-bottom: 14px; overflow: hidden;
-}
-.bcard-head {
-  display: flex; align-items: center; gap: 14px;
-  padding: 18px 18px 0; cursor: pointer; user-select: none;
-}
-.bcard-head:active { opacity: 0.75; }
-.bcard-icon {
-  width: 44px; height: 44px;
-  border-radius: 12px;
-  background: var(--s2);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.bcard-meta { flex: 1; }
-.bcard-title { font-size: 12px; font-weight: 800; color: var(--t3); text-transform: uppercase; letter-spacing: 1.2px; }
-.bcard-badge {
-  height: 26px; padding: 0 10px;
-  border-radius: 13px;
-  font-size: 11px; font-weight: 800;
-  display: flex; align-items: center;
-  text-transform: uppercase; letter-spacing: 0.5px;
-  white-space: nowrap; flex-shrink: 0;
-}
-.bd { background:#2a1212; color:var(--danger); }
-.bs { background:#122a1a; color:var(--ok); }
-.bw { background:#2a2010; color:var(--accent); }
-.bm { background:var(--s3); color:var(--t3); }
-.bcard-chev { font-size: 20px; color: var(--t3); transition: transform 0.2s; flex-shrink: 0; }
-.bcard-chev.open { transform: rotate(90deg); }
-.bcard-line { height: 1px; background: var(--border); margin: 14px 18px 0; }
-.bcard-body { padding: 16px 18px 18px; display: none; }
-.bcard-body.open { display: block; }
-
-/* CARD CONTENT */
-.ctext { font-size: 17px; color: var(--text); line-height: 1.7; }
-.ctext strong { color: var(--accent); }
-.calert { background: #2a1212; border-radius: 10px; padding: 12px 16px; font-size: 16px; color: var(--danger); font-weight: 600; margin-bottom: 10px; line-height: 1.5; }
-
-/* TASK LIST */
-.task {
-  display: flex; align-items: flex-start; gap: 14px;
-  padding: 13px 0; border-bottom: 1px solid var(--border);
-}
-.task:last-child { border-bottom: none; }
-.task-chk {
-  width: 28px; height: 28px; min-width: 28px;
-  border: 2px solid var(--border); border-radius: 8px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  margin-top: 1px; transition: all 0.15s; font-size: 16px; color: #fff;
-}
-.task-chk.on { background: var(--ok); border-color: var(--ok); }
-.task-chk.on::after { content: '✓'; font-weight: 800; }
-.task-txt { font-size: 18px; color: var(--text); flex: 1; line-height: 1.4; }
-.task-txt.done { color: var(--t3); text-decoration: line-through; }
-.task-late { font-size: 13px; color: var(--danger); font-weight: 700; margin-top: 3px; }
-
-/* QUICK GRID */
-.qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
-.qcard {
-  background: var(--s1); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 18px 16px;
-  cursor: pointer;
-}
-.qcard:active { background: var(--s2); }
-.qcard-icon { width: 32px; height: 32px; margin-bottom: 10px; }
-.qcard-lbl { font-size: 14px; font-weight: 700; color: var(--t2); }
-
-/* MOOD */
-.mood-row { display: flex; align-items: center; gap: 14px; margin: 14px 0; }
-.mood-sl {
-  flex: 1; -webkit-appearance: none; height: 5px;
-  border-radius: 3px; background: var(--s3); outline: none;
-}
-.mood-sl::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 28px; height: 28px;
-  border-radius: 50%; background: var(--accent); cursor: pointer;
-}
-.mood-num { font-size: 28px; font-weight: 900; color: var(--accent); min-width: 36px; text-align: right; }
-.ci-row { display: flex; gap: 10px; margin-top: 12px; }
-.ci-inp {
-  flex: 1; background: var(--s2); border: 1.5px solid var(--border);
-  border-radius: 10px; padding: 12px; color: var(--text);
-  font-size: 16px; outline: none; font-family: var(--font);
-}
-.ci-inp:focus { border-color: var(--accent); }
-.ci-save {
-  height: 50px; background: var(--accent); color: #000;
-  border: none; border-radius: 10px; font-size: 15px;
-  font-weight: 800; padding: 0 20px; cursor: pointer;
-  font-family: var(--font); white-space: nowrap; margin-top: 12px; width: 100%;
-}
+/* SCREENS */
+.screens{flex:1;overflow:hidden;position:relative;}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 0 90px;display:none;}
+.screen.active{display:block;}
 
 /* BOTTOM NAV */
-.bnav {
-  flex-shrink: 0;
-  position: absolute; bottom: 0; left: 0; right: 0;
-  height: calc(72px + var(--safe-bot));
-  background: var(--s1); border-top: 1px solid var(--border);
-  display: flex; align-items: flex-start; padding-top: 10px;
-  z-index: 50;
-}
-.bnav-item {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 4px; cursor: pointer; padding: 4px 0;
-}
-.bnav-item:active { opacity: 0.6; }
-.bnav-ico { width: 28px; height: 28px; }
-.bnav-lbl { font-size: 11px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: 0.8px; }
-.bnav-item.on .bnav-lbl { color: var(--accent); }
+.bnav{flex-shrink:0;display:flex;background:var(--s1);border-top:1px solid var(--border);padding-bottom:var(--sab);}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;background:none;border:none;}
+.bnav-btn:active{opacity:.6;}
+.bnav-ico{width:24px;height:24px;}
+.bnav-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;}
+.bnav-btn.on .bnav-lbl{color:var(--accent);}
+.bnav-btn.on .ni{stroke:var(--accent);}
 
-/* SETTINGS SCREEN */
-#settings { flex-direction: column; }
-.shead {
-  flex-shrink: 0; background: var(--s1);
-  border-bottom: 1px solid var(--border);
-  padding: 16px 18px;
-  display: flex; align-items: center; gap: 14px;
-}
-.sback { font-size: 22px; color: var(--accent); background: none; border: none; cursor: pointer; padding: 4px; }
-.shead-title { font-size: 21px; font-weight: 900; letter-spacing: 0.5px; }
-.sbody { flex: 1; overflow-y: auto; padding: 20px 16px 40px; -webkit-overflow-scrolling: touch; }
-.sgroup { background: var(--s1); border: 1px solid var(--border); border-radius: var(--rl); margin-bottom: 18px; overflow: hidden; }
-.sgroup-lbl { font-size: 12px; font-weight: 800; color: var(--t3); text-transform: uppercase; letter-spacing: 1.2px; padding: 14px 18px 6px; }
-.srow { display: flex; align-items: center; padding: 14px 18px; border-top: 1px solid var(--border); gap: 14px; }
-.srow:first-of-type { border-top: none; }
-.srow label { font-size: 17px; color: var(--text); flex: 1; }
-.sinp {
-  background: var(--s2); border: 1.5px solid var(--border);
-  border-radius: 10px; padding: 10px 14px; color: var(--text);
-  font-size: 15px; width: 150px; outline: none; font-family: var(--font);
-}
-.sinp:focus { border-color: var(--accent); }
-.sacts { display: flex; flex-direction: column; gap: 12px; }
+/* SETUP */
+#setup{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;z-index:999;overflow-y:auto;}
+.su-logo{margin-bottom:24px;}
+.su-name{font-size:32px;font-weight:900;letter-spacing:4px;text-transform:uppercase;margin-bottom:6px;text-align:center;}
+.su-tag{font-size:12px;letter-spacing:3px;color:var(--t2);text-transform:uppercase;margin-bottom:48px;text-align:center;}
+.su-field{width:100%;margin-bottom:16px;}
+.su-lbl{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:7px;}
+.su-inp{width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;color:var(--text);font-size:17px;outline:none;}
+.su-inp:focus{border-color:var(--accent);}
+.su-btn{width:100%;height:56px;border-radius:var(--r);font-size:16px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.su-btn:active{opacity:.8;transform:scale(.98);}
+.btn-acc{background:var(--accent);color:#000;}
+.btn-goo{background:#fff;color:#111;text-transform:none;letter-spacing:0;font-size:16px;}
+
+/* HOME SCREEN */
+.home-scroll{padding:20px 16px 0;}
+.greeting{font-size:13px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;}
+.greeting-name{font-size:30px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px;}
+.greeting-date{font-size:14px;color:var(--t2);margin-bottom:24px;}
+
+/* WEATHER HERO */
+.weather-hero{background:linear-gradient(135deg,#1a1400 0%,#2a2000 100%);border:1px solid #3a2e00;border-radius:var(--rl);padding:22px 20px;margin-bottom:16px;position:relative;overflow:hidden;}
+.weather-hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(240,165,0,.06);}
+.wh-loc{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.wh-temp{font-size:52px;font-weight:900;color:var(--text);line-height:1;margin-bottom:6px;letter-spacing:-2px;}
+.wh-cond{font-size:16px;color:var(--t2);margin-bottom:14px;}
+.wh-row{display:flex;gap:20px;}
+.wh-day{text-align:center;}
+.wh-day-name{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.wh-day-temp{font-size:15px;font-weight:700;color:var(--text);}
+.wh-loading{color:var(--t2);font-size:15px;padding:8px 0;}
+
+/* HOME CARDS */
+.hcard{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);padding:18px 18px;margin-bottom:14px;}
+.hcard-label{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;}
+.hcard-empty{font-size:15px;color:var(--t2);}
+
+/* NEXT EVENT */
+.event-time{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.event-title{font-size:18px;font-weight:700;color:var(--text);}
+.event-more{font-size:13px;color:var(--t2);margin-top:6px;}
+
+/* PRIORITIES */
+.pri-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.pri-item:last-child{border-bottom:none;}
+.pri-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.pri-txt{font-size:17px;color:var(--text);}
+
+/* EMAIL BADGE */
+.email-row{display:flex;align-items:center;justify-content:space-between;}
+.email-count{font-size:36px;font-weight:900;color:var(--accent);}
+.email-lbl{font-size:14px;color:var(--t2);}
+.email-priority{margin-top:12px;}
+.ep-item{font-size:15px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border);}
+.ep-item:last-child{border-bottom:none;}
+.ep-from{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:1px;}
+
+/* PORTFOLIO STRIP */
+.port-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.port-row:last-child{border-bottom:none;}
+.port-ticker{font-size:15px;font-weight:800;color:var(--accent);width:56px;}
+.port-price{font-size:15px;color:var(--text);flex:1;text-align:center;}
+.port-chg{font-size:14px;font-weight:700;text-align:right;min-width:60px;}
+.up{color:var(--ok);}
+.dn{color:var(--danger);}
+
+/* TASKS SCREEN */
+.screen-header{padding:20px 18px 16px;background:var(--s1);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+.sh-title{font-size:26px;font-weight:900;letter-spacing:-.5px;}
+.sh-sub{font-size:14px;color:var(--t2);margin-top:3px;}
+.task-section{padding:16px 16px 0;}
+.ts-label{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;}
+.task-item{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:var(--s1);border-radius:var(--r);margin-bottom:10px;border:1px solid var(--border);}
+.task-chk{width:26px;height:26px;min-width:26px;border:2px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s;}
+.task-chk.on{background:var(--ok);border-color:var(--ok);}
+.task-chk.on::after{content:'✓';color:#fff;font-size:14px;font-weight:800;}
+.task-body{flex:1;}
+.task-title{font-size:17px;color:var(--text);line-height:1.4;}
+.task-title.done{color:var(--t3);text-decoration:line-through;}
+.task-late{font-size:12px;color:var(--danger);font-weight:700;margin-top:3px;}
+.add-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 32px);margin:16px 16px;height:52px;background:var(--s2);border:1.5px dashed var(--border);border-radius:var(--r);font-size:15px;font-weight:700;color:var(--t2);}
+.add-btn:active{background:var(--s3);}
+
+/* CALENDAR SCREEN */
+.cal-day{padding:16px 16px 0;}
+.cal-day-label{font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.cal-event{background:var(--s1);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;}
+.cal-time{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:4px;}
+.cal-title{font-size:17px;font-weight:700;color:var(--text);}
+.cal-empty{padding:20px 16px;font-size:15px;color:var(--t2);text-align:center;}
+
+/* MAIL SCREEN */
+.mail-item{padding:16px 18px;border-bottom:1px solid var(--border);background:var(--s1);margin:0 16px 10px;border-radius:var(--r);border:1px solid var(--border);}
+.mail-from{font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.mail-subj{font-size:16px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:4px;}
+.mail-snip{font-size:14px;color:var(--t2);line-height:1.5;}
+.mail-urgent{background:#2a1010;border-color:#3a1515;}
+.mail-urgent .mail-from{color:var(--danger);}
+.mail-section-lbl{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;padding:16px 18px 8px;}
+
+/* SETTINGS */
+.sgroup{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);margin:16px;overflow:hidden;}
+.sgroup-lbl{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;padding:14px 18px 6px;}
+.srow{display:flex;align-items:center;padding:14px 18px;border-top:1px solid var(--border);gap:14px;}
+.srow:first-of-type{border-top:none;}
+.srow label{font-size:17px;color:var(--text);flex:1;}
+.sinp{background:var(--s2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:15px;width:150px;outline:none;}
+.sinp:focus{border-color:var(--accent);}
+.sbtn{width:calc(100% - 32px);margin:0 16px 12px;height:52px;border-radius:var(--r);font-size:15px;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.sbtn:active{opacity:.8;}
+.sbtn-acc{background:var(--accent);color:#000;}
+.sbtn-goo{background:#fff;color:#111;font-size:15px;font-weight:700;letter-spacing:0;}
+.sbtn-danger{background:transparent;border:1.5px solid var(--danger);color:var(--danger);}
+
+/* LOADING STATES */
+.spin-wrap{display:flex;flex-direction:column;align-items:center;padding:48px 24px;gap:16px;}
+.spinner{width:36px;height:36px;border:3px solid var(--s3);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin-txt{font-size:15px;color:var(--t2);}
 
 /* MODAL */
-.modal-bg {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.8); z-index: 200;
-  align-items: flex-end;
-}
-.modal-bg.open { display: flex; }
-.msheet {
-  background: var(--s1); border-radius: 28px 28px 0 0;
-  padding: 24px 20px calc(28px + var(--safe-bot)); width: 100%;
-}
-.mhandle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 22px; }
-.mtitle { font-size: 22px; font-weight: 900; margin-bottom: 18px; }
-.mta {
-  width: 100%; background: var(--s2); border: 1.5px solid var(--border);
-  border-radius: var(--r); padding: 14px 16px; color: var(--text);
-  font-size: 17px; height: 96px; outline: none; resize: none;
-  font-family: var(--font); line-height: 1.5; margin-bottom: 14px;
-}
-.mta:focus { border-color: var(--accent); }
-.macts { display: flex; gap: 10px; }
-.macts .btn { flex: 1; text-transform: none; letter-spacing: 0; }
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:500;align-items:flex-end;}
+.modal-bg.open{display:flex;}
+.msheet{background:var(--s1);border-radius:24px 24px 0 0;padding:20px 20px calc(24px + var(--sab));width:100%;}
+.mhandle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;}
+.mtitle{font-size:20px;font-weight:900;margin-bottom:16px;}
+.mta{width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;color:var(--text);font-size:17px;height:90px;outline:none;resize:none;line-height:1.5;margin-bottom:14px;}
+.mta:focus{border-color:var(--accent);}
+.macts{display:flex;gap:10px;}
+.macts button{flex:1;height:52px;border-radius:var(--r);font-size:15px;font-weight:800;}
+.mbtn-cancel{background:var(--s2);border:1.5px solid var(--border);color:var(--t2);}
+.mbtn-go{background:var(--accent);color:#000;}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(82px + var(--sab));left:16px;right:16px;background:#222;border:1px solid #333;border-radius:14px;padding:14px 20px;font-size:16px;font-weight:600;text-align:center;z-index:600;pointer-events:none;opacity:0;transition:opacity .2s;}
+.toast.show{opacity:1;}
 </style>
 </head>
 <body>
 
 <!-- SETUP -->
-<div id="setup" class="screen active">
-  <div class="setup-brand">
-    <svg class="logo-mark" width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="90" height="90" rx="20" fill="#0d0d0d"/>
-      <rect x="18" y="18" width="11" height="54" rx="4" fill="#f0a500"/>
-      <path d="M29 22 Q68 22 68 45 Q68 68 29 68" stroke="#f0a500" stroke-width="10" fill="none" stroke-linecap="round"/>
-      <polygon points="52,28 38,45 48,45 36,62 58,42 46,42" fill="#fff5cc"/>
+<div id="setup">
+  <div class="su-logo">
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+      <rect width="80" height="80" rx="18" fill="#161616"/>
+      <rect x="16" y="16" width="10" height="48" rx="4" fill="#f0a500"/>
+      <path d="M26 20 Q62 20 62 40 Q62 60 26 60" stroke="#f0a500" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <polygon points="46,25 34,40 43,40 32,55 52,38 41,38" fill="#ffe088"/>
     </svg>
-    <div class="setup-wordmark">Ditty PA</div>
-    <div class="setup-tagline">Personal Command Center</div>
   </div>
-  <div class="field-wrap">
-    <div class="field-lbl">Claude API Key</div>
-    <input class="field-inp" type="password" id="setup-key" placeholder="sk-ant-api03-..." autocomplete="off">
+  <div class="su-name">Ditty PA</div>
+  <div class="su-tag">Personal Command Center</div>
+  <div class="su-field">
+    <div class="su-lbl">Claude API Key</div>
+    <input class="su-inp" type="password" id="su-key" placeholder="sk-ant-api03-..." autocomplete="off">
   </div>
-  <div class="field-wrap">
-    <div class="field-lbl">ZIP Code</div>
-    <input class="field-inp" type="text" id="setup-zip" placeholder="46151" maxlength="10">
+  <div class="su-field">
+    <div class="su-lbl">ZIP Code</div>
+    <input class="su-inp" type="text" id="su-zip" placeholder="46151" maxlength="10">
   </div>
-  <button class="btn btn-accent" onclick="saveSetup()">Get Started</button>
-  <button class="btn btn-google" onclick="connectGoogle()">
-    <svg width="20" height="20" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+  <button class="su-btn btn-acc" onclick="doSetup()">Get Started</button>
+  <button class="su-btn btn-goo" onclick="gConnect()">
+    <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
     Connect Google Account
   </button>
 </div>
 
 <!-- APP -->
-<div id="app" class="screen" style="position:relative;">
-  <div class="app-header">
-    <div class="header-brand">
-      <svg width="34" height="34" viewBox="0 0 90 90" fill="none">
-        <rect width="90" height="90" rx="20" fill="#0d0d0d"/>
-        <rect x="18" y="18" width="11" height="54" rx="4" fill="#f0a500"/>
-        <path d="M29 22 Q68 22 68 45 Q68 68 29 68" stroke="#f0a500" stroke-width="10" fill="none" stroke-linecap="round"/>
-        <polygon points="52,28 38,45 48,45 36,62 58,42 46,42" fill="#fff5cc"/>
+<div id="app" style="display:none">
+  <div class="top-bar">
+    <div class="top-logo">
+      <svg width="28" height="28" viewBox="0 0 80 80" fill="none">
+        <rect width="80" height="80" rx="18" fill="#161616"/>
+        <rect x="16" y="16" width="10" height="48" rx="4" fill="#f0a500"/>
+        <path d="M26 20 Q62 20 62 40 Q62 60 26 60" stroke="#f0a500" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <polygon points="46,25 34,40 43,40 32,55 52,38 41,38" fill="#ffe088"/>
       </svg>
-      <div>
-        <div class="header-wordmark">Ditty PA</div>
-        <div class="header-date" id="hdate">Loading...</div>
-      </div>
+      <span class="top-wordmark">Ditty PA</span>
     </div>
-    <div class="header-actions">
-      <button class="gpill gpill-off" id="gpill" onclick="connectGoogle()">● Google</button>
-      <div class="hbtn" onclick="openRemind()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </div>
-      <div class="hbtn" onclick="showSettings()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <div class="top-right">
+      <button class="gpill gpill-off" id="gpill" onclick="gConnect()">● Google</button>
+      <div class="top-icon" onclick="openRemind()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       </div>
     </div>
   </div>
 
-  <div class="tab-strip">
-    <button class="tab-item on" id="t-morning" onclick="setTab('morning')">🌅 5:30</button>
-    <button class="tab-item" id="t-midday" onclick="setTab('midday')">☀️ 12PM</button>
-    <button class="tab-item" id="t-evening" onclick="setTab('evening')">🌙 9PM</button>
-  </div>
+  <div class="screens">
+    <!-- HOME -->
+    <div class="screen active" id="scr-home">
+      <div class="home-scroll">
+        <div class="greeting" id="h-greeting">Good Morning</div>
+        <div class="greeting-name">Chris</div>
+        <div class="greeting-date" id="h-date">Loading...</div>
 
-  <div class="scroll-area" id="scroll-area">
-    <button class="gen-btn" id="gbtn" onclick="generate()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="#000"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      <span id="glbl">Generate Morning Briefing</span>
-    </button>
-    <div id="out">
-      <div class="empty">
-        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 7h8M8 12h8M8 17h5"/></svg>
-        <p>Tap above to generate<br>your briefing</p>
+        <div class="weather-hero" id="weather-card">
+          <div class="wh-loading">Loading weather...</div>
+        </div>
+
+        <div class="hcard" id="next-event-card">
+          <div class="hcard-label">Next Event</div>
+          <div class="hcard-empty">Loading calendar...</div>
+        </div>
+
+        <div class="hcard" id="priorities-card">
+          <div class="hcard-label">Today's Priorities</div>
+          <div class="hcard-empty">Loading...</div>
+        </div>
+
+        <div class="hcard" id="email-card">
+          <div class="hcard-label">Email</div>
+          <div class="hcard-empty">Loading...</div>
+        </div>
+
+        <div class="hcard" id="portfolio-card">
+          <div class="hcard-label">Portfolio</div>
+          <div class="hcard-empty">Loading stocks...</div>
+        </div>
       </div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="screen" id="scr-tasks">
+      <div class="screen-header">
+        <div class="sh-title">Tasks</div>
+        <div class="sh-sub">Farm checks + personal</div>
+      </div>
+      <div class="task-section">
+        <div class="ts-label">Farm Checks</div>
+        <div id="farm-tasks"></div>
+      </div>
+      <div class="task-section" style="margin-top:8px">
+        <div class="ts-label">Personal</div>
+        <div id="personal-tasks"></div>
+      </div>
+      <button class="add-btn" onclick="openRemind()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Task or Reminder
+      </button>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="screen" id="scr-cal">
+      <div class="screen-header">
+        <div class="sh-title">Calendar</div>
+        <div class="sh-sub" id="cal-sub">Next 48 hours</div>
+      </div>
+      <div id="cal-content">
+        <div class="spin-wrap"><div class="spinner"></div><div class="spin-txt">Fetching calendar...</div></div>
+      </div>
+    </div>
+
+    <!-- MAIL -->
+    <div class="screen" id="scr-mail">
+      <div class="screen-header">
+        <div class="sh-title">Mail</div>
+        <div class="sh-sub">Priority senders only</div>
+      </div>
+      <div id="mail-content">
+        <div class="spin-wrap"><div class="spinner"></div><div class="spin-txt">Scanning inbox...</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="screen" id="scr-settings">
+      <div class="screen-header">
+        <div class="sh-title">Settings</div>
+      </div>
+      <div class="sgroup">
+        <div class="sgroup-lbl">API</div>
+        <div class="srow"><label>Claude API Key</label><input class="sinp" type="password" id="s-key" placeholder="sk-ant-..."></div>
+      </div>
+      <div class="sgroup">
+        <div class="sgroup-lbl">Location</div>
+        <div class="srow"><label>ZIP Code</label><input class="sinp" type="text" id="s-zip" placeholder="46151"></div>
+      </div>
+      <div class="sgroup">
+        <div class="sgroup-lbl">Google Account</div>
+        <div class="srow"><label>Status</label><span id="s-gstat" style="font-size:15px;color:#888">Not connected</span></div>
+      </div>
+      <button class="sbtn sbtn-goo" onclick="gConnect()" style="margin-top:4px">
+        <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        Reconnect Google
+      </button>
+      <button class="sbtn sbtn-acc" onclick="saveSettings()">Save Settings</button>
+      <button class="sbtn sbtn-danger" onclick="doSignOut()" style="margin-top:4px">Sign Out & Reset</button>
+      <div style="text-align:center;color:var(--t3);font-size:12px;letter-spacing:1px;margin:24px 0">DITTY PA · V3.0</div>
     </div>
   </div>
 
   <div class="bnav">
-    <div class="bnav-item on" onclick="showMain()">
-      <svg class="bnav-ico" viewBox="0 0 24 24" fill="none" stroke="#f0a500" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 7h8M8 12h8M8 17h5"/></svg>
-      <div class="bnav-lbl" style="color:var(--accent)">Brief</div>
-    </div>
-    <div class="bnav-item" onclick="openRemind()">
-      <svg class="bnav-ico" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      <div class="bnav-lbl">Remind</div>
-    </div>
-    <div class="bnav-item" onclick="showSettings()">
-      <svg class="bnav-ico" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <div class="bnav-lbl">Settings</div>
-    </div>
-  </div>
-</div>
-
-<!-- SETTINGS -->
-<div id="settings" class="screen">
-  <div class="shead">
-    <button class="sback" onclick="showMain()">←</button>
-    <div class="shead-title">Settings</div>
-  </div>
-  <div class="sbody">
-    <div class="sgroup">
-      <div class="sgroup-lbl">API</div>
-      <div class="srow"><label>Claude API Key</label><input class="sinp" type="password" id="s-key" placeholder="sk-ant-..."></div>
-    </div>
-    <div class="sgroup">
-      <div class="sgroup-lbl">Location</div>
-      <div class="srow"><label>ZIP Code</label><input class="sinp" type="text" id="s-zip" placeholder="46151"></div>
-    </div>
-    <div class="sgroup">
-      <div class="sgroup-lbl">Google Account</div>
-      <div class="srow"><label>Status</label><span id="s-gstat" style="font-size:15px;color:var(--t2)">Not connected</span></div>
-      <div class="srow" style="padding-top:8px;padding-bottom:16px">
-        <button class="btn btn-google" style="height:48px;font-size:15px;text-transform:none;letter-spacing:0" onclick="connectGoogle()">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-          Reconnect Google
-        </button>
-      </div>
-    </div>
-    <div class="sacts">
-      <button class="btn btn-accent" onclick="saveSettings()">Save Settings</button>
-      <button class="btn btn-danger" onclick="signOut()">Sign Out & Reset</button>
-    </div>
-    <div style="text-align:center;color:var(--t3);font-size:13px;margin-top:28px;letter-spacing:1px">DITTY PA  ·  V2.0</div>
+    <button class="bnav-btn on" id="nb-home" onclick="nav('home')">
+      <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="#f0a500" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="bnav-lbl" style="color:var(--accent)">Home</span>
+    </button>
+    <button class="bnav-btn" id="nb-tasks" onclick="nav('tasks')">
+      <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span class="bnav-lbl">Tasks</span>
+    </button>
+    <button class="bnav-btn" id="nb-cal" onclick="nav('cal')">
+      <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="bnav-lbl">Calendar</span>
+    </button>
+    <button class="bnav-btn" id="nb-mail" onclick="nav('mail')">
+      <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <span class="bnav-lbl">Mail</span>
+    </button>
+    <button class="bnav-btn" id="nb-settings" onclick="nav('settings')">
+      <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="bnav-lbl">Settings</span>
+    </button>
   </div>
 </div>
 
@@ -526,238 +371,306 @@ body {
   <div class="msheet">
     <div class="mhandle"></div>
     <div class="mtitle">Set Reminder</div>
-    <textarea class="mta" id="rtxt" placeholder="e.g. Pick up chicken feed at 4:30 today"></textarea>
+    <textarea class="mta" id="rtxt" placeholder="Pick up chicken feed at 4:30 today..."></textarea>
     <div class="macts">
-      <button class="btn btn-ghost" onclick="closeRemind()">Cancel</button>
-      <button class="btn btn-accent" onclick="submitRemind()">Set It</button>
+      <button class="mbtn-cancel" onclick="closeRemind()">Cancel</button>
+      <button class="mbtn-go" onclick="submitRemind()">Set It</button>
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 var GID='397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.com';
 var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
-var S={},T={},GT=null,TAB='morning';
+var S={},T={},GT=null,CUR='home';
+var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
+var PRIORITY_SENDERS=['elks','edward jones','ducks unlimited','tami','iu health','bill','invoice','statement','duke energy'];
 
 function ls(k,v){if(v!==undefined)localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));else{try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}}
 
 function boot(){
-  S=ls('dpa2_s')||{};T=ls('dpa2_t')||{};GT=localStorage.getItem('dpa2_g')||null;
-  tick();setInterval(tick,30000);
+  S=ls('dpa3_s')||{};T=ls('dpa3_t')||{};GT=localStorage.getItem('dpa3_g')||null;
   checkOAuth();
-  if(!S.apiKey){showScreen('setup');}else{showScreen('app');updateG();}
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
-  }
-}
-
-function tick(){
-  var n=new Date(),days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var h=n.getHours(),m=n.getMinutes(),ap=h>=12?'PM':'AM';h=h%12||12;
-  var el=document.getElementById('hdate');
-  if(el)el.textContent=days[n.getDay()]+' '+mons[n.getMonth()]+' '+n.getDate()+'  ·  '+h+':'+(m<10?'0':'')+m+' '+ap;
+  if(!S.apiKey){document.getElementById('setup').style.display='flex';document.getElementById('app').style.display='none';}
+  else{document.getElementById('setup').style.display='none';document.getElementById('app').style.display='flex';bootApp();}
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
 }
 
 function checkOAuth(){
   var h=window.location.hash;
   if(h&&h.indexOf('access_token=')>-1){
     var p={};h.substring(1).split('&').forEach(function(s){var kv=s.split('=');p[decodeURIComponent(kv[0])]=decodeURIComponent(kv[1]||'');});
-    if(p.access_token){GT=p.access_token;localStorage.setItem('dpa2_g',GT);window.history.replaceState({},'',window.location.pathname);toast('Google connected');if(S.apiKey){showScreen('app');updateG();}}
+    if(p.access_token){GT=p.access_token;ls('dpa3_g',GT);window.history.replaceState({},'',window.location.pathname);toast('Google connected');}
   }
 }
 
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
-  var el=document.getElementById(id);if(el)el.classList.add('active');
+function bootApp(){
+  updateG();setGreeting();renderFarmTasks();renderPersonalTasks();
+  loadHome();loadCal();loadMail();
 }
 
 function updateG(){
-  var pill=document.getElementById('gpill'),stat=document.getElementById('s-gstat');
-  if(GT){if(pill){pill.textContent='● Google';pill.className='gpill gpill-on';}if(stat)stat.textContent='Connected';}
-  else{if(pill){pill.textContent='● Connect';pill.className='gpill gpill-off';}if(stat)stat.textContent='Not connected';}
+  var p=document.getElementById('gpill'),s=document.getElementById('s-gstat');
+  if(GT){if(p){p.textContent='● Google';p.className='gpill gpill-on';}if(s)s.textContent='Connected';}
+  else{if(p){p.textContent='● Connect';p.className='gpill gpill-off';}if(s)s.textContent='Not connected';}
 }
 
-function connectGoogle(){
+function setGreeting(){
+  var h=new Date().getHours();
+  var g=h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening';
+  var el=document.getElementById('h-greeting');if(el)el.textContent=g;
+  var n=new Date();
+  var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var mons=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var de=document.getElementById('h-date');
+  if(de)de.textContent=days[n.getDay()]+', '+mons[n.getMonth()]+' '+n.getDate()+', '+n.getFullYear();
+  var cs=document.getElementById('cal-sub');
+  if(cs)cs.textContent=days[n.getDay()]+' + next 48 hrs';
+}
+
+function nav(scr){
+  CUR=scr;
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.bnav-btn').forEach(function(b){
+    b.classList.remove('on');
+    b.querySelector('.bnav-lbl').style.color='';
+    b.querySelector('.ni').setAttribute('stroke','#444');
+  });
+  var s=document.getElementById('scr-'+scr);if(s)s.classList.add('active');
+  var b=document.getElementById('nb-'+scr);
+  if(b){b.classList.add('on');b.querySelector('.bnav-lbl').style.color='var(--accent)';b.querySelector('.ni').setAttribute('stroke','#f0a500');}
+  if(scr==='settings'){
+    document.getElementById('s-key').value=S.apiKey||'';
+    document.getElementById('s-zip').value=S.zip||'46151';
+    updateG();
+  }
+}
+
+function doSetup(){
+  var k=document.getElementById('su-key').value.trim(),z=document.getElementById('su-zip').value.trim();
+  if(!k||k.length<20){alert('Enter a valid Claude API key');return;}
+  S.apiKey=k;S.zip=z||'46151';ls('dpa3_s',S);
+  document.getElementById('setup').style.display='none';
+  document.getElementById('app').style.display='flex';
+  bootApp();
+}
+
+function gConnect(){
   window.location.href='https://accounts.google.com/o/oauth2/v2/auth?client_id='+GID+'&redirect_uri='+encodeURIComponent('https://cditt.github.io/ditty-pa/ditty-pa.html')+'&response_type=token&scope='+encodeURIComponent(GSCOPE)+'&prompt=consent';
 }
 
-function saveSetup(){
-  var k=document.getElementById('setup-key').value.trim(),z=document.getElementById('setup-zip').value.trim();
-  if(!k||k.length<20){alert('Enter a valid Claude API key');return;}
-  S.apiKey=k;S.zip=z||'46151';ls('dpa2_s',S);showScreen('app');updateG();
-}
-
-function showMain(){showScreen('app');}
-function showSettings(){
-  showScreen('settings');
-  document.getElementById('s-key').value=S.apiKey||'';
-  document.getElementById('s-zip').value=S.zip||'46151';
-  updateG();
-}
 function saveSettings(){
   var k=document.getElementById('s-key').value.trim(),z=document.getElementById('s-zip').value.trim();
-  if(k)S.apiKey=k;if(z)S.zip=z;ls('dpa2_s',S);showMain();toast('Saved');
+  if(k)S.apiKey=k;if(z)S.zip=z;ls('dpa3_s',S);toast('Saved');
 }
-function signOut(){if(!confirm('Reset everything?'))return;localStorage.clear();location.reload();}
 
-function setTab(t){
-  TAB=t;['morning','midday','evening'].forEach(function(x){document.getElementById('t-'+x).className='tab-item'+(x===t?' on':'');});
-  var lb={morning:'Generate Morning Briefing',midday:'Generate Midday Briefing',evening:'Generate Evening Briefing'};
-  document.getElementById('glbl').textContent=lb[t];
-  document.getElementById('out').innerHTML='<div class="empty"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 7h8M8 12h8M8 17h5"/></svg><p>Tap above to generate<br>your briefing</p></div>';
-}
+function doSignOut(){if(!confirm('Reset everything?'))return;localStorage.clear();location.reload();}
 
 function openRemind(){document.getElementById('rmodal').classList.add('open');setTimeout(function(){document.getElementById('rtxt').focus();},100);}
 function closeRemind(){document.getElementById('rmodal').classList.remove('open');document.getElementById('rtxt').value='';}
 function submitRemind(){
   var txt=document.getElementById('rtxt').value.trim();if(!txt)return;closeRemind();
-  if(!GT){toast('Connect Google first');return;}
+  if(!GT){toast('Connect Google to set calendar reminders');return;}
   var now=new Date();
-  callClaude('Parse this reminder and return ONLY JSON: {title,dateTime(ISO8601 based on today '+now.toISOString()+')}. Reminder: "'+txt+'". No markdown.',function(r){
+  callClaude('Parse this reminder and return ONLY JSON: {title,dateTime(ISO8601 based on today '+now.toISOString()+')}. No markdown. Reminder: "'+txt+'"',function(r){
     try{
       var d=JSON.parse(r.replace(/```json|```/g,'').trim());
       var ev={summary:d.title,start:{dateTime:d.dateTime,timeZone:'America/Indiana/Indianapolis'},end:{dateTime:new Date(new Date(d.dateTime).getTime()+1800000).toISOString(),timeZone:'America/Indiana/Indianapolis'},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
-      fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},body:JSON.stringify(ev)}).then(function(res){toast(res.ok?'Reminder added':'Failed to add reminder');});
-    }catch(e){toast('Could not parse reminder');}
+      fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},body:JSON.stringify(ev)}).then(function(res){toast(res.ok?'Reminder added to calendar':'Failed');});
+    }catch(e){
+      // Add as personal task instead
+      var pt=ls('dpa3_pt')||[];pt.push({text:txt,done:false,ts:Date.now()});ls('dpa3_pt',pt);
+      renderPersonalTasks();toast('Added to tasks');
+    }
   });
 }
 
 function toast(msg){
-  var t=document.createElement('div');
-  t.style.cssText='position:fixed;bottom:86px;left:16px;right:16px;background:#2a2a2a;border:1px solid #444;border-radius:14px;padding:14px 20px;font-size:16px;color:#f0f0f0;z-index:400;text-align:center;font-weight:600;';
-  t.textContent=msg;document.body.appendChild(t);
-  setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},2800);
-}
-
-function fetchCal(){
-  if(!GT)return Promise.resolve('Google not connected.');
-  var now=new Date(),fut=new Date(now.getTime()+172800000);
-  return fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin='+encodeURIComponent(now.toISOString())+'&timeMax='+encodeURIComponent(fut.toISOString())+'&singleEvents=true&orderBy=startTime&maxResults=15',{headers:{Authorization:'Bearer '+GT}})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(!d.items||!d.items.length)return 'No events next 48 hours.';
-      return d.items.map(function(e){var s=e.start.dateTime||e.start.date;var dt=new Date(s);var t=e.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';return t+' — '+e.summary;}).join('\n');
-    }).catch(function(){return 'Calendar unavailable.';});
-}
-
-function fetchEmail(){
-  if(!GT)return Promise.resolve('Google not connected.');
-  return fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=15&q=is:unread',{headers:{Authorization:'Bearer '+GT}})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(!d.messages||!d.messages.length)return 'Inbox clear.';
-      return Promise.all(d.messages.slice(0,10).map(function(m){
-        return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
-      })).then(function(msgs){
-        return msgs.map(function(m){var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value;});return 'FROM: '+from+' | '+sub;}).join('\n');
-      });
-    }).catch(function(){return 'Email unavailable.';});
+  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2500);
 }
 
 function callClaude(prompt,cb){
-  fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],messages:[{role:'user',content:prompt}]})})
+  fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:3}],messages:[{role:'user',content:prompt}]})})
     .then(function(r){return r.json();})
-    .then(function(d){var txt='';if(d.content)d.content.forEach(function(c){if(c.type==='text')txt+=c.text;});cb(txt);})
+    .then(function(d){var t='';if(d.content)d.content.forEach(function(c){if(c.type==='text')t+=c.text;});cb(t);})
     .catch(function(e){cb('Error: '+e.message);});
 }
 
-function buildPrompt(type,cal,email){
-  var now=new Date(),zip=S.zip||'46151';
-  var dateStr=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  var dow=now.getDay(),isGym=dow>=1&&dow<=5;
-  var gymDay=['','Push','Pull','Legs','Upper','Lower'][dow]||'Rest';
-  var lastShot=new Date('2026-06-13'),nextShot=new Date(lastShot.getTime()+518400000);
-  var dLeft=Math.round((nextShot-now)/86400000);
-  var shotTxt=dLeft<=1?'RETATRUTIDE DUE: '+nextShot.toLocaleDateString():'Next injection: '+nextShot.toLocaleDateString()+' ('+dLeft+' days)';
-  var stocks='Portfolio: GOOGL 100sh, DKNG 261sh, LMT 19sh, MU 25sh (cost basis $118 show P&L), IHAK 117.77sh, SCZ 179.09sh, SPY 34sh, VO 275.58sh, VOO 122.94sh, FNWFX 156.63sh, FRISX 308.94sh, MDIZX 853.04sh. Search current prices.';
-  var base='Personal assistant for Chris Dittemore, Martinsville IN ZIP '+zip+'. Today: '+dateStr+'. Direct. No fluff.\n\nCALENDAR:\n'+cal+'\n\nEMAIL:\n'+email+'\n\nPriority senders: Elks Lodge, Edward Jones, Ducks Unlimited, bills, Tami, IU Health.\n\n';
-  var fmt='Return ONLY valid JSON: {"sections":[{"id":"","emoji":"","title":"","content":"<html>","badge":"","badgeType":"danger|success|warn|muted","tasks":[{"id":"","text":"","overdue":false}]}]}. No markdown, no backticks, no explanation.';
-  if(type==='morning')return base+'Morning briefing:\n1. WEATHER 🌤 search ZIP '+zip+' today+tomorrow+5day. Temp+conditions only.\n2. CALENDAR 📅 use data. Flag birthdays. Next 48hrs.\n3. EMAIL 📧 surface priority senders. Flag urgent only.\n4. FARM TASKS 🐓 tasks:[{text:"Chicken water"},{text:"Chicken food"},{text:"Check bees"},{text:"Garden check"}]\n5. ELKS 🦌 any Elks Lodge 1349 items.\n6. MEDS 💊 Lisinopril 40mg OVERDUE since 6/9/26. '+shotTxt+'. Sildenafil 6/17, Testosterone last 5/29, Anastrozole 8/21, Omeprazole 8/27, Tadalafil 9/10.\n7. GYM 💪 Today: '+(isGym?gymDay+' day':'Rest day')+'\n\n'+fmt;
-  if(type==='midday')return base+'Midday:\n1. WEATHER 🌤 rest of today+tomorrow\n2. CALENDAR 📅 afternoon items\n3. FARM 🐓 tasks:[{text:"Chicken water"},{text:"Chicken food"},{text:"Bees"},{text:"Garden"}]\n4. STOCKS 📈 '+stocks+'\n5. ELKS 🦌\n\n'+fmt;
-  if(now.getDay()===0)return base+'WEEKLY SUNDAY SUMMARY:\n1. WEEK REVIEW 📆 calendar recap\n2. STOCKS 📈 '+stocks+'\n3. NEXT WEEK 🗓 preview\n4. CHECK-IN 🧠 weekly reflection\n\n'+fmt;
-  return base+'Evening:\n1. TOMORROW 🗓 weather+calendar\n2. STOCKS 📈 '+stocks+'\n3. ACCOUNTABILITY ✅ tasks:[{text:"Chicken water"},{text:"Chicken food"},{text:"Bees"},{text:"Garden"},{text:"Gym — '+gymDay+'"}]\n4. HEALTH 🏃 '+shotTxt+'\n5. CHECK-IN 🧠 mood 1-10 + weight + calories\n\n'+fmt;
+function fetchCal(){
+  if(!GT)return Promise.resolve(null);
+  var now=new Date(),fut=new Date(now.getTime()+172800000);
+  return fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin='+encodeURIComponent(now.toISOString())+'&timeMax='+encodeURIComponent(fut.toISOString())+'&singleEvents=true&orderBy=startTime&maxResults=20',{headers:{Authorization:'Bearer '+GT}})
+    .then(function(r){return r.json();})
+    .catch(function(){return null;});
 }
 
-function generate(){
-  var btn=document.getElementById('gbtn');btn.disabled=true;
-  var out=document.getElementById('out');
-  out.innerHTML='<div class="load-card"><div class="spinner"></div><div class="load-title">Building your briefing...</div><div id="ls0" class="load-step act">Fetching calendar...</div><div id="ls1" class="load-step">Scanning email...</div><div id="ls2" class="load-step">Pulling weather + stocks...</div><div id="ls3" class="load-step">Assembling...</div></div>';
-  var si=0,timer=setInterval(function(){var c=document.getElementById('ls'+si);if(c)c.className='load-step done';si++;var n=document.getElementById('ls'+si);if(n)n.className='load-step act';if(si>=4)clearInterval(timer);},2500);
+function fetchEmail(){
+  if(!GT)return Promise.resolve(null);
+  return fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q=is:unread',{headers:{Authorization:'Bearer '+GT}})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d.messages||!d.messages.length)return {messages:[],count:0};
+      return Promise.all(d.messages.slice(0,15).map(function(m){
+        return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
+      })).then(function(msgs){return {messages:msgs,count:d.resultSizeEstimate||d.messages.length};});
+    }).catch(function(){return null;});
+}
+
+function loadHome(){
+  var zip=S.zip||'46151';
+  // Weather
+  callClaude('Search current weather for ZIP '+zip+' and return ONLY JSON: {temp,condition,high,low,forecast:[{day,high,low,cond}x4]}. No markdown.',function(r){
+    try{
+      var d=JSON.parse(r.replace(/```json|```/g,'').trim());
+      var wc=document.getElementById('weather-card');
+      if(!wc)return;
+      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'</div></div>';}).join(''):'';
+      wc.innerHTML='<div class="wh-loc">Martinsville, IN '+zip+'</div><div class="wh-temp">'+(d.temp||'--')+'°</div><div class="wh-cond">'+(d.condition||'')+'</div><div class="wh-row">'+fhtml+'</div>';
+    }catch(e){
+      var wc2=document.getElementById('weather-card');if(wc2)wc2.innerHTML='<div class="wh-loading">Weather unavailable</div>';
+    }
+  });
+
+  // Calendar + Email in parallel
   Promise.all([fetchCal(),fetchEmail()]).then(function(res){
-    callClaude(buildPrompt(TAB,res[0],res[1]),function(txt){
-      clearInterval(timer);btn.disabled=false;
+    var calData=res[0],emailData=res[1];
+
+    // Next event
+    var ec=document.getElementById('next-event-card');
+    if(calData&&calData.items&&calData.items.length){
+      var ev=calData.items[0];
+      var st=ev.start.dateTime||ev.start.date;
+      var dt=new Date(st);
+      var timeStr=ev.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
+      var more=calData.items.length>1?' + '+(calData.items.length-1)+' more event'+(calData.items.length>2?'s':''):'';
+      if(ec)ec.innerHTML='<div class="hcard-label">Next Event</div><div class="event-time">'+timeStr+'</div><div class="event-title">'+ev.summary+'</div>'+(more?'<div class="event-more">'+more+'</div>':'');
+    }else{
+      if(ec)ec.innerHTML='<div class="hcard-label">Next Event</div><div class="hcard-empty">Calendar clear today</div>';
+    }
+
+    // Priorities (top 3 tasks)
+    var pc=document.getElementById('priorities-card');
+    var pts=[].concat(FARM).slice(0,3);
+    if(pc)pc.innerHTML='<div class="hcard-label">Today\'s Priorities</div>'+pts.map(function(p){return'<div class="pri-item"><div class="pri-dot"></div><div class="pri-txt">'+p+'</div></div>';}).join('');
+
+    // Email
+    var emlc=document.getElementById('email-card');
+    if(emailData&&emailData.messages&&emailData.messages.length){
+      var priority=emailData.messages.filter(function(m){
+        var hh=(m.payload&&m.payload.headers)||[];
+        var from='';hh.forEach(function(h){if(h.name==='From')from=h.value.toLowerCase();});
+        return PRIORITY_SENDERS.some(function(s){return from.indexOf(s)>-1;});
+      }).slice(0,3);
+      var phtml=priority.map(function(m){
+        var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
+        hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
+        return'<div class="ep-item"><div class="ep-from">'+from+'</div>'+sub+'</div>';
+      }).join('');
+      if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div></div>'+(phtml?'<div class="email-priority">'+phtml+'</div>':'');
+    }else{
+      if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
+    }
+
+    // Portfolio
+    var port=document.getElementById('portfolio-card');
+    var tickers=['GOOGL','DKNG','MU','SPY','VOO'];
+    callClaude('Search current stock prices for '+tickers.join(',')+'. Return ONLY JSON: [{ticker,price,change}]. No markdown.',function(sr){
       try{
-        var clean=txt.replace(/```json|```/g,'').trim();
-        var fi=clean.indexOf('{'),li=clean.lastIndexOf('}');
-        if(fi>-1&&li>-1)clean=clean.substring(fi,li+1);
-        renderBriefing(JSON.parse(clean));
-      }catch(e){
-        out.innerHTML='<div class="bcard"><div class="bcard-body open"><div class="ctext">'+txt.replace(/\n/g,'<br>')+'</div></div></div>';
-      }
+        var sd=JSON.parse(sr.replace(/```json|```/g,'').trim());
+        if(!Array.isArray(sd))throw new Error();
+        var rows=sd.slice(0,5).map(function(s){
+          var chg=parseFloat(s.change)||0;
+          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price">$'+s.price+'</div><div class="port-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'+':'')+s.change+'</div></div>';
+        }).join('');
+        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
+      }catch(e){if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock data unavailable</div>';}
     });
   });
 }
 
-function renderBriefing(data){
-  var out=document.getElementById('out');
-  if(!data.sections||!data.sections.length){out.innerHTML='<div class="empty"><p>No data. Try again.</p></div>';return;}
-  var html='';
-  data.sections.forEach(function(sec,i){
-    var sid='s'+i,bt=sec.badgeType||'muted';
-    var bdg=sec.badge?'<span class="bcard-badge b'+bt.charAt(0)+'">'+sec.badge+'</span>':'';
-    html+='<div class="bcard">';
-    html+='<div class="bcard-head" onclick="toggleCard(\''+sid+'\')">';
-    html+='<div class="bcard-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="'+( bt==='danger'?'#e03c3c':bt==='success'?'#2ecc71':bt==='warn'?'#f0a500':'#666' )+'" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/></svg></div>';
-    html+='<div class="bcard-meta"><div class="bcard-title">'+(sec.title||'')+'</div></div>';
-    html+=bdg;
-    html+='<div class="bcard-chev'+(i===0?' open':'')+'" id="cv-'+sid+'">›</div>';
-    html+='</div><div class="bcard-line"></div>';
-    html+='<div class="bcard-body'+(i===0?' open':'')+'" id="'+sid+'">';
-    if(sec.tasks&&sec.tasks.length){
-      sec.tasks.forEach(function(t,ti){
-        var tid=sid+'-'+ti,done=T[tid]||false;
-        html+='<div class="task"><div class="task-chk'+(done?' on':'')+'" id="ck-'+tid+'" onclick="toggleTask(\''+tid+'\')"></div><div><div class="task-txt'+(done?' done':'')+'" id="tl-'+tid+'">'+(t.text||'')+'</div>'+(t.overdue?'<div class="task-late">OVERDUE</div>':'')+'</div></div>';
-      });
-    }else if(sec.id&&sec.id.toLowerCase().includes('check')){
-      html+='<div class="ctext">'+(sec.content||'')+'</div>';
-      html+='<div style="margin-top:16px"><div style="font-size:16px;color:var(--t2);margin-bottom:8px">Mood & Energy (1–10)</div>';
-      html+='<div class="mood-row"><input type="range" class="mood-sl" min="1" max="10" value="7" id="md-'+sid+'" oninput="document.getElementById(\'mn-'+sid+'\').textContent=this.value"><div class="mood-num" id="mn-'+sid+'">7</div></div>';
-      html+='<div class="ci-row"><input class="ci-inp" type="number" placeholder="Weight (lbs)" id="w-'+sid+'"><input class="ci-inp" type="number" placeholder="Calories" id="c-'+sid+'"><input class="ci-inp" type="number" placeholder="Water oz" id="h-'+sid+'"></div>';
-      html+='<button class="ci-save" onclick="saveCI(\''+sid+'\')">Save Check-In</button></div>';
-    }else{
-      html+='<div class="ctext">'+(sec.content||'')+'</div>';
+function loadCal(){
+  fetchCal().then(function(data){
+    var el=document.getElementById('cal-content');if(!el)return;
+    if(!GT){el.innerHTML='<div class="cal-empty">Connect Google to see your calendar</div>';return;}
+    if(!data||!data.items||!data.items.length){el.innerHTML='<div class="cal-empty">No events in the next 48 hours</div>';return;}
+    var now=new Date();
+    var todayEnd=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59);
+    var today=[],tmrw=[];
+    data.items.forEach(function(e){
+      var st=new Date(e.start.dateTime||e.start.date);
+      if(st<=todayEnd)today.push(e);else tmrw.push(e);
+    });
+    function renderDay(evts,label){
+      if(!evts.length)return'';
+      return'<div class="cal-day"><div class="cal-day-label">'+label+'</div>'+evts.map(function(e){
+        var st=e.start.dateTime||e.start.date;var dt=new Date(st);
+        var t=e.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
+        return'<div class="cal-event"><div class="cal-time">'+t+'</div><div class="cal-title">'+e.summary+'</div></div>';
+      }).join('')+'</div>';
     }
-    html+='</div></div>';
+    var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var tomorrow=new Date(now.getTime()+86400000);
+    el.innerHTML=renderDay(today,'Today')+renderDay(tmrw,days[tomorrow.getDay()]+' · Tomorrow');
   });
-  html+='<div class="qgrid">';
-  html+='<div class="qcard" onclick="openRemind()"><svg class="qcard-icon" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><div class="qcard-lbl">Set Reminder</div></div>';
-  html+='<div class="qcard" onclick="window.open(\'https://mail.google.com\',\'_blank\')"><svg class="qcard-icon" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><div class="qcard-lbl">Gmail</div></div>';
-  html+='<div class="qcard" onclick="window.open(\'https://calendar.google.com\',\'_blank\')"><svg class="qcard-icon" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="qcard-lbl">Calendar</div></div>';
-  html+='<div class="qcard" onclick="window.open(\'https://tasks.google.com\',\'_blank\')"><svg class="qcard-icon" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><div class="qcard-lbl">Tasks</div></div>';
-  html+='</div>';
-  out.innerHTML=html;
-  document.getElementById('scroll-area').scrollTop=0;
 }
 
-function toggleCard(id){
-  var b=document.getElementById(id),c=document.getElementById('cv-'+id);
-  if(!b)return;var o=b.classList.contains('open');
-  b.className='bcard-body'+(o?'':' open');
-  if(c)c.className='bcard-chev'+(o?'':' open');
+function loadMail(){
+  fetchEmail().then(function(data){
+    var el=document.getElementById('mail-content');if(!el)return;
+    if(!GT){el.innerHTML='<div class="cal-empty">Connect Google to see your email</div>';return;}
+    if(!data||!data.messages||!data.messages.length){el.innerHTML='<div class="cal-empty">Inbox clear</div>';return;}
+    var priority=[],other=[];
+    data.messages.forEach(function(m){
+      var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
+      hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
+      var isPri=PRIORITY_SENDERS.some(function(s){return from.toLowerCase().indexOf(s)>-1;});
+      if(isPri)priority.push({from:from,sub:sub});else other.push({from:from,sub:sub});
+    });
+    var html='';
+    if(priority.length){
+      html+='<div class="mail-section-lbl">Priority</div>';
+      html+=priority.map(function(m){return'<div class="mail-item mail-urgent"><div class="mail-from">'+m.from.replace(/<.*>/,'').trim()+'</div><div class="mail-subj">'+m.sub+'</div></div>';}).join('');
+    }
+    if(other.length){
+      html+='<div class="mail-section-lbl">Other Unread ('+other.length+')</div>';
+      html+=other.slice(0,8).map(function(m){return'<div class="mail-item"><div class="mail-from">'+m.from.replace(/<.*>/,'').trim()+'</div><div class="mail-subj">'+m.sub+'</div></div>';}).join('');
+    }
+    el.innerHTML=html||'<div class="cal-empty">Inbox clear</div>';
+  });
+}
+
+function renderFarmTasks(){
+  var el=document.getElementById('farm-tasks');if(!el)return;
+  el.innerHTML=FARM.map(function(f,i){
+    var tid='farm-'+i,done=T[tid]||false;
+    return'<div class="task-item"><div class="task-chk'+(done?' on':'')+'" id="ck-'+tid+'" onclick="toggleTask(\''+tid+'\')"></div><div class="task-body"><div class="task-title'+(done?' done':'')+'" id="tl-'+tid+'">'+f+'</div></div></div>';
+  }).join('');
+}
+
+function renderPersonalTasks(){
+  var el=document.getElementById('personal-tasks');if(!el)return;
+  var pts=ls('dpa3_pt')||[];
+  if(!pts.length){el.innerHTML='<div style="padding:12px 0;font-size:15px;color:var(--t3)">No personal tasks</div>';return;}
+  el.innerHTML=pts.map(function(t,i){
+    var tid='pt-'+i;
+    return'<div class="task-item"><div class="task-chk'+(t.done?' on':'')+'" id="ck-'+tid+'" onclick="togglePT('+i+')"></div><div class="task-body"><div class="task-title'+(t.done?' done':'')+'" id="tl-'+tid+'">'+t.text+'</div></div></div>';
+  }).join('');
 }
 
 function toggleTask(tid){
-  T[tid]=!T[tid];ls('dpa2_t',T);
+  T[tid]=!T[tid];ls('dpa3_t',T);
   var ck=document.getElementById('ck-'+tid),tl=document.getElementById('tl-'+tid);
   if(ck)ck.className='task-chk'+(T[tid]?' on':'');
-  if(tl)tl.className='task-txt'+(T[tid]?' done':'');
+  if(tl)tl.className='task-title'+(T[tid]?' done':'');
 }
 
-function saveCI(sid){
-  var md=document.getElementById('md-'+sid),w=document.getElementById('w-'+sid),c=document.getElementById('c-'+sid),h=document.getElementById('h-'+sid);
-  S.ci={mood:md&&md.value,weight:w&&w.value,cals:c&&c.value,water:h&&h.value,date:new Date().toLocaleDateString()};
-  ls('dpa2_s',S);toast('Check-in saved');
+function togglePT(i){
+  var pts=ls('dpa3_pt')||[];if(!pts[i])return;
+  pts[i].done=!pts[i].done;ls('dpa3_pt',pts);renderPersonalTasks();
 }
 
 window.onload=boot;
