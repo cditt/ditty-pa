@@ -320,7 +320,7 @@ input,textarea{font-family:var(--font);}
         <div class="sgroup-lbl">API</div>
         <div class="srow"><label>Claude API Key</label><input class="sinp" type="password" id="s-key" placeholder="sk-ant-..."></div>
       </div>
-      
+
       <div class="sgroup">
         <div class="sgroup-lbl">Google Account</div>
         <div class="srow"><label>Status</label><span id="s-gstat" style="font-size:15px;color:#888">Not connected</span></div>
@@ -570,26 +570,25 @@ function loadHome(){
 
     // Portfolio
     var port=document.getElementById('portfolio-card');
-    if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Loading stocks...</div>';
     fetch(PROXY+'/stocks?symbols=GOOGL,DKNG,LMT,MU,IHAK,SCZ,SPY,VO,VOO')
       .then(function(r){return r.json();})
       .then(function(d){
         if(!d.stocks||!d.stocks.length){
-          console.error('Stock API empty response:',d);
-          if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock API unavailable</div>';
+          if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">'+(d.error||'Market data unavailable')+'</div>';
           return;
         }
-        var MU_COST=118;
         var rows=d.stocks.map(function(s){
           var isUp=(s.change||0)>=0;
-          var muNote=s.ticker==='MU'?'<div style="font-size:10px;color:var(--t2);white-space:nowrap">cost $'+MU_COST+' <span style="color:'+(s.price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(s.price>MU_COST?'+':'')+((s.price-MU_COST).toFixed(2))+'</span></div>':'';
-          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
+          var muNote=s.ticker==='MU'?'<div style="font-size:11px;color:var(--t2);margin-top:1px">cost $118 &nbsp;'+(s.price&&s.price>118?'<span style="color:var(--ok)">+$'+(s.price-118).toFixed(2)+'</span>':'<span style="color:var(--danger)">-$'+(118-s.price).toFixed(2)+'</span>')+'</div>':'';
+          var priceStr=s.price?'$'+s.price.toFixed(2):'--';
+          var chgStr=s.change!==null?(isUp?'+':'')+s.change.toFixed(2):'--';
+          var pctStr=s.percent!==null?(isUp?'+':'')+s.percent.toFixed(2)+'%':'';
+          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>'+priceStr+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+chgStr+'<div style="font-size:11px">'+pctStr+'</div></div></div>';
         }).join('');
         if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
       })
-      .catch(function(e){
-        console.error('Stock API failed:',e);
-        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock API unavailable</div>';
+      .catch(function(){
+        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Market data unavailable</div>';
       });
   });
 }
