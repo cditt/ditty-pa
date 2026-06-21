@@ -2,7 +2,7 @@
   "name": "Ditty PA",
   "short_name": "Ditty",
   "description": "Personal Command Center",
-  "start_url": "/ditty-pa/ditty-pa.html",
+  "start_url": "/ditty-pa/",
   "scope": "/ditty-pa/",
   "display": "standalone",
   "orientation": "portrait",
