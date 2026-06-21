@@ -208,10 +208,6 @@ input,textarea{font-family:var(--font);}
     <div class="su-lbl">Claude API Key</div>
     <input class="su-inp" type="password" id="su-key" placeholder="sk-ant-api03-..." autocomplete="off">
   </div>
-  <div class="su-field">
-    <div class="su-lbl">ZIP Code</div>
-    <input class="su-inp" type="text" id="su-zip" placeholder="46151" maxlength="10">
-  </div>
   <button class="su-btn btn-acc" onclick="doSetup()">Get Started</button>
   <button class="su-btn btn-goo" onclick="gConnect()">
     <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
@@ -324,10 +320,7 @@ input,textarea{font-family:var(--font);}
         <div class="sgroup-lbl">API</div>
         <div class="srow"><label>Claude API Key</label><input class="sinp" type="password" id="s-key" placeholder="sk-ant-..."></div>
       </div>
-      <div class="sgroup">
-        <div class="sgroup-lbl">Location</div>
-        <div class="srow"><label>ZIP Code</label><input class="sinp" type="text" id="s-zip" placeholder="46151"></div>
-      </div>
+      
       <div class="sgroup">
         <div class="sgroup-lbl">Google Account</div>
         <div class="srow"><label>Status</label><span id="s-gstat" style="font-size:15px;color:#888">Not connected</span></div>
@@ -386,9 +379,9 @@ var GID='397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.co
 var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var S={},T={},GT=null,CUR='home';
+var ZIP='46151';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
-var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited'];
-var PRIORITY_SUBJECT=['payment','invoice','statement','bill due','amount due','past due','claim','appointment','your bill','account summary'];
+var PRIORITY_SENDERS=['elks','edward jones','ducks unlimited','tami','iu health','bill','invoice','statement','duke energy'];
 
 function ls(k,v){if(v!==undefined)localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));else{try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}}
 
@@ -445,15 +438,14 @@ function nav(scr){
   if(b){b.classList.add('on');b.querySelector('.bnav-lbl').style.color='var(--accent)';b.querySelector('.ni').setAttribute('stroke','#f0a500');}
   if(scr==='settings'){
     document.getElementById('s-key').value=S.apiKey||'';
-    document.getElementById('s-zip').value=S.zip||'46151';
     updateG();
   }
 }
 
 function doSetup(){
-  var k=document.getElementById('su-key').value.trim(),z=document.getElementById('su-zip').value.trim();
+  var k=document.getElementById('su-key').value.trim();
   if(!k||k.length<20){alert('Enter a valid Claude API key');return;}
-  S.apiKey=k;S.zip=z||'46151';ls('dpa3_s',S);
+  S.apiKey=k;ls('dpa3_s',S);
   document.getElementById('setup').style.display='none';
   document.getElementById('app').style.display='flex';
   bootApp();
@@ -464,8 +456,8 @@ function gConnect(){
 }
 
 function saveSettings(){
-  var k=document.getElementById('s-key').value.trim(),z=document.getElementById('s-zip').value.trim();
-  if(k)S.apiKey=k;if(z)S.zip=z;ls('dpa3_s',S);toast('Saved');
+  var k=document.getElementById('s-key').value.trim();
+  if(k)S.apiKey=k;ls('dpa3_s',S);toast('Saved');
 }
 
 function doSignOut(){if(!confirm('Reset everything?'))return;localStorage.clear();location.reload();}
@@ -511,26 +503,18 @@ function fetchCal(){
 
 function fetchEmail(){
   if(!GT)return Promise.resolve(null);
-  var fromQ='from:(tami OR elks OR "edward jones" OR "ducks unlimited")';
-  var subjQ='subject:(payment OR invoice OR statement OR "bill due" OR "amount due" OR "past due" OR claim OR appointment OR "your bill" OR "account summary" OR "iu health")';
-  var priQ='is:unread ('+fromQ+' OR '+subjQ+')';
-  return Promise.all([
-    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q='+encodeURIComponent(priQ),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};}),
-    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=1&q=is:unread',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};})
-  ]).then(function(res){
-    var priData=res[0],allData=res[1];
-    var count=allData.resultSizeEstimate||0;
-    if(!priData.messages||!priData.messages.length)return{messages:[],count:count};
-    var seen={};
-    var unique=priData.messages.filter(function(m){if(seen[m.id])return false;seen[m.id]=true;return true;}).slice(0,5);
-    return Promise.all(unique.map(function(m){
-      return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
-    })).then(function(msgs){return{messages:msgs,count:count};});
-  }).catch(function(){return null;});
+  return fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q=is:unread',{headers:{Authorization:'Bearer '+GT}})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d.messages||!d.messages.length)return {messages:[],count:0};
+      return Promise.all(d.messages.slice(0,15).map(function(m){
+        return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
+      })).then(function(msgs){return {messages:msgs,count:d.resultSizeEstimate||d.messages.length};});
+    }).catch(function(){return null;});
 }
 
 function loadHome(){
-  var zip=S.zip||'46151';
+  var zip=ZIP;
   // Weather
   callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","high":"84","low":"62","forecast":[{"day":"Sun","high":"82","low":"60"},{"day":"Mon","high":"79","low":"58"},{"day":"Tue","high":"77","low":"57"},{"day":"Wed","high":"80","low":"59"}]}',function(r){
     try{
@@ -568,15 +552,17 @@ function loadHome(){
 
     // Email
     var emlc=document.getElementById('email-card');
-    if(emailData&&emailData.count>0){
-      var phtml='';
-      if(emailData.messages&&emailData.messages.length){
-        phtml=emailData.messages.map(function(m){
-          var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
-          hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
-          return'<div class="ep-item"><div class="ep-from">'+from+'</div>'+sub+'</div>';
-        }).join('');
-      }
+    if(emailData&&emailData.messages&&emailData.messages.length){
+      var priority=emailData.messages.filter(function(m){
+        var hh=(m.payload&&m.payload.headers)||[];
+        var from='';hh.forEach(function(h){if(h.name==='From')from=h.value.toLowerCase();});
+        return PRIORITY_SENDERS.some(function(s){return from.indexOf(s)>-1;});
+      }).slice(0,3);
+      var phtml=priority.map(function(m){
+        var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
+        hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
+        return'<div class="ep-item"><div class="ep-from">'+from+'</div>'+sub+'</div>';
+      }).join('');
       if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div></div>'+(phtml?'<div class="email-priority">'+phtml+'</div>':'');
     }else{
       if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
@@ -585,24 +571,26 @@ function loadHome(){
     // Portfolio
     var port=document.getElementById('portfolio-card');
     if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Loading stocks...</div>';
-    callClaude('Search current stock prices for these 9 tickers: GOOGL, DKNG, LMT, MU, IHAK, SCZ, SPY, VO, VOO. Today is '+new Date().toDateString()+'. You MUST return prices for ALL 9. Return ONLY a JSON array, no markdown, no backticks, no extra text. Format: [{"t":"GOOGL","p":"185.20","c":"+2.10","pct":"+1.15%"}]',function(sr){
-      try{
-        var fi=sr.indexOf('['),li=sr.lastIndexOf(']');
-        if(fi===-1||li===-1)throw new Error('no array');
-        var sd=JSON.parse(sr.substring(fi,li+1));
-        if(!Array.isArray(sd)||!sd.length)throw new Error('empty');
+    fetch(PROXY+'/stocks?symbols=GOOGL,DKNG,LMT,MU,IHAK,SCZ,SPY,VO,VOO')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!d.stocks||!d.stocks.length){
+          console.error('Stock API empty response:',d);
+          if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock API unavailable</div>';
+          return;
+        }
         var MU_COST=118;
-        var rows=sd.map(function(s){
-          var isUp=(s.c||'+').charAt(0)!=='-';
-          var price=parseFloat(s.p)||0;
-          var muNote=s.t==='MU'?'<div style="font-size:10px;color:var(--t2);white-space:nowrap">cost $'+MU_COST+' <span style="color:'+(price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(price>MU_COST?'+':'')+((price-MU_COST).toFixed(2))+'</span></div>':'';
-          return'<div class="port-row"><div class="port-ticker">'+s.t+'</div><div class="port-price"><div>$'+s.p+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+s.c+'<div style="font-size:11px">'+(s.pct||'')+'</div></div></div>';
+        var rows=d.stocks.map(function(s){
+          var isUp=(s.change||0)>=0;
+          var muNote=s.ticker==='MU'?'<div style="font-size:10px;color:var(--t2);white-space:nowrap">cost $'+MU_COST+' <span style="color:'+(s.price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(s.price>MU_COST?'+':'')+((s.price-MU_COST).toFixed(2))+'</span></div>':'';
+          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
         }).join('');
         if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
-      }catch(e){
-        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock data unavailable</div>';
-      }
-    });
+      })
+      .catch(function(e){
+        console.error('Stock API failed:',e);
+        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock API unavailable</div>';
+      });
   });
 }
 
@@ -641,7 +629,7 @@ function loadMail(){
     data.messages.forEach(function(m){
       var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
       hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
-      var isPri=PRIORITY_FROM.some(function(s){return from.toLowerCase().indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub.toLowerCase().indexOf(s)>-1;});
+      var isPri=PRIORITY_SENDERS.some(function(s){return from.toLowerCase().indexOf(s)>-1;});
       if(isPri)priority.push({from:from,sub:sub});else other.push({from:from,sub:sub});
     });
     var html='';
