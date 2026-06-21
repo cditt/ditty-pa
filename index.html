@@ -388,7 +388,7 @@ var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var S={},T={},GT=null,CUR='home';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
 var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited','iu health'];
-var PRIORITY_SUBJECT=['receipt','payment','invoice','statement','bill','due','claim'];
+var PRIORITY_SUBJECT=['payment','invoice','statement','bill','due','claim'];
 
 function ls(k,v){if(v!==undefined)localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));else{try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}}
 
@@ -563,10 +563,10 @@ function loadHome(){
     if(emailData&&emailData.messages&&emailData.messages.length){
       var priority=emailData.messages.filter(function(m){
         var hh=(m.payload&&m.payload.headers)||[];
-        var from='',sub='';
-        hh.forEach(function(h){if(h.name==='From')from=h.value.toLowerCase();if(h.name==='Subject')sub=h.value.toLowerCase();});
-        return PRIORITY_FROM.some(function(s){return from.indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub.indexOf(s)>-1;});
-      }).slice(0,5);
+        var from='';hh.forEach(function(h){if(h.name==='From')from=h.value.toLowerCase();});
+        var sub2='';hh.forEach(function(h){if(h.name==='Subject')sub2=h.value.toLowerCase();});
+        return PRIORITY_FROM.some(function(s){return from.indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub2.indexOf(s)>-1;});
+      }).slice(0,3);
       var phtml=priority.map(function(m){
         var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
         hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
@@ -580,7 +580,7 @@ function loadHome(){
     // Portfolio
     var port=document.getElementById('portfolio-card');
     if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Loading stocks...</div>';
-    callClaude('Search current stock prices for these tickers: GOOGL, DKNG, LMT, MU, IHAK, SCZ, SPY, VO, VOO. Today is '+new Date().toDateString()+'. Return ONLY a raw JSON array, no markdown, no backticks, no explanation. Exact format: [{"ticker":"GOOGL","price":"185.20","change":"+2.10","pct":"+1.15%"}]',function(sr){
+    callClaude('Search current stock prices for: GOOGL, DKNG, LMT, MU, IHAK, SCZ, SPY, VO, VOO. Today is '+new Date().toDateString()+'. Return ONLY a JSON array, no markdown, no backticks. Format: [{"t":"GOOGL","p":"185.20","c":"+2.10","pct":"+1.15%"}]',function(sr){
       try{
         var fi=sr.indexOf('['),li=sr.lastIndexOf(']');
         if(fi===-1||li===-1)throw new Error('no array');
@@ -588,10 +588,10 @@ function loadHome(){
         if(!Array.isArray(sd)||!sd.length)throw new Error('empty');
         var MU_COST=118;
         var rows=sd.map(function(s){
-          var isUp=(s.change||'').indexOf('-')===-1;
-          var price=parseFloat(s.price)||0;
-          var muNote=s.ticker==='MU'?'<div style="font-size:11px;color:var(--t2)">cost $'+MU_COST+' <span style="color:'+(price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(price>MU_COST?'+':'')+' $'+(price-MU_COST).toFixed(2)+'</span></div>':'';
-          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+s.change+'<div style="font-size:11px">'+(s.pct||'')+'</div></div></div>';
+          var isUp=(s.c||'+').charAt(0)!=='-';
+          var price=parseFloat(s.p)||0;
+          var muNote=s.t==='MU'?'<div style="font-size:11px;color:var(--t2)">cost $'+MU_COST+' <span style="color:'+(price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(price>MU_COST?'+':'')+((price-MU_COST).toFixed(2))+'</span></div>':'';
+          return'<div class="port-row"><div class="port-ticker">'+s.t+'</div><div class="port-price"><div>$'+s.p+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+s.c+'<div style="font-size:11px">'+(s.pct||'')+'</div></div></div>';
         }).join('');
         if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
       }catch(e){
