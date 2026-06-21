@@ -263,7 +263,7 @@ input,textarea{font-family:var(--font);}
           <div class="hcard-empty">Loading...</div>
         </div>
 
-        <div class="hcard" id="email-card">
+        <div class="hcard" id="email-card" onclick="nav('mail')" style="cursor:pointer">
           <div class="hcard-label">Email</div>
           <div class="hcard-empty">Loading...</div>
         </div>
@@ -620,7 +620,7 @@ function loadCal(){
 function updateHomeEmailCard(emailData){
   var emlc=document.getElementById('email-card');if(!emlc)return;
   if(emailData&&emailData.count>0){
-    emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div><div onclick="nav(\'mail\')" style="font-size:15px;color:var(--accent);font-weight:700;cursor:pointer;align-self:center">Open Mail tab →</div></div>';
+    emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread &nbsp;·&nbsp; tap to open</div>';
   }else{
     emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
   }
