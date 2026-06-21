@@ -388,7 +388,7 @@ var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var S={},T={},GT=null,CUR='home';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
 var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited','iu health'];
-var PRIORITY_SUBJECT=['receipt','payment','invoice','statement','bill','due','claim','confirmation','transaction','order'];
+var PRIORITY_SUBJECT=['receipt','payment','invoice','statement','bill','due','claim'];
 
 function ls(k,v){if(v!==undefined)localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));else{try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}}
 
@@ -588,11 +588,10 @@ function loadHome(){
         if(!Array.isArray(sd)||!sd.length)throw new Error('empty');
         var MU_COST=118;
         var rows=sd.map(function(s){
-          var chgNum=parseFloat((s.change||'0').replace(/[^0-9.\-]/g,''))*(s.change&&s.change.indexOf('-')>-1?-1:1);
-          var isUp=chgNum>=0;
+          var isUp=(s.change||'').indexOf('-')===-1;
           var price=parseFloat(s.price)||0;
           var muNote=s.ticker==='MU'?'<div style="font-size:11px;color:var(--t2)">cost $'+MU_COST+' <span style="color:'+(price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(price>MU_COST?'+':'')+' $'+(price-MU_COST).toFixed(2)+'</span></div>':'';
-          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp&&(s.change||'').indexOf('+')===-1?'+':'')+s.change+'<div style="font-size:11px">'+(s.pct||'')+'</div></div></div>';
+          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+s.change+'<div style="font-size:11px">'+(s.pct||'')+'</div></div></div>';
         }).join('');
         if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
       }catch(e){
