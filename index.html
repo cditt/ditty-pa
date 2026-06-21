@@ -565,23 +565,7 @@ function loadHome(){
     if(pc)pc.innerHTML='<div class="hcard-label">Today\'s Priorities</div>'+pts.map(function(p){return'<div class="pri-item"><div class="pri-dot"></div><div class="pri-txt">'+p+'</div></div>';}).join('');
 
     // Email - summary
-    var emlc=document.getElementById('email-card');
-    if(emailData&&emailData.count>0){
-      var MKTG=['cpap','giveaway','reorder','eligible to order','don\'t miss','unsubscribe','limited time','special offer','supplies online'];
-      var seenFrom={};var priNames=[];var hiddenMktg=0;
-      (emailData.messages||[]).forEach(function(m){
-        var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
-        hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
-        if(MKTG.some(function(k){return sub.toLowerCase().indexOf(k)>-1;})){hiddenMktg++;return;}
-        if(!seenFrom[from]){seenFrom[from]=true;priNames.push(from);}
-      });
-      var phtml='';
-      if(priNames.length){phtml='<div class="email-priority">'+priNames.slice(0,3).map(function(n){return'<div class="ep-item"><div class="ep-from">'+n+'</div></div>';}).join('')+'</div>';}
-      if(hiddenMktg>0)phtml+='<div style="font-size:13px;color:var(--t3);margin-top:6px">'+hiddenMktg+' marketing email'+(hiddenMktg>1?'s':'')+' hidden</div>';
-      if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div></div>'+phtml;
-    }else{
-      if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
-    }
+    updateHomeEmailCard(emailData);
 
     // Portfolio
     var port=document.getElementById('portfolio-card');
@@ -633,11 +617,34 @@ function loadCal(){
   });
 }
 
+function updateHomeEmailCard(emailData){
+  var emlc=document.getElementById('email-card');if(!emlc)return;
+  var MKTG=['cpap','giveaway','reorder','eligible to order','don\'t miss','unsubscribe','limited time','special offer','supplies online'];
+  if(emailData&&emailData.count>0){
+    var seenFrom={};var priNames=[];var hiddenMktg=0;
+    (emailData.messages||[]).forEach(function(m){
+      var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
+      hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
+      if(MKTG.some(function(k){return sub.toLowerCase().indexOf(k)>-1;})){hiddenMktg++;return;}
+      if(!seenFrom[from]){seenFrom[from]=true;priNames.push(from);}
+    });
+    var phtml='';
+    if(priNames.length){phtml='<div class="email-priority">'+priNames.slice(0,3).map(function(n){return'<div class="ep-item"><div class="ep-from">'+n+'</div></div>';}).join('')+'</div>';}
+    if(hiddenMktg>0)phtml+='<div style="font-size:13px;color:var(--t3);margin-top:6px">'+hiddenMktg+' marketing email'+(hiddenMktg>1?'s':'')+' hidden</div>';
+    emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div></div>'+phtml;
+  }else{
+    emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
+  }
+}
+
 function loadMail(){
   fetchEmail().then(function(data){
     var el=document.getElementById('mail-content');if(!el)return;
     if(!GT){el.innerHTML='<div class="cal-empty">Connect Google to see your email</div>';return;}
     if(!data||!data.messages||!data.messages.length){el.innerHTML='<div class="cal-empty">Inbox clear</div>';return;}
+    // Store latest and update home card
+    window.latestEmailData=data;
+    updateHomeEmailCard(data);
     var seen={};
     var priority=[],other=[];
     data.messages.forEach(function(m){
@@ -698,21 +705,7 @@ function refreshAll(){
       if(ec)ec.innerHTML='<div class="hcard-label">Next Event</div><div class="event-time">'+timeStr+'</div><div class="event-title">'+ev.summary+'</div>'+(more?'<div class="event-more">'+more+'</div>':'');
     }else if(ec){ec.innerHTML='<div class="hcard-label">Next Event</div><div class="hcard-empty">Calendar clear today</div>';}
     // Email
-    var emlc=document.getElementById('email-card');
-    if(emailData&&emailData.count>0){
-      var MKTG2=['cpap','giveaway','reorder','eligible to order','don\'t miss','unsubscribe','limited time','special offer','supplies online'];
-      var seenFrom2={};var priNames2=[];var hiddenMktg2=0;
-      (emailData.messages||[]).forEach(function(m){
-        var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
-        hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
-        if(MKTG2.some(function(k){return sub.toLowerCase().indexOf(k)>-1;})){hiddenMktg2++;return;}
-        if(!seenFrom2[from]){seenFrom2[from]=true;priNames2.push(from);}
-      });
-      var phtml2='';
-      if(priNames2.length){phtml2='<div class="email-priority">'+priNames2.slice(0,3).map(function(n){return'<div class="ep-item"><div class="ep-from">'+n+'</div></div>';}).join('')+'</div>';}
-      if(hiddenMktg2>0)phtml2+='<div style="font-size:13px;color:var(--t3);margin-top:6px">'+hiddenMktg2+' marketing email'+(hiddenMktg2>1?'s':'')+' hidden</div>';
-      if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div></div>'+phtml2;
-    }else if(emlc){emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';}
+    updateHomeEmailCard(emailData);
     check();
   }).catch(function(){toast('Calendar/Email refresh failed');check();});
 
