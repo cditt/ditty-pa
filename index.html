@@ -110,11 +110,13 @@ input,textarea{font-family:var(--font);}
 .ep-from{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:1px;}
 
 /* PORTFOLIO STRIP */
-.port-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
+.port-row{display:grid;grid-template-columns:64px minmax(0,1fr) 82px;align-items:center;column-gap:10px;min-height:58px;padding:8px 0;border-bottom:1px solid var(--border);overflow:hidden;}
 .port-row:last-child{border-bottom:none;}
-.port-ticker{font-size:16px;font-weight:800;color:var(--accent);width:60px;}
-.port-price{font-size:16px;color:var(--text);flex:1;text-align:center;}
-.port-chg{font-size:15px;font-weight:800;text-align:right;min-width:64px;}
+.port-ticker{font-size:16px;font-weight:800;color:var(--accent);min-width:0;}
+.port-price{font-size:16px;color:var(--text);min-width:0;text-align:right;overflow:hidden;}
+.port-chg{font-size:15px;font-weight:800;text-align:right;min-width:0;white-space:nowrap;}
+.mu-note{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.refresh-spinning{animation:spin .75s linear infinite;}
 .up{color:var(--ok);}
 .dn{color:var(--danger);}
 
@@ -229,6 +231,9 @@ input,textarea{font-family:var(--font);}
     </div>
     <div class="top-right">
       <button class="gpill gpill-off" id="gpill" onclick="gConnect()">● Google</button>
+      <div class="top-icon" id="refresh-btn" onclick="refreshAll()">
+        <svg id="refresh-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </div>
       <div class="top-icon" onclick="openRemind()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       </div>
@@ -242,6 +247,7 @@ input,textarea{font-family:var(--font);}
         <div class="greeting" id="h-greeting">Good Morning</div>
         <div class="greeting-name">Chris</div>
         <div class="greeting-date" id="h-date">Loading...</div>
+        <div id="h-updated" style="font-size:12px;color:var(--t3);margin-bottom:16px;margin-top:-18px;"></div>
 
         <div class="weather-hero" id="weather-card">
           <div class="wh-loading">Loading weather...</div>
@@ -320,7 +326,6 @@ input,textarea{font-family:var(--font);}
         <div class="sgroup-lbl">API</div>
         <div class="srow"><label>Claude API Key</label><input class="sinp" type="password" id="s-key" placeholder="sk-ant-..."></div>
       </div>
-
       <div class="sgroup">
         <div class="sgroup-lbl">Google Account</div>
         <div class="srow"><label>Status</label><span id="s-gstat" style="font-size:15px;color:#888">Not connected</span></div>
@@ -381,7 +386,8 @@ var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var S={},T={},GT=null,CUR='home';
 var ZIP='46151';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
-var PRIORITY_SENDERS=['elks','edward jones','ducks unlimited','tami','iu health','bill','invoice','statement','duke energy'];
+var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited'];
+var PRIORITY_SUBJECT=['payment','invoice','statement','bill due','amount due','past due','claim','appointment','your bill','account summary'];
 
 function ls(k,v){if(v!==undefined)localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));else{try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}}
 
@@ -503,14 +509,22 @@ function fetchCal(){
 
 function fetchEmail(){
   if(!GT)return Promise.resolve(null);
-  return fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q=is:unread',{headers:{Authorization:'Bearer '+GT}})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(!d.messages||!d.messages.length)return {messages:[],count:0};
-      return Promise.all(d.messages.slice(0,15).map(function(m){
-        return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
-      })).then(function(msgs){return {messages:msgs,count:d.resultSizeEstimate||d.messages.length};});
-    }).catch(function(){return null;});
+  var fromQ='from:(tami OR elks OR "edward jones" OR "ducks unlimited" OR "iu health")';
+  var subjQ='subject:(payment OR invoice OR statement OR "bill due" OR "amount due" OR "past due" OR claim OR appointment OR "your bill" OR "account summary")';
+  var priQ='is:unread ('+fromQ+' OR '+subjQ+')';
+  return Promise.all([
+    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q='+encodeURIComponent(priQ),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};}),
+    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=1&q=is:unread',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};})
+  ]).then(function(res){
+    var priData=res[0],allData=res[1];
+    var count=allData.resultSizeEstimate||0;
+    if(!priData.messages||!priData.messages.length)return{messages:[],count:count};
+    var seen={};
+    var unique=priData.messages.filter(function(m){if(seen[m.id])return false;seen[m.id]=true;return true;}).slice(0,5);
+    return Promise.all(unique.map(function(m){
+      return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
+    })).then(function(msgs){return{messages:msgs,count:count};});
+  }).catch(function(){return null;});
 }
 
 function loadHome(){
@@ -552,17 +566,15 @@ function loadHome(){
 
     // Email
     var emlc=document.getElementById('email-card');
-    if(emailData&&emailData.messages&&emailData.messages.length){
-      var priority=emailData.messages.filter(function(m){
-        var hh=(m.payload&&m.payload.headers)||[];
-        var from='';hh.forEach(function(h){if(h.name==='From')from=h.value.toLowerCase();});
-        return PRIORITY_SENDERS.some(function(s){return from.indexOf(s)>-1;});
-      }).slice(0,3);
-      var phtml=priority.map(function(m){
-        var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
-        hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
-        return'<div class="ep-item"><div class="ep-from">'+from+'</div>'+sub+'</div>';
-      }).join('');
+    if(emailData&&emailData.count>0){
+      var phtml='';
+      if(emailData.messages&&emailData.messages.length){
+        phtml=emailData.messages.map(function(m){
+          var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
+          hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
+          return'<div class="ep-item"><div class="ep-from">'+from+'</div>'+sub+'</div>';
+        }).join('');
+      }
       if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div></div>'+(phtml?'<div class="email-priority">'+phtml+'</div>':'');
     }else{
       if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
@@ -574,21 +586,20 @@ function loadHome(){
       .then(function(r){return r.json();})
       .then(function(d){
         if(!d.stocks||!d.stocks.length){
-          if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">'+(d.error||'Market data unavailable')+'</div>';
+          console.error('Stock API empty:',d);
+          if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock API unavailable</div>';
           return;
         }
         var rows=d.stocks.map(function(s){
           var isUp=(s.change||0)>=0;
-          var muNote=s.ticker==='MU'?'<div style="font-size:11px;color:var(--t2);margin-top:1px">cost $118 &nbsp;'+(s.price&&s.price>118?'<span style="color:var(--ok)">+$'+(s.price-118).toFixed(2)+'</span>':'<span style="color:var(--danger)">-$'+(118-s.price).toFixed(2)+'</span>')+'</div>':'';
-          var priceStr=s.price?'$'+s.price.toFixed(2):'--';
-          var chgStr=s.change!==null?(isUp?'+':'')+s.change.toFixed(2):'--';
-          var pctStr=s.percent!==null?(isUp?'+':'')+s.percent.toFixed(2)+'%':'';
-          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>'+priceStr+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+chgStr+'<div style="font-size:11px">'+pctStr+'</div></div></div>';
+          var muNote=s.ticker==='MU'?'<div class="mu-note">Cost $118</div>':'';
+          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
         }).join('');
         if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
       })
-      .catch(function(){
-        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Market data unavailable</div>';
+      .catch(function(e){
+        console.error('Stock API failed:',e);
+        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock API unavailable</div>';
       });
   });
 }
@@ -628,7 +639,7 @@ function loadMail(){
     data.messages.forEach(function(m){
       var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
       hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
-      var isPri=PRIORITY_SENDERS.some(function(s){return from.toLowerCase().indexOf(s)>-1;});
+      var isPri=PRIORITY_FROM.some(function(s){return from.toLowerCase().indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub.toLowerCase().indexOf(s)>-1;});
       if(isPri)priority.push({from:from,sub:sub});else other.push({from:from,sub:sub});
     });
     var html='';
@@ -642,6 +653,73 @@ function loadMail(){
     }
     el.innerHTML=html||'<div class="cal-empty">Inbox clear</div>';
   });
+}
+
+function updateTimestamp(){
+  var el=document.getElementById('h-updated');
+  if(!el)return;
+  var now=new Date();
+  el.textContent='Updated '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+
+function refreshAll(){
+  var ico=document.getElementById('refresh-ico');
+  if(ico)ico.classList.add('refresh-spinning');
+  var done=0,total=3;
+  function check(){done++;if(done>=total){if(ico)ico.classList.remove('refresh-spinning');updateTimestamp();}}
+
+  // Weather
+  callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","high":"84","low":"62","forecast":[{"day":"Sun","high":"82","low":"60"},{"day":"Mon","high":"79","low":"58"},{"day":"Tue","high":"77","low":"57"},{"day":"Wed","high":"80","low":"59"}]}',function(r){
+    try{
+      var d=JSON.parse(r.replace(/```json|```/g,'').trim());
+      var wc=document.getElementById('weather-card');if(!wc)return;
+      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'</div></div>';}).join(''):'';
+      wc.innerHTML='<div class="wh-loc">Martinsville, IN '+ZIP+'</div><div class="wh-temp">'+(d.temp||'--')+'°</div><div class="wh-cond">'+(d.condition||'')+'</div><div class="wh-row">'+fhtml+'</div>';
+    }catch(e){toast('Weather refresh failed');}
+    check();
+  });
+
+  // Calendar + Email
+  Promise.all([fetchCal(),fetchEmail()]).then(function(res){
+    var calData=res[0],emailData=res[1];
+    // Calendar
+    var ec=document.getElementById('next-event-card');
+    if(calData&&calData.items&&calData.items.length){
+      var ev=calData.items[0];var st=ev.start.dateTime||ev.start.date;var dt=new Date(st);
+      var timeStr=ev.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
+      var more=calData.items.length>1?' + '+(calData.items.length-1)+' more event'+(calData.items.length>2?'s':''):'';
+      if(ec)ec.innerHTML='<div class="hcard-label">Next Event</div><div class="event-time">'+timeStr+'</div><div class="event-title">'+ev.summary+'</div>'+(more?'<div class="event-more">'+more+'</div>':'');
+    }else if(ec){ec.innerHTML='<div class="hcard-label">Next Event</div><div class="hcard-empty">Calendar clear today</div>';}
+    // Email
+    var emlc=document.getElementById('email-card');
+    if(emailData&&emailData.count>0){
+      var phtml='';
+      if(emailData.messages&&emailData.messages.length){
+        phtml=emailData.messages.map(function(m){
+          var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
+          hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
+          return'<div class="ep-item"><div class="ep-from">'+from+'</div>'+sub+'</div>';
+        }).join('');
+      }
+      if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div></div>'+(phtml?'<div class="email-priority">'+phtml+'</div>':'');
+    }else if(emlc){emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';}
+    check();
+  }).catch(function(){toast('Calendar/Email refresh failed');check();});
+
+  // Portfolio
+  fetch(PROXY+'/stocks?symbols=GOOGL,DKNG,LMT,MU,IHAK,SCZ,SPY,VO,VOO')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var port=document.getElementById('portfolio-card');
+      if(!d.stocks||!d.stocks.length){toast('Portfolio refresh failed');check();return;}
+      var rows=d.stocks.map(function(s){
+        var isUp=(s.change||0)>=0;
+        var muNote=s.ticker==='MU'?'<div class="mu-note">Cost $118</div>':'';
+        return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
+      }).join('');
+      if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
+      check();
+    }).catch(function(){toast('Portfolio refresh failed');check();});
 }
 
 function renderFarmTasks(){
