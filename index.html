@@ -619,19 +619,8 @@ function loadCal(){
 
 function updateHomeEmailCard(emailData){
   var emlc=document.getElementById('email-card');if(!emlc)return;
-  var MKTG=['cpap','giveaway','reorder','eligible to order','don\'t miss','unsubscribe','limited time','special offer','supplies online'];
   if(emailData&&emailData.count>0){
-    var seenFrom={};var priNames=[];var hiddenMktg=0;
-    (emailData.messages||[]).forEach(function(m){
-      var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
-      hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
-      if(MKTG.some(function(k){return sub.toLowerCase().indexOf(k)>-1;})){hiddenMktg++;return;}
-      if(!seenFrom[from]){seenFrom[from]=true;priNames.push(from);}
-    });
-    var phtml='';
-    if(priNames.length){phtml='<div class="email-priority">'+priNames.slice(0,3).map(function(n){return'<div class="ep-item"><div class="ep-from">'+n+'</div></div>';}).join('')+'</div>';}
-    if(hiddenMktg>0)phtml+='<div style="font-size:13px;color:var(--t3);margin-top:6px">'+hiddenMktg+' marketing email'+(hiddenMktg>1?'s':'')+' hidden</div>';
-    emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div></div>'+phtml;
+    emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div><div onclick="nav(\'mail\')" style="font-size:15px;color:var(--accent);font-weight:700;cursor:pointer;align-self:center">Open Mail tab →</div></div>';
   }else{
     emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
   }
