@@ -387,8 +387,8 @@ var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.google
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var S={},T={},GT=null,CUR='home';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
-var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited','iu health'];
-var PRIORITY_SUBJECT=['payment','invoice','statement','bill due','amount due','past due','claim'];
+var PRIORITY_FROM=['tami','elks lodge','edward jones','ducks unlimited'];
+var PRIORITY_SUBJECT=['payment','invoice','statement','bill due','amount due','past due','claim','appointment','your bill','account summary'];
 
 function ls(k,v){if(v!==undefined)localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));else{try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}}
 
@@ -511,19 +511,20 @@ function fetchCal(){
 
 function fetchEmail(){
   if(!GT)return Promise.resolve(null);
-  // Build Gmail search query for priority senders and bill subjects
-  var fromQ='from:(tami OR "elks" OR "edward jones" OR "ducks unlimited" OR "iu health")';
-  var subjQ='subject:(payment OR invoice OR statement OR "bill due" OR "amount due" OR "past due" OR claim)';
+  var fromQ='from:(tami OR "elks lodge" OR "edward jones" OR "ducks unlimited" OR "iu health")';
+  var subjQ='subject:(payment OR invoice OR statement OR "bill due" OR "amount due" OR "past due" OR claim OR appointment OR "your bill" OR "account summary")';
   var priQuery='is:unread ('+fromQ+' OR '+subjQ+')';
-  var allQuery='is:unread';
   return Promise.all([
-    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=5&q='+encodeURIComponent(priQuery),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};}),
-    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=1&q='+encodeURIComponent(allQuery),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};})
+    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q='+encodeURIComponent(priQuery),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};}),
+    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=1&q=is:unread',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};})
   ]).then(function(res){
     var priData=res[0],allData=res[1];
     var count=allData.resultSizeEstimate||0;
     if(!priData.messages||!priData.messages.length)return{messages:[],count:count};
-    return Promise.all(priData.messages.map(function(m){
+    // Deduplicate by message id
+    var seen={};
+    var unique=priData.messages.filter(function(m){if(seen[m.id])return false;seen[m.id]=true;return true;});
+    return Promise.all(unique.slice(0,5).map(function(m){
       return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
     })).then(function(msgs){return{messages:msgs,count:count};});
   }).catch(function(){return null;});
