@@ -384,8 +384,9 @@ var GID='397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.co
 var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var S={},T={},GT=null,CUR='home';
-var portfolioOpen=false;
+var portfolioOpen=localStorage.getItem('dpa_portOpen')==='true';
 var portfolioRows='';
+var portfolioSummary=null;
 var ZIP='46151';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
 var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited'];
@@ -579,12 +580,15 @@ function loadHome(){
           if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock API unavailable</div>';
           return;
         }
+        var totalChange=0;
         var rows=d.stocks.map(function(s){
           var isUp=(s.change||0)>=0;
           var muNote=s.ticker==='MU'?'<div class="mu-note">Cost $118</div>':'';
+          totalChange+=(s.change||0);
           return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
         }).join('');
         portfolioRows=rows;
+        portfolioSummary={count:d.stocks.length,change:totalChange};
         renderPortfolioCard();
       })
       .catch(function(e){
@@ -707,12 +711,15 @@ function refreshAll(){
     .then(function(d){
       var port=document.getElementById('portfolio-card');
       if(!d.stocks||!d.stocks.length){toast('Portfolio refresh failed');check();return;}
+      var totalChange2=0;
       var rows=d.stocks.map(function(s){
         var isUp=(s.change||0)>=0;
         var muNote=s.ticker==='MU'?'<div class="mu-note">Cost $118</div>':'';
+        totalChange2+=(s.change||0);
         return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
       }).join('');
       portfolioRows=rows;
+      portfolioSummary={count:d.stocks.length,change:totalChange2};
       renderPortfolioCard();
       check();
     }).catch(function(){toast('Portfolio refresh failed');check();});
@@ -721,12 +728,21 @@ function refreshAll(){
 function renderPortfolioCard(){
   var port=document.getElementById('portfolio-card');if(!port)return;
   var arrow=portfolioOpen?'▲':'▼';
+  var summaryTxt='';
+  var summaryColor='var(--t2)';
+  if(portfolioSummary){
+    var chg=portfolioSummary.change;
+    var chgStr=(chg>=0?'+':'')+chg.toFixed(2);
+    summaryTxt=' '+portfolioSummary.count+' Positions \u2022 $'+chgStr+' Today';
+    summaryColor=chg>0?'var(--ok)':chg<0?'var(--danger)':'var(--t2)';
+  }
   var body=portfolioOpen&&portfolioRows?'<div id="port-body">'+portfolioRows+'</div>':'';
-  port.innerHTML='<div class="hcard-label" onclick="togglePortfolio()" style="cursor:pointer;user-select:none">Portfolio <span style="color:var(--accent)">'+arrow+'</span></div>'+body;
+  port.innerHTML='<div onclick="togglePortfolio()" style="cursor:pointer;user-select:none;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap"><span class="hcard-label" style="margin-bottom:0">Portfolio</span><span style="color:'+summaryColor+';font-size:13px;font-weight:700">'+arrow+summaryTxt+'</span></div>'+body;
 }
 
 function togglePortfolio(){
   portfolioOpen=!portfolioOpen;
+  localStorage.setItem('dpa_portOpen',portfolioOpen);
   renderPortfolioCard();
 }
 
