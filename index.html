@@ -387,7 +387,8 @@ var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.google
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var S={},T={},GT=null,CUR='home';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
-var PRIORITY_SENDERS=['elks','edward jones','ducks unlimited','tami','iu health','bill','invoice','statement','duke energy'];
+var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited','iu health'];
+var PRIORITY_SUBJECT=['receipt','payment','invoice','statement','bill','due','claim','confirmation','transaction','order'];
 
 function ls(k,v){if(v!==undefined)localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));else{try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}}
 
@@ -523,7 +524,7 @@ function fetchEmail(){
 function loadHome(){
   var zip=S.zip||'46151';
   // Weather
-  callClaude('Search current weather for ZIP '+zip+' and return ONLY JSON: {temp,condition,high,low,forecast:[{day,high,low,cond}x4]}. No markdown.',function(r){
+  callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","high":"84","low":"62","forecast":[{"day":"Sun","high":"82","low":"60"},{"day":"Mon","high":"79","low":"58"},{"day":"Tue","high":"77","low":"57"},{"day":"Wed","high":"80","low":"59"}]}',function(r){
     try{
       var d=JSON.parse(r.replace(/```json|```/g,'').trim());
       var wc=document.getElementById('weather-card');
@@ -562,9 +563,10 @@ function loadHome(){
     if(emailData&&emailData.messages&&emailData.messages.length){
       var priority=emailData.messages.filter(function(m){
         var hh=(m.payload&&m.payload.headers)||[];
-        var from='';hh.forEach(function(h){if(h.name==='From')from=h.value.toLowerCase();});
-        return PRIORITY_SENDERS.some(function(s){return from.indexOf(s)>-1;});
-      }).slice(0,3);
+        var from='',sub='';
+        hh.forEach(function(h){if(h.name==='From')from=h.value.toLowerCase();if(h.name==='Subject')sub=h.value.toLowerCase();});
+        return PRIORITY_FROM.some(function(s){return from.indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub.indexOf(s)>-1;});
+      }).slice(0,5);
       var phtml=priority.map(function(m){
         var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
         hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
@@ -577,17 +579,25 @@ function loadHome(){
 
     // Portfolio
     var port=document.getElementById('portfolio-card');
-    var tickers=['GOOGL','DKNG','MU','SPY','VOO'];
-    callClaude('Search current stock prices for '+tickers.join(',')+'. Return ONLY JSON: [{ticker,price,change}]. No markdown.',function(sr){
+    if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Loading stocks...</div>';
+    callClaude('Search current stock prices for these tickers: GOOGL, DKNG, LMT, MU, IHAK, SCZ, SPY, VO, VOO. Today is '+new Date().toDateString()+'. Return ONLY a raw JSON array, no markdown, no backticks, no explanation. Exact format: [{"ticker":"GOOGL","price":"185.20","change":"+2.10","pct":"+1.15%"}]',function(sr){
       try{
-        var sd=JSON.parse(sr.replace(/```json|```/g,'').trim());
-        if(!Array.isArray(sd))throw new Error();
-        var rows=sd.slice(0,5).map(function(s){
-          var chg=parseFloat(s.change)||0;
-          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price">$'+s.price+'</div><div class="port-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'+':'')+s.change+'</div></div>';
+        var fi=sr.indexOf('['),li=sr.lastIndexOf(']');
+        if(fi===-1||li===-1)throw new Error('no array');
+        var sd=JSON.parse(sr.substring(fi,li+1));
+        if(!Array.isArray(sd)||!sd.length)throw new Error('empty');
+        var MU_COST=118;
+        var rows=sd.map(function(s){
+          var chgNum=parseFloat((s.change||'0').replace(/[^0-9.\-]/g,''))*(s.change&&s.change.indexOf('-')>-1?-1:1);
+          var isUp=chgNum>=0;
+          var price=parseFloat(s.price)||0;
+          var muNote=s.ticker==='MU'?'<div style="font-size:11px;color:var(--t2)">cost $'+MU_COST+' <span style="color:'+(price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(price>MU_COST?'+':'')+' $'+(price-MU_COST).toFixed(2)+'</span></div>':'';
+          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp&&(s.change||'').indexOf('+')===-1?'+':'')+s.change+'<div style="font-size:11px">'+(s.pct||'')+'</div></div></div>';
         }).join('');
         if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
-      }catch(e){if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock data unavailable</div>';}
+      }catch(e){
+        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock data unavailable</div>';
+      }
     });
   });
 }
@@ -627,7 +637,7 @@ function loadMail(){
     data.messages.forEach(function(m){
       var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
       hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
-      var isPri=PRIORITY_SENDERS.some(function(s){return from.toLowerCase().indexOf(s)>-1;});
+      var isPri=PRIORITY_FROM.some(function(s){return from.toLowerCase().indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub.toLowerCase().indexOf(s)>-1;});
       if(isPri)priority.push({from:from,sub:sub});else other.push({from:from,sub:sub});
     });
     var html='';
