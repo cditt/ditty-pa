@@ -1,6 +1,6 @@
 var CACHE = 'ditty-pa-v1';
 var SHELL = [
-  '/ditty-pa/ditty-pa.html',
+  '/ditty-pa/',
   '/ditty-pa/manifest.json',
   '/ditty-pa/icon-192.png',
   '/ditty-pa/icon-512.png',
