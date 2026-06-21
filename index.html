@@ -388,7 +388,7 @@ var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var S={},T={},GT=null,CUR='home';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
 var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited','iu health'];
-var PRIORITY_SUBJECT=['payment','invoice','statement','bill','due','claim'];
+var PRIORITY_SUBJECT=['payment','invoice','statement','bill due','amount due','past due','claim'];
 
 function ls(k,v){if(v!==undefined)localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));else{try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}}
 
@@ -511,14 +511,22 @@ function fetchCal(){
 
 function fetchEmail(){
   if(!GT)return Promise.resolve(null);
-  return fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q=is:unread',{headers:{Authorization:'Bearer '+GT}})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(!d.messages||!d.messages.length)return {messages:[],count:0};
-      return Promise.all(d.messages.slice(0,15).map(function(m){
-        return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
-      })).then(function(msgs){return {messages:msgs,count:d.resultSizeEstimate||d.messages.length};});
-    }).catch(function(){return null;});
+  // Build Gmail search query for priority senders and bill subjects
+  var fromQ='from:(tami OR "elks" OR "edward jones" OR "ducks unlimited" OR "iu health")';
+  var subjQ='subject:(payment OR invoice OR statement OR "bill due" OR "amount due" OR "past due" OR claim)';
+  var priQuery='is:unread ('+fromQ+' OR '+subjQ+')';
+  var allQuery='is:unread';
+  return Promise.all([
+    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=5&q='+encodeURIComponent(priQuery),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};}),
+    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=1&q='+encodeURIComponent(allQuery),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};})
+  ]).then(function(res){
+    var priData=res[0],allData=res[1];
+    var count=allData.resultSizeEstimate||0;
+    if(!priData.messages||!priData.messages.length)return{messages:[],count:count};
+    return Promise.all(priData.messages.map(function(m){
+      return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
+    })).then(function(msgs){return{messages:msgs,count:count};});
+  }).catch(function(){return null;});
 }
 
 function loadHome(){
@@ -560,18 +568,15 @@ function loadHome(){
 
     // Email
     var emlc=document.getElementById('email-card');
-    if(emailData&&emailData.messages&&emailData.messages.length){
-      var priority=emailData.messages.filter(function(m){
-        var hh=(m.payload&&m.payload.headers)||[];
-        var from='';hh.forEach(function(h){if(h.name==='From')from=h.value.toLowerCase();});
-        var sub2='';hh.forEach(function(h){if(h.name==='Subject')sub2=h.value.toLowerCase();});
-        return PRIORITY_FROM.some(function(s){return from.indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub2.indexOf(s)>-1;});
-      }).slice(0,3);
-      var phtml=priority.map(function(m){
-        var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
-        hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
-        return'<div class="ep-item"><div class="ep-from">'+from+'</div>'+sub+'</div>';
-      }).join('');
+    if(emailData&&emailData.count>0){
+      var phtml='';
+      if(emailData.messages&&emailData.messages.length){
+        phtml=emailData.messages.map(function(m){
+          var hh=(m.payload&&m.payload.headers)||[];var sub='',from='';
+          hh.forEach(function(h){if(h.name==='Subject')sub=h.value;if(h.name==='From')from=h.value.replace(/<.*>/,'').trim();});
+          return'<div class="ep-item"><div class="ep-from">'+from+'</div>'+sub+'</div>';
+        }).join('');
+      }
       if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-row"><div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread</div></div></div>'+(phtml?'<div class="email-priority">'+phtml+'</div>':'');
     }else{
       if(emlc)emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
@@ -579,25 +584,26 @@ function loadHome(){
 
     // Portfolio
     var port=document.getElementById('portfolio-card');
-    if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Loading stocks...</div>';
-    callClaude('Search current stock prices for: GOOGL, DKNG, LMT, MU, IHAK, SCZ, SPY, VO, VOO. Today is '+new Date().toDateString()+'. Return ONLY a JSON array, no markdown, no backticks. Format: [{"t":"GOOGL","p":"185.20","c":"+2.10","pct":"+1.15%"}]',function(sr){
-      try{
-        var fi=sr.indexOf('['),li=sr.lastIndexOf(']');
-        if(fi===-1||li===-1)throw new Error('no array');
-        var sd=JSON.parse(sr.substring(fi,li+1));
-        if(!Array.isArray(sd)||!sd.length)throw new Error('empty');
-        var MU_COST=118;
-        var rows=sd.map(function(s){
-          var isUp=(s.c||'+').charAt(0)!=='-';
-          var price=parseFloat(s.p)||0;
-          var muNote=s.t==='MU'?'<div style="font-size:11px;color:var(--t2)">cost $'+MU_COST+' <span style="color:'+(price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(price>MU_COST?'+':'')+((price-MU_COST).toFixed(2))+'</span></div>':'';
-          return'<div class="port-row"><div class="port-ticker">'+s.t+'</div><div class="port-price"><div>$'+s.p+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+s.c+'<div style="font-size:11px">'+(s.pct||'')+'</div></div></div>';
+    fetch(PROXY+'/stocks?symbols=GOOGL,DKNG,MU,SPY,VOO')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!d.stocks||!d.stocks.length){
+          if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">'+(d.error||'Market data unavailable')+'</div>';
+          return;
+        }
+        var rows=d.stocks.map(function(s){
+          var isUp=(s.change||0)>=0;
+          var muNote=s.ticker==='MU'?'<div style="font-size:11px;color:var(--t2);margin-top:1px">cost $118 &nbsp;'+(s.price&&s.price>118?'<span style="color:var(--ok)">+$'+(s.price-118).toFixed(2)+'</span>':'<span style="color:var(--danger)">-$'+(118-s.price).toFixed(2)+'</span>')+'</div>':'';
+          var priceStr=s.price?'$'+s.price.toFixed(2):'--';
+          var chgStr=s.change!==null?(isUp?'+':'')+s.change.toFixed(2):'--';
+          var pctStr=s.percent!==null?(isUp?'+':'')+s.percent.toFixed(2)+'%':'';
+          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>'+priceStr+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+chgStr+'<div style="font-size:11px">'+pctStr+'</div></div></div>';
         }).join('');
         if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
-      }catch(e){
-        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock data unavailable</div>';
-      }
-    });
+      })
+      .catch(function(){
+        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Market data unavailable</div>';
+      });
   });
 }
 
