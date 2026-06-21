@@ -410,12 +410,6 @@ function checkOAuth(){
 
 function bootApp(){
   updateG();setGreeting();renderFarmTasks();renderPersonalTasks();
-  if(!GT){
-    // Show reconnect banner instead of silent failure
-    setTimeout(function(){
-      if(!GT){toast('Tap Google pill to reconnect Google');}
-    },1000);
-  }
   loadHome();loadCal();loadMail();
 }
 
@@ -517,8 +511,8 @@ function fetchCal(){
 
 function fetchEmail(){
   if(!GT)return Promise.resolve(null);
-  var fromQ='from:(tami OR elks OR "edward jones" OR "ducks unlimited" OR "iu health")';
-  var subjQ='subject:(payment OR invoice OR statement OR "bill due" OR "amount due" OR "past due" OR claim OR appointment OR "your bill" OR "account summary")';
+  var fromQ='from:(tami OR elks OR "edward jones" OR "ducks unlimited")';
+  var subjQ='subject:(payment OR invoice OR statement OR "bill due" OR "amount due" OR "past due" OR claim OR appointment OR "your bill" OR "account summary" OR "iu health")';
   var priQ='is:unread ('+fromQ+' OR '+subjQ+')';
   return Promise.all([
     fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q='+encodeURIComponent(priQ),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};}),
@@ -591,7 +585,7 @@ function loadHome(){
     // Portfolio
     var port=document.getElementById('portfolio-card');
     if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Loading stocks...</div>';
-    callClaude('Search current stock prices for: GOOGL, DKNG, LMT, MU, IHAK, SCZ, SPY, VO, VOO. Today is '+new Date().toDateString()+'. Return ONLY a JSON array, no markdown, no backticks. Format: [{"t":"GOOGL","p":"185.20","c":"+2.10","pct":"+1.15%"}]',function(sr){
+    callClaude('Search current stock prices for these 9 tickers: GOOGL, DKNG, LMT, MU, IHAK, SCZ, SPY, VO, VOO. Today is '+new Date().toDateString()+'. You MUST return prices for ALL 9. Return ONLY a JSON array, no markdown, no backticks, no extra text. Format: [{"t":"GOOGL","p":"185.20","c":"+2.10","pct":"+1.15%"}]',function(sr){
       try{
         var fi=sr.indexOf('['),li=sr.lastIndexOf(']');
         if(fi===-1||li===-1)throw new Error('no array');
@@ -601,7 +595,7 @@ function loadHome(){
         var rows=sd.map(function(s){
           var isUp=(s.c||'+').charAt(0)!=='-';
           var price=parseFloat(s.p)||0;
-          var muNote=s.t==='MU'?'<div style="font-size:10px;color:var(--t2)">cost $'+MU_COST+' <span style="color:'+(price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(price>MU_COST?'+':'')+((price-MU_COST).toFixed(2))+'</span></div>':'';
+          var muNote=s.t==='MU'?'<div style="font-size:10px;color:var(--t2);white-space:nowrap">cost $'+MU_COST+' <span style="color:'+(price>MU_COST?'var(--ok)':'var(--danger)')+'>'+(price>MU_COST?'+':'')+((price-MU_COST).toFixed(2))+'</span></div>':'';
           return'<div class="port-row"><div class="port-ticker">'+s.t+'</div><div class="port-price"><div>$'+s.p+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+s.c+'<div style="font-size:11px">'+(s.pct||'')+'</div></div></div>';
         }).join('');
         if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
