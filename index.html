@@ -638,10 +638,14 @@ function loadMail(){
     var el=document.getElementById('mail-content');if(!el)return;
     if(!GT){el.innerHTML='<div class="cal-empty">Connect Google to see your email</div>';return;}
     if(!data||!data.messages||!data.messages.length){el.innerHTML='<div class="cal-empty">Inbox clear</div>';return;}
+    var seen={};
     var priority=[],other=[];
     data.messages.forEach(function(m){
       var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
       hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
+      var key=from.replace(/<.*>/,'').trim().toLowerCase()+'|'+sub.toLowerCase().trim();
+      if(seen[key])return;
+      seen[key]=true;
       var isPri=PRIORITY_FROM.some(function(s){return from.toLowerCase().indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub.toLowerCase().indexOf(s)>-1;});
       if(isPri)priority.push({from:from,sub:sub});else other.push({from:from,sub:sub});
     });
