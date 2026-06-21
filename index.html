@@ -384,6 +384,8 @@ var GID='397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.co
 var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var S={},T={},GT=null,CUR='home';
+var portfolioOpen=false;
+var portfolioRows='';
 var ZIP='46151';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
 var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited'];
@@ -582,7 +584,8 @@ function loadHome(){
           var muNote=s.ticker==='MU'?'<div class="mu-note">Cost $118</div>':'';
           return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
         }).join('');
-        if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
+        portfolioRows=rows;
+        renderPortfolioCard();
       })
       .catch(function(e){
         console.error('Stock API failed:',e);
@@ -709,9 +712,22 @@ function refreshAll(){
         var muNote=s.ticker==='MU'?'<div class="mu-note">Cost $118</div>':'';
         return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
       }).join('');
-      if(port)port.innerHTML='<div class="hcard-label">Portfolio</div>'+rows;
+      portfolioRows=rows;
+      renderPortfolioCard();
       check();
     }).catch(function(){toast('Portfolio refresh failed');check();});
+}
+
+function renderPortfolioCard(){
+  var port=document.getElementById('portfolio-card');if(!port)return;
+  var arrow=portfolioOpen?'▲':'▼';
+  var body=portfolioOpen&&portfolioRows?'<div id="port-body">'+portfolioRows+'</div>':'';
+  port.innerHTML='<div class="hcard-label" onclick="togglePortfolio()" style="cursor:pointer;user-select:none">Portfolio <span style="color:var(--accent)">'+arrow+'</span></div>'+body;
+}
+
+function togglePortfolio(){
+  portfolioOpen=!portfolioOpen;
+  renderPortfolioCard();
 }
 
 function renderFarmTasks(){
