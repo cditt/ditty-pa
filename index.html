@@ -970,50 +970,22 @@ function togglePT(i){
 
 
 function fetchFatJourney(){
-  var dbg={status:null,jsonOk:false,hasRecord:false,hasDittyV3:false,keys:[],err:null};
-  return fetch('https://api.jsonbin.io/v3/b/'+JSONBIN_ID+'/latest')
-    .then(function(r){
-      dbg.status=r.status;
-      return r.json().then(function(d){
-        dbg.jsonOk=true;
-        dbg.hasRecord=!!(d&&d.record);
-        dbg.hasDittyV3=!!(d&&d.record&&d.record.ditty_v3);
-        dbg.keys=d?Object.keys(d):[];
-        var result=d&&d.record?(d.record.ditty_v3||d.record):null;
-        if(!result){dbg._raw=JSON.stringify(d).substring(0,300);}
-        return {data:result,dbg:dbg};
-      }).catch(function(e){
-        dbg.err='JSON parse failed: '+e.message;
-        return {data:null,dbg:dbg};
-      });
-    })
-    .catch(function(e){
-      dbg.err='Fetch failed: '+e.message;
-      return {data:null,dbg:dbg};
-    });
+  var fjKey=null;try{fjKey=JSON.parse(localStorage.getItem('ditty_v3')||'{}').jsonbinKey||null;}catch(e){}
+  if(!fjKey)return Promise.resolve({_noKey:true});
+  return fetch('https://api.jsonbin.io/v3/b/'+JSONBIN_ID+'/latest',{headers:{'X-Master-Key':fjKey}})
+    .then(function(r){return r.json();})
+    .then(function(d){return d.record?(d.record.ditty_v3||d.record):null;})
+    .catch(function(){return null;});
 }
 
-function updateFatJourneyCard(payload){
+function updateFatJourneyCard(data){
   var card=document.getElementById('fj-card');if(!card)return;
-  var data=payload&&payload.data!==undefined?payload.data:payload;
-  var dbg=payload&&payload.dbg?payload.dbg:null;
   var open=localStorage.getItem('dpa_fjOpen')==='true';
+  if(data&&data._noKey){
+    card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Open Fat Journey on this device first, then return here.</div>';return;
+  }
   if(!data){
-    var di='<div class="hcard-label" style="color:var(--danger)">Fat Journey DEBUG</div>';
-    if(dbg){
-      di+='<div style="font-size:12px;color:var(--text);line-height:1.8;margin-top:8px;font-family:monospace">';
-      di+='HTTP status: <b>'+(dbg.status||'no response')+'</b><br>';
-      di+='JSON parsed: <b>'+(dbg.jsonOk?'YES':'NO')+'</b><br>';
-      di+='d.record exists: <b>'+(dbg.hasRecord?'YES':'NO')+'</b><br>';
-      di+='d.record.ditty_v3 exists: <b>'+(dbg.hasDittyV3?'YES':'NO')+'</b><br>';
-      di+='Top-level keys: <b>'+(dbg.keys.length?dbg.keys.join(', '):'none')+'</b><br>';
-      if(dbg.err)di+='Error: <b style="color:var(--danger)">'+dbg.err+'</b><br>';
-      if(dbg._raw)di+='Raw(300): <b style="word-break:break-all">'+dbg._raw+'</b>';
-      di+='</div>';
-    }else{
-      di+='<div class="hcard-empty">Fat Journey Offline</div>';
-    }
-    card.innerHTML=di;return;
+    card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Fat Journey Offline</div>';return;
   }
   var w=data.weight||'--',g=data.goalWeight||'--',cal=data.calories||'--',pro=data.protein||'--',wat=data.water||'--',syn=data.lastSync||'';
   var chev=open?'▲':'▼';
