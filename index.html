@@ -605,7 +605,11 @@ function loadHome(){
           var muNote=s.ticker==='MU'?'<div class="mu-note">Cost $118</div>':'';
           totalChange+=(s.change||0);
           return'<div class="port-row '+(isUp?'up-row':'dn-row')+'"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
+        }).join('');
+        portfolioRows=rows;
+        portfolioSummary={count:d.stocks.length,change:totalChange};
         renderPortfolioCard();
+        clearOffline('portfolio');
         updateTimestamp();
       })
       .catch(function(e){
@@ -795,7 +799,7 @@ function renderMedCard(){
   if(medOpen){
     var items=MEDS.map(function(m,i){
       var done=state.checked.indexOf(i)>-1;
-      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div onclick="toggleMedItem('+i+')" style="width:26px;height:26px;min-width:26px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:8px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer">'+(done?'<span style="color:#fff;font-size:14px;font-weight:800">✓</span>':'')+'</div><span style="font-size:17px;color:'+(done?'var(--t3)':'var(--text)')+(done?';text-decoration:line-through':'')+'"">'+m+'</span></div>';
+      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div onclick="toggleMedItem('+i+')" style="width:26px;height:26px;min-width:26px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:8px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer">'+(done?'<span style="color:#fff;font-size:14px;font-weight:800">✓</span>':'')+'</div><span style="font-size:17px;color:'+(done?'var(--t3)':'var(--text)')+(done?';text-decoration:line-through':'')+'">'+m+'</span></div>';
     }).join('');
     mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none"><span class="hcard-label">Did You Take Today? ▲</span></div>'+items;
   }else{
