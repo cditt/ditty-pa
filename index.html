@@ -82,6 +82,7 @@ input,textarea{font-family:var(--font);}
 .wh-day{text-align:center;flex:1;}
 .wh-day-name{font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
 .wh-day-temp{font-size:17px;font-weight:800;color:var(--text);}
+.wh-day-low{font-size:13px;font-weight:600;color:var(--t2);margin-top:2px;}
 .wh-loading{color:var(--t2);font-size:16px;padding:16px 0;}
 
 /* HOME CARDS */
@@ -110,8 +111,10 @@ input,textarea{font-family:var(--font);}
 .ep-from{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:1px;}
 
 /* PORTFOLIO STRIP */
-.port-row{display:grid;grid-template-columns:64px minmax(0,1fr) 82px;align-items:center;column-gap:10px;min-height:58px;padding:8px 0;border-bottom:1px solid var(--border);overflow:hidden;}
+.port-row{display:grid;grid-template-columns:64px minmax(0,1fr) 82px;align-items:center;column-gap:10px;min-height:58px;padding:8px 0 8px 8px;border-bottom:1px solid var(--border);overflow:hidden;border-left:3px solid var(--border);}
 .port-row:last-child{border-bottom:none;}
+.port-row.up-row{border-left-color:var(--ok);}
+.port-row.dn-row{border-left-color:var(--danger);}
 .port-ticker{font-size:16px;font-weight:800;color:var(--accent);min-width:0;}
 .port-price{font-size:16px;color:var(--text);min-width:0;text-align:right;overflow:hidden;}
 .port-chg{font-size:15px;font-weight:800;text-align:right;min-width:0;white-space:nowrap;}
@@ -262,6 +265,11 @@ input,textarea{font-family:var(--font);}
           <div class="hcard-empty">Loading...</div>
         </div>
 
+        <div class="hcard" id="med-card">
+          <div class="hcard-label">Did You Take Today?</div>
+          <div class="hcard-empty">Loading...</div>
+        </div>
+
         <div class="hcard" id="portfolio-card">
           <div class="hcard-label">Portfolio</div>
           <div class="hcard-empty">Loading stocks...</div>
@@ -389,6 +397,8 @@ var calSummary=null;
 var priOpen=localStorage.getItem('dpa_priOpen')==='true';
 var emailOpen=localStorage.getItem('dpa_emailOpen')==='true';
 var lastEmailData=null;
+var medOpen=localStorage.getItem('dpa_medOpen')==='true';
+var MEDS=['Lisinopril 40mg','Omeprazole 40mg','Tadalafil 5mg','Creatine 5g'];
 var ZIP='46151';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
 var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited'];
@@ -413,7 +423,7 @@ function checkOAuth(){
 }
 
 function bootApp(){
-  updateG();setGreeting();renderFarmTasks();renderPersonalTasks();
+  updateG();setGreeting();renderFarmTasks();renderPersonalTasks();renderMedCard();
   loadHome();loadCal();loadMail();
 }
 
@@ -519,10 +529,10 @@ function fetchEmail(){
   var priQ='is:unread ('+fromQ+' OR '+subjQ+')';
   return Promise.all([
     fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q='+encodeURIComponent(priQ),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};}),
-    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=1&q=is:unread',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};})
+    fetch('https://www.googleapis.com/gmail/v1/users/me/labels/INBOX',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};})
   ]).then(function(res){
-    var priData=res[0],allData=res[1];
-    var count=allData.resultSizeEstimate||0;
+    var priData=res[0],labelData=res[1];
+    var count=labelData.messagesUnread||0;
     if(!priData.messages||!priData.messages.length)return{messages:[],count:count};
     var seen={};
     var unique=priData.messages.filter(function(m){if(seen[m.id])return false;seen[m.id]=true;return true;}).slice(0,5);
@@ -540,8 +550,8 @@ function loadHome(){
       var d=JSON.parse(r.replace(/```json|```/g,'').trim());
       var wc=document.getElementById('weather-card');
       if(!wc)return;
-      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'</div></div>';}).join(''):'';
-      weatherData={loc:'Martinsville, IN '+zip,temp:(d.temp||'--'),cond:(d.condition||''),fhtml:fhtml};
+      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'°</div>'+(f.low?'<div class="wh-day-low">'+f.low+'°</div>':'')+'</div>';}).join(''):'';
+      weatherData={loc:'Martinsville, IN '+zip,temp:(d.temp||'--'),cond:(d.condition||''),high:(d.high||''),low:(d.low||''),fhtml:fhtml};
       renderWeatherCard();
       clearOffline('weather');
     }catch(e){
@@ -560,8 +570,12 @@ function loadHome(){
       var st=ev.start.dateTime||ev.start.date;
       var dt=new Date(st);
       var timeStr=ev.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-      var more=calData.items.length>1?' + '+(calData.items.length-1)+' more event'+(calData.items.length>2?'s':''):'';
-      calSummary={timeStr:timeStr,title:ev.summary,more:more,empty:false};
+      var events=calData.items.slice(0,3).map(function(e){
+        var s2=e.start.dateTime||e.start.date;var d2=new Date(s2);
+        var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
+        return{timeStr:t2,title:e.summary};
+      });
+      calSummary={timeStr:timeStr,title:ev.summary,events:events,empty:false};
     }else{
       calSummary={empty:true};
     }
@@ -590,10 +604,7 @@ function loadHome(){
           var isUp=(s.change||0)>=0;
           var muNote=s.ticker==='MU'?'<div class="mu-note">Cost $118</div>':'';
           totalChange+=(s.change||0);
-          return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
-        }).join('');
-        portfolioRows=rows;
-        portfolioSummary={count:d.stocks.length,change:totalChange};
+          return'<div class="port-row '+(isUp?'up-row':'dn-row')+'"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
         renderPortfolioCard();
         updateTimestamp();
       })
@@ -718,8 +729,8 @@ function refreshAll(){
     try{
       var d=JSON.parse(r.replace(/```json|```/g,'').trim());
       var wc=document.getElementById('weather-card');if(!wc)return;
-      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'</div></div>';}).join(''):'';
-      weatherData={loc:'Martinsville, IN '+ZIP,temp:(d.temp||'--'),cond:(d.condition||''),fhtml:fhtml};
+      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'°</div>'+(f.low?'<div class="wh-day-low">'+f.low+'°</div>':'')+'</div>';}).join(''):'';
+      weatherData={loc:'Martinsville, IN '+ZIP,temp:(d.temp||'--'),cond:(d.condition||''),high:(d.high||''),low:(d.low||''),fhtml:fhtml};
       renderWeatherCard();
       clearOffline('weather');
     }catch(e){toast('Weather refresh failed');setOffline('weather');}
@@ -733,8 +744,12 @@ function refreshAll(){
     if(calData&&calData.items&&calData.items.length){
       var ev=calData.items[0];var st=ev.start.dateTime||ev.start.date;var dt=new Date(st);
       var timeStr=ev.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-      var more=calData.items.length>1?' + '+(calData.items.length-1)+' more event'+(calData.items.length>2?'s':''):'';
-      calSummary={timeStr:timeStr,title:ev.summary,more:more,empty:false};
+      var events=calData.items.slice(0,3).map(function(e){
+        var s2=e.start.dateTime||e.start.date;var d2=new Date(s2);
+        var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
+        return{timeStr:t2,title:e.summary};
+      });
+      calSummary={timeStr:timeStr,title:ev.summary,events:events,empty:false};
     }else{calSummary={empty:true};}
     renderCalCard();
     // Email
@@ -755,7 +770,7 @@ function refreshAll(){
         var isUp=(s.change||0)>=0;
         var muNote=s.ticker==='MU'?'<div class="mu-note">Cost $118</div>':'';
         totalChange2+=(s.change||0);
-        return'<div class="port-row"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
+        return'<div class="port-row '+(isUp?'up-row':'dn-row')+'"><div class="port-ticker">'+s.ticker+'</div><div class="port-price"><div>$'+s.price.toFixed(2)+'</div>'+muNote+'</div><div class="port-chg '+(isUp?'up':'dn')+'">'+(isUp?'+':'')+s.change.toFixed(2)+'<div style="font-size:11px">'+(isUp?'+':'')+s.percent.toFixed(2)+'%</div></div></div>';
       }).join('');
       portfolioRows=rows;
       portfolioSummary={count:d.stocks.length,change:totalChange2};
@@ -763,6 +778,41 @@ function refreshAll(){
       clearOffline('portfolio');
       check();
     }).catch(function(){toast('Portfolio refresh failed');setOffline('portfolio');check();});
+}
+
+function getMedState(){
+  var today=new Date().toDateString();
+  var stored=localStorage.getItem('dpa_meds');
+  var state=stored?JSON.parse(stored):{date:'',checked:[]};
+  if(state.date!==today){state={date:today,checked:[]};localStorage.setItem('dpa_meds',JSON.stringify(state));}
+  return state;
+}
+function renderMedCard(){
+  var mc=document.getElementById('med-card');if(!mc)return;
+  var state=getMedState();
+  var taken=state.checked.length;
+  var total=MEDS.length;
+  if(medOpen){
+    var items=MEDS.map(function(m,i){
+      var done=state.checked.indexOf(i)>-1;
+      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div onclick="toggleMedItem('+i+')" style="width:26px;height:26px;min-width:26px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:8px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer">'+(done?'<span style="color:#fff;font-size:14px;font-weight:800">✓</span>':'')+'</div><span style="font-size:17px;color:'+(done?'var(--t3)':'var(--text)')+(done?';text-decoration:line-through':'')+'"">'+m+'</span></div>';
+    }).join('');
+    mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none"><span class="hcard-label">Did You Take Today? ▲</span></div>'+items;
+  }else{
+    mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Did You Take Today? ▼</span><span style="font-size:15px;font-weight:700;color:'+(taken===total?'var(--ok)':'var(--accent)')+'">'+taken+'/'+total+' taken</span></div>';
+  }
+}
+function toggleMed(){
+  medOpen=!medOpen;
+  localStorage.setItem('dpa_medOpen',String(medOpen));
+  renderMedCard();
+}
+function toggleMedItem(i){
+  var state=getMedState();
+  var idx=state.checked.indexOf(i);
+  if(idx>-1)state.checked.splice(idx,1);else state.checked.push(i);
+  localStorage.setItem('dpa_meds',JSON.stringify(state));
+  renderMedCard();
 }
 
 function renderPriorityCard(){
@@ -784,7 +834,8 @@ function renderWeatherCard(){
   var wc=document.getElementById('weather-card');if(!wc)return;
   if(!weatherData){wc.innerHTML='<div class="wh-loading">Loading weather...</div>';return;}
   if(weatherOpen){
-    wc.innerHTML='<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer">'+weatherData.loc+' ▲</div><div class="wh-temp">'+weatherData.temp+'°</div><div class="wh-cond">'+weatherData.cond+'</div><div class="wh-row">'+weatherData.fhtml+'</div>';
+    var hiLo=weatherData.high&&weatherData.low?'<div style="font-size:15px;color:var(--t2);margin-bottom:20px">H: '+weatherData.high+'° · L: '+weatherData.low+'°</div>':'';
+    wc.innerHTML='<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer">'+weatherData.loc+' ▲</div><div class="wh-temp">'+weatherData.temp+'°</div><div class="wh-cond">'+weatherData.cond+'</div>'+hiLo+'<div class="wh-row">'+weatherData.fhtml+'</div>';
   }else{
     wc.innerHTML='<div onclick="toggleWeather()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:13px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-right:8px">Weather ▼</span><span style="font-size:15px;font-weight:600;color:var(--text)">'+weatherData.temp+'° '+weatherData.cond+'</span></div>';
   }
@@ -807,7 +858,10 @@ function renderCalCard(){
     return;
   }
   if(calOpen){
-    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Next Event ▲</span></div><div class="event-time">'+calSummary.timeStr+'</div><div class="event-title">'+calSummary.title+'</div>'+(calSummary.more?'<div class="event-more">'+calSummary.more+'</div>':'');
+    var evHtml=(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title}]).map(function(e){
+      return'<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div class="event-time">'+e.timeStr+'</div><div class="event-title" style="font-size:17px">'+e.title+'</div></div>';
+    }).join('');
+    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Next Event ▲</span></div>'+evHtml;
   }else{
     ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Next Event ▼</span><span style="font-size:13px;font-weight:800;color:var(--accent);margin-right:6px">'+calSummary.timeStr+'</span><span style="font-size:15px;font-weight:600;color:var(--text)">'+calSummary.title+'</span></div>';
   }
