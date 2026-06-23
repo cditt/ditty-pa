@@ -274,6 +274,11 @@ input,textarea{font-family:var(--font);}
           <div class="hcard-label">Portfolio</div>
           <div class="hcard-empty">Loading stocks...</div>
         </div>
+
+        <div class="hcard" id="fj-card">
+          <div class="hcard-label">Fat Journey</div>
+          <div class="hcard-empty">Loading...</div>
+        </div>
       </div>
     </div>
 
@@ -386,6 +391,7 @@ input,textarea{font-family:var(--font);}
 var GID='397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.com';
 var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
+var JSONBIN_ID='69fbc6d7adc21f119a63898a';
 var S={},T={},GT=null,CUR='home';
 var portfolioOpen=localStorage.getItem('dpa_portOpen')==='true';
 var portfolioRows='';
@@ -425,7 +431,7 @@ function checkOAuth(){
 
 function bootApp(){
   updateG();setGreeting();renderFarmTasks();renderPersonalTasks();renderMedCard();
-  loadHome();loadCal();loadMail();
+  loadHome();loadCal();loadMail();loadFatJourney();
 }
 
 function updateG(){
@@ -960,6 +966,48 @@ function toggleTask(tid){
 function togglePT(i){
   var pts=ls('dpa3_pt')||[];if(!pts[i])return;
   pts[i].done=!pts[i].done;ls('dpa3_pt',pts);renderPersonalTasks();
+}
+
+
+function fetchFatJourney(){
+  return fetch('https://api.jsonbin.io/v3/b/'+JSONBIN_ID+'/latest')
+    .then(function(r){return r.json();})
+    .then(function(d){return d.record?(d.record.ditty_v3||d.record):null;})
+    .catch(function(){return null;});
+}
+
+function updateFatJourneyCard(data){
+  var card=document.getElementById('fj-card');if(!card)return;
+  var open=localStorage.getItem('dpa_fjOpen')==='true';
+  if(!data){
+    card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Fat Journey Offline</div>';return;
+  }
+  var w=data.weight||'--',g=data.goalWeight||'--',cal=data.calories||'--',pro=data.protein||'--',wat=data.water||'--',syn=data.lastSync||'';
+  var chev=open?'▲':'▼';
+  if(!open){
+    card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span> <span style="font-size:16px;color:var(--text);font-weight:700">'+w+' lb</span></div>';
+  }else{
+    card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span></div>'
+      +'<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Weight</div><div style="font-size:22px;font-weight:900;color:var(--text)">'+w+'<span style="font-size:13px;font-weight:500;color:var(--t2)"> lb</span></div></div>'
+      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Goal</div><div style="font-size:22px;font-weight:900;color:var(--accent)">'+g+'<span style="font-size:13px;font-weight:500;color:var(--t2)"> lb</span></div></div>'
+      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Calories</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+cal+'<span style="font-size:11px;color:var(--t2)"> / 1800</span></div></div>'
+      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Protein</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+pro+'<span style="font-size:11px;color:var(--t2)"> g</span></div></div>'
+      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Water</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+wat+'<span style="font-size:11px;color:var(--t2)"> / 128 oz</span></div></div>'
+      +'</div>'+(syn?'<div style="margin-top:10px;font-size:11px;color:var(--t3)">Last sync: '+syn+'</div>':'');
+  }
+}
+
+function toggleFJ(){
+  var open=localStorage.getItem('dpa_fjOpen')==='true';
+  localStorage.setItem('dpa_fjOpen',open?'false':'true');
+  fetchFatJourney().then(function(d){updateFatJourneyCard(d);});
+}
+
+function loadFatJourney(){
+  var card=document.getElementById('fj-card');
+  if(card)card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Loading...</div>';
+  fetchFatJourney().then(function(d){updateFatJourneyCard(d);});
 }
 
 window.onload=boot;
