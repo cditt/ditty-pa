@@ -257,7 +257,7 @@ input,textarea{font-family:var(--font);}
           <div class="hcard-empty">Loading...</div>
         </div>
 
-        <div class="hcard" id="email-card" onclick="nav('mail')" style="cursor:pointer">
+        <div class="hcard" id="email-card">
           <div class="hcard-label">Email</div>
           <div class="hcard-empty">Loading...</div>
         </div>
@@ -386,6 +386,9 @@ var weatherOpen=localStorage.getItem('dpa_wxOpen')==='true';
 var weatherData=null;
 var calOpen=localStorage.getItem('dpa_calOpen')==='true';
 var calSummary=null;
+var priOpen=localStorage.getItem('dpa_priOpen')==='true';
+var emailOpen=localStorage.getItem('dpa_emailOpen')==='true';
+var lastEmailData=null;
 var ZIP='46151';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
 var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited'];
@@ -565,9 +568,7 @@ function loadHome(){
     renderCalCard();
 
     // Priorities (top 3 tasks)
-    var pc=document.getElementById('priorities-card');
-    var pts=[].concat(FARM).slice(0,3);
-    if(pc)pc.innerHTML='<div class="hcard-label">Today\'s Priorities</div>'+pts.map(function(p){return'<div class="pri-item"><div class="pri-dot"></div><div class="pri-txt">'+p+'</div></div>';}).join('');
+    renderPriorityCard();
 
     // Email - summary
     updateHomeEmailCard(emailData);
@@ -631,12 +632,26 @@ function loadCal(){
 }
 
 function updateHomeEmailCard(emailData){
+  if(emailData)lastEmailData=emailData;
+  renderHomeEmailCard();
+}
+function renderHomeEmailCard(){
   var emlc=document.getElementById('email-card');if(!emlc)return;
-  if(emailData&&emailData.count>0){
-    emlc.innerHTML='<div class="hcard-label">Email</div><div class="email-count">'+emailData.count+'</div><div class="email-lbl">unread &nbsp;·&nbsp; tap to open</div>';
-  }else{
+  var data=lastEmailData;
+  if(!data||!(data.count>0)){
     emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
+    return;
   }
+  if(emailOpen){
+    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none"><span class="hcard-label">Email ▲</span></div><div style="margin-top:4px"><span style="font-size:36px;font-weight:900;color:var(--accent)">'+data.count+'</span><span style="font-size:15px;color:var(--t2);margin-left:8px">unread</span></div><div onclick="nav(\'mail\')" style="margin-top:10px;font-size:15px;font-weight:700;color:var(--accent);cursor:pointer">Open Mail tab →</div>';
+  }else{
+    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Email ▼</span><span style="font-size:15px;font-weight:700;color:var(--accent)">'+data.count+' unread</span></div>';
+  }
+}
+function toggleEmail(){
+  emailOpen=!emailOpen;
+  localStorage.setItem('dpa_emailOpen',String(emailOpen));
+  renderHomeEmailCard();
 }
 
 function loadMail(){
@@ -748,6 +763,21 @@ function refreshAll(){
       clearOffline('portfolio');
       check();
     }).catch(function(){toast('Portfolio refresh failed');setOffline('portfolio');check();});
+}
+
+function renderPriorityCard(){
+  var pc=document.getElementById('priorities-card');if(!pc)return;
+  var pts=[].concat(FARM).slice(0,3);
+  if(priOpen){
+    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none"><span class="hcard-label">Today\'s Priorities ▲</span></div>'+pts.map(function(p){return'<div class="pri-item"><div class="pri-dot"></div><div class="pri-txt">'+p+'</div></div>';}).join('');
+  }else{
+    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Today\'s Priorities ▼</span><span style="font-size:15px;font-weight:700;color:var(--text)">'+pts.length+' items</span></div>';
+  }
+}
+function togglePriority(){
+  priOpen=!priOpen;
+  localStorage.setItem('dpa_priOpen',String(priOpen));
+  renderPriorityCard();
 }
 
 function renderWeatherCard(){
