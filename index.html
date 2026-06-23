@@ -382,6 +382,10 @@ var S={},T={},GT=null,CUR='home';
 var portfolioOpen=localStorage.getItem('dpa_portOpen')==='true';
 var portfolioRows='';
 var portfolioSummary=null;
+var weatherOpen=localStorage.getItem('dpa_wxOpen')==='true';
+var weatherData=null;
+var calOpen=localStorage.getItem('dpa_calOpen')==='true';
+var calSummary=null;
 var ZIP='46151';
 var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
 var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited'];
@@ -534,7 +538,8 @@ function loadHome(){
       var wc=document.getElementById('weather-card');
       if(!wc)return;
       var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'</div></div>';}).join(''):'';
-      wc.innerHTML='<div class="wh-loc">Martinsville, IN '+zip+'</div><div class="wh-temp">'+(d.temp||'--')+'°</div><div class="wh-cond">'+(d.condition||'')+'</div><div class="wh-row">'+fhtml+'</div>';
+      weatherData={loc:'Martinsville, IN '+zip,temp:(d.temp||'--'),cond:(d.condition||''),fhtml:fhtml};
+      renderWeatherCard();
       clearOffline('weather');
     }catch(e){
       var wc2=document.getElementById('weather-card');if(wc2)wc2.innerHTML='<div class="wh-loading">Weather unavailable</div>';
@@ -547,17 +552,17 @@ function loadHome(){
     var calData=res[0],emailData=res[1];
 
     // Next event
-    var ec=document.getElementById('next-event-card');
     if(calData&&calData.items&&calData.items.length){
       var ev=calData.items[0];
       var st=ev.start.dateTime||ev.start.date;
       var dt=new Date(st);
       var timeStr=ev.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
       var more=calData.items.length>1?' + '+(calData.items.length-1)+' more event'+(calData.items.length>2?'s':''):'';
-      if(ec)ec.innerHTML='<div class="hcard-label">Next Event</div><div class="event-time">'+timeStr+'</div><div class="event-title">'+ev.summary+'</div>'+(more?'<div class="event-more">'+more+'</div>':'');
+      calSummary={timeStr:timeStr,title:ev.summary,more:more,empty:false};
     }else{
-      if(ec)ec.innerHTML='<div class="hcard-label">Next Event</div><div class="hcard-empty">Calendar clear today</div>';
+      calSummary={empty:true};
     }
+    renderCalCard();
 
     // Priorities (top 3 tasks)
     var pc=document.getElementById('priorities-card');
@@ -699,7 +704,8 @@ function refreshAll(){
       var d=JSON.parse(r.replace(/```json|```/g,'').trim());
       var wc=document.getElementById('weather-card');if(!wc)return;
       var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'</div></div>';}).join(''):'';
-      wc.innerHTML='<div class="wh-loc">Martinsville, IN '+ZIP+'</div><div class="wh-temp">'+(d.temp||'--')+'°</div><div class="wh-cond">'+(d.condition||'')+'</div><div class="wh-row">'+fhtml+'</div>';
+      weatherData={loc:'Martinsville, IN '+ZIP,temp:(d.temp||'--'),cond:(d.condition||''),fhtml:fhtml};
+      renderWeatherCard();
       clearOffline('weather');
     }catch(e){toast('Weather refresh failed');setOffline('weather');}
     check();
@@ -709,13 +715,13 @@ function refreshAll(){
   Promise.all([fetchCal(),fetchEmail()]).then(function(res){
     var calData=res[0],emailData=res[1];
     // Calendar
-    var ec=document.getElementById('next-event-card');
     if(calData&&calData.items&&calData.items.length){
       var ev=calData.items[0];var st=ev.start.dateTime||ev.start.date;var dt=new Date(st);
       var timeStr=ev.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
       var more=calData.items.length>1?' + '+(calData.items.length-1)+' more event'+(calData.items.length>2?'s':''):'';
-      if(ec)ec.innerHTML='<div class="hcard-label">Next Event</div><div class="event-time">'+timeStr+'</div><div class="event-title">'+ev.summary+'</div>'+(more?'<div class="event-more">'+more+'</div>':'');
-    }else if(ec){ec.innerHTML='<div class="hcard-label">Next Event</div><div class="hcard-empty">Calendar clear today</div>';}
+      calSummary={timeStr:timeStr,title:ev.summary,more:more,empty:false};
+    }else{calSummary={empty:true};}
+    renderCalCard();
     // Email
     updateHomeEmailCard(emailData);
     if(emailData)clearOffline('email');else setOffline('email');
@@ -742,6 +748,44 @@ function refreshAll(){
       clearOffline('portfolio');
       check();
     }).catch(function(){toast('Portfolio refresh failed');setOffline('portfolio');check();});
+}
+
+function renderWeatherCard(){
+  var wc=document.getElementById('weather-card');if(!wc)return;
+  if(!weatherData){wc.innerHTML='<div class="wh-loading">Loading weather...</div>';return;}
+  if(weatherOpen){
+    wc.innerHTML='<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer">'+weatherData.loc+' ▲</div><div class="wh-temp">'+weatherData.temp+'°</div><div class="wh-cond">'+weatherData.cond+'</div><div class="wh-row">'+weatherData.fhtml+'</div>';
+  }else{
+    wc.innerHTML='<div onclick="toggleWeather()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:13px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-right:8px">Weather ▼</span><span style="font-size:15px;font-weight:600;color:var(--text)">'+weatherData.temp+'° '+weatherData.cond+'</span></div>';
+  }
+}
+function toggleWeather(){
+  weatherOpen=!weatherOpen;
+  localStorage.setItem('dpa_wxOpen',String(weatherOpen));
+  renderWeatherCard();
+}
+
+function renderCalCard(){
+  var ec=document.getElementById('next-event-card');if(!ec)return;
+  if(!calSummary){ec.innerHTML='<div class="hcard-label">Next Event</div><div class="hcard-empty">Loading...</div>';return;}
+  if(calSummary.empty){
+    if(calOpen){
+      ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Next Event ▲</span></div><div class="hcard-empty" style="margin-top:8px">Calendar clear today</div>';
+    }else{
+      ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px">Next Event ▼</span><span style="font-size:14px;color:var(--t2);margin-left:8px">Calendar clear</span></div>';
+    }
+    return;
+  }
+  if(calOpen){
+    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Next Event ▲</span></div><div class="event-time">'+calSummary.timeStr+'</div><div class="event-title">'+calSummary.title+'</div>'+(calSummary.more?'<div class="event-more">'+calSummary.more+'</div>':'');
+  }else{
+    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Next Event ▼</span><span style="font-size:13px;font-weight:800;color:var(--accent);margin-right:6px">'+calSummary.timeStr+'</span><span style="font-size:15px;font-weight:600;color:var(--text)">'+calSummary.title+'</span></div>';
+  }
+}
+function toggleCal(){
+  calOpen=!calOpen;
+  localStorage.setItem('dpa_calOpen',String(calOpen));
+  renderCalCard();
 }
 
 function renderPortfolioCard(){
