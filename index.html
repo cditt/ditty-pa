@@ -197,9 +197,18 @@ input,textarea{font-family:var(--font);}
 /* TOAST */
 .toast{position:fixed;bottom:calc(82px + var(--sab));left:16px;right:16px;background:#222;border:1px solid #333;border-radius:14px;padding:14px 20px;font-size:16px;font-weight:600;text-align:center;z-index:600;pointer-events:none;opacity:0;transition:opacity .2s;}
 .toast.show{opacity:1;}
+.update-banner{display:none;position:fixed;top:calc(var(--sat) + 60px);left:12px;right:12px;background:#1a2a1a;border:1.5px solid var(--ok);border-radius:14px;padding:14px 18px;z-index:700;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,.5);}
+.update-banner-txt{font-size:14px;font-weight:700;color:var(--ok);}
+.update-banner-btn{height:36px;padding:0 16px;border-radius:10px;background:var(--ok);color:#000;font-size:13px;font-weight:800;letter-spacing:.5px;white-space:nowrap;}
 </style>
 </head>
 <body>
+
+<!-- UPDATE BANNER -->
+<div class="update-banner" id="update-banner">
+  <span class="update-banner-txt">A new version is available.</span>
+  <button class="update-banner-btn" id="update-btn">Update now</button>
+</div>
 
 <!-- SETUP -->
 <div id="setup">
@@ -419,7 +428,35 @@ function boot(){
   checkOAuth();
   if(!S.apiKey){document.getElementById('setup').style.display='flex';document.getElementById('app').style.display='none';}
   else{document.getElementById('setup').style.display='none';document.getElementById('app').style.display='flex';bootApp();}
-  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      // Check for a waiting SW on first load (update was already downloaded)
+      if(reg.waiting){showUpdateBanner(reg.waiting);}
+      // New SW found while page is open
+      reg.addEventListener('updatefound',function(){
+        var newSW=reg.installing;
+        if(!newSW)return;
+        newSW.addEventListener('statechange',function(){
+          if(newSW.state==='installed'&&navigator.serviceWorker.controller){
+            showUpdateBanner(newSW);
+          }
+        });
+      });
+    }).catch(function(){});
+    // When SW activates, reload to get fresh files
+    var reloading=false;
+    navigator.serviceWorker.addEventListener('controllerchange',function(){
+      if(!reloading){reloading=true;window.location.reload();}
+    });
+  }
+
+  function showUpdateBanner(swWaiting){
+    var b=document.getElementById('update-banner');
+    if(b)b.style.display='flex';
+    document.getElementById('update-btn').onclick=function(){
+      swWaiting.postMessage({type:'SKIP_WAITING'});
+    };
+  }
 }
 
 function checkOAuth(){
