@@ -970,27 +970,65 @@ function togglePT(i){
 
 
 function fetchFatJourney(){
-  var fjKey=null;try{fjKey=JSON.parse(localStorage.getItem('ditty_v3')||'{}').jsonbinKey||null;}catch(e){}
-  if(!fjKey)return Promise.resolve({_noKey:true});
-  return fetch('https://api.jsonbin.io/v3/b/'+JSONBIN_ID+'/latest',{headers:{'X-Master-Key':fjKey}})
-    .then(function(r){return r.json();})
-    .then(function(d){return d.record?(d.record.ditty_v3||d.record):null;})
-    .catch(function(){return null;});
+  var dbg={lsRaw:null,lsKey:null,status:null,hasRecord:null,hasDV3:null,dataKeys:[],weight:null,goalWeight:null,calories:null,protein:null,water:null,fetchErr:null};
+  try{dbg.lsRaw=localStorage.getItem('ditty_v3');dbg.lsKey=JSON.parse(dbg.lsRaw||'{}').jsonbinKey||null;}catch(e){dbg.fetchErr='LS parse: '+e.message;}
+  if(!dbg.lsKey)return Promise.resolve({_noKey:true,dbg:dbg});
+  return fetch('https://api.jsonbin.io/v3/b/'+JSONBIN_ID+'/latest',{headers:{'X-Master-Key':dbg.lsKey}})
+    .then(function(r){
+      dbg.status=r.status;
+      return r.json().then(function(d){
+        dbg.hasRecord=!!(d&&d.record);
+        dbg.hasDV3=!!(d&&d.record&&d.record.ditty_v3);
+        var result=d&&d.record?(d.record.ditty_v3||d.record):null;
+        if(result){
+          dbg.dataKeys=Object.keys(result);
+          dbg.weight=result.weight||null;dbg.goalWeight=result.goalWeight||null;
+          dbg.calories=result.calories||null;dbg.protein=result.protein||null;dbg.water=result.water||null;
+        }
+        return {data:result,dbg:dbg};
+      }).catch(function(e){dbg.fetchErr='JSON parse: '+e.message;return {data:null,dbg:dbg};});
+    })
+    .catch(function(e){dbg.fetchErr='Fetch: '+e.message;return {data:null,dbg:dbg};});
 }
 
-function updateFatJourneyCard(data){
+function updateFatJourneyCard(payload){
   var card=document.getElementById('fj-card');if(!card)return;
+  var data=payload&&payload.data!==undefined?payload.data:payload;
+  var dbg=payload&&payload.dbg?payload.dbg:null;
   var open=localStorage.getItem('dpa_fjOpen')==='true';
+
+  function dbgHtml(d){
+    var h='<div style="font-size:12px;line-height:2;margin-top:10px;font-family:monospace;color:var(--text)">';
+    h+='ditty_v3 in LS: <b>'+(d.lsRaw?'YES':'NO')+'</b><br>';
+    h+='jsonbinKey found: <b>'+(d.lsKey?'YES':'NO')+'</b><br>';
+    h+='HTTP status: <b>'+(d.status!==null?d.status:'n/a')+'</b><br>';
+    h+='d.record exists: <b>'+(d.hasRecord!==null?(d.hasRecord?'YES':'NO'):'n/a')+'</b><br>';
+    h+='d.record.ditty_v3 exists: <b>'+(d.hasDV3!==null?(d.hasDV3?'YES':'NO'):'n/a')+'</b><br>';
+    h+='data keys: <b>'+(d.dataKeys&&d.dataKeys.length?d.dataKeys.join(', '):'none')+'</b><br>';
+    h+='weight: <b>'+(d.weight||'--')+'</b> &nbsp; goalWeight: <b>'+(d.goalWeight||'--')+'</b><br>';
+    h+='calories: <b>'+(d.calories||'--')+'</b> &nbsp; protein: <b>'+(d.protein||'--')+'</b> &nbsp; water: <b>'+(d.water||'--')+'</b>';
+    if(d.fetchErr)h+='<br>error: <b style="color:var(--danger)">'+d.fetchErr+'</b>';
+    h+='</div>';
+    return h;
+  }
+
   if(data&&data._noKey){
-    card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Open Fat Journey on this device first, then return here.</div>';return;
+    var h='<div class="hcard-label" style="color:var(--danger)">Fat Journey DEBUG</div>';
+    if(dbg)h+=dbgHtml(dbg);
+    else h+='<div class="hcard-empty">Open Fat Journey on this device first, then return here.</div>';
+    card.innerHTML=h;return;
   }
   if(!data){
-    card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Fat Journey Offline</div>';return;
+    var h='<div class="hcard-label" style="color:var(--danger)">Fat Journey DEBUG</div>';
+    if(dbg)h+=dbgHtml(dbg);
+    else h+='<div class="hcard-empty">Fat Journey Offline</div>';
+    card.innerHTML=h;return;
   }
   var w=data.weight||'--',g=data.goalWeight||'--',cal=data.calories||'--',pro=data.protein||'--',wat=data.water||'--',syn=data.lastSync||'';
+  var dbgBlock=dbg?dbgHtml(dbg):'';
   var chev=open?'▲':'▼';
   if(!open){
-    card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span> <span style="font-size:16px;color:var(--text);font-weight:700">'+w+' lb</span></div>';
+    card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span> <span style="font-size:16px;color:var(--text);font-weight:700">'+w+' lb</span></div>'+dbgBlock;
   }else{
     card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span></div>'
       +'<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
@@ -999,7 +1037,7 @@ function updateFatJourneyCard(data){
       +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Calories</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+cal+'<span style="font-size:11px;color:var(--t2)"> / 1800</span></div></div>'
       +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Protein</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+pro+'<span style="font-size:11px;color:var(--t2)"> g</span></div></div>'
       +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Water</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+wat+'<span style="font-size:11px;color:var(--t2)"> / 128 oz</span></div></div>'
-      +'</div>'+(syn?'<div style="margin-top:10px;font-size:11px;color:var(--t3)">Last sync: '+syn+'</div>':'');
+      +'</div>'+(syn?'<div style="margin-top:10px;font-size:11px;color:var(--t3)">Last sync: '+syn+'</div>':'')+dbgBlock;
   }
 }
 
