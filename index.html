@@ -770,7 +770,7 @@ function updateTimestamp(){
 function refreshAll(){
   var ico=document.getElementById('refresh-ico');
   if(ico)ico.classList.add('refresh-spinning');
-  var done=0,total=3;
+  var done=0,total=4;
   function check(){done++;if(done>=total){if(ico)ico.classList.remove('refresh-spinning');updateTimestamp();}}
 
   // Weather
@@ -827,6 +827,14 @@ function refreshAll(){
       clearOffline('portfolio');
       check();
     }).catch(function(){toast('Portfolio refresh failed');setOffline('portfolio');check();});
+
+  // Fat Journey
+  fetchFatJourney().then(function(d){
+    latestFatJourneyData=d;
+    updateFatJourneyCard(d);
+    renderMedCard();
+    check();
+  }).catch(function(){check();});
 }
 
 function getLastSunday(){
