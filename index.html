@@ -819,10 +819,14 @@ function getFJTakenNames(){
   try{
     var pills=(latestFatJourneyData&&latestFatJourneyData.pills)
       ||JSON.parse(localStorage.getItem('ditty_v3')||'{}').pills||[];
-    var taken={};
-    pills.forEach(function(p){if(p.taken)taken[p.name.toLowerCase().trim()]=true;});
-    return taken;
-  }catch(e){return {};}
+    var taken={};var raw={};
+    pills.forEach(function(p){
+      var k=p.name.toLowerCase().trim();
+      taken[k]=(p.taken===true);
+      raw[k]=p.taken;
+    });
+    return {taken:taken,raw:raw};
+  }catch(e){return {taken:{},raw:{}};}
 }
 function renderMedCard(){
   var mc=document.getElementById('med-card');if(!mc)return;
@@ -830,23 +834,27 @@ function renderMedCard(){
   var isSunday=new Date().getDay()===0;
   var dailyState=getMedState();
   var sunState=isSunday?getSunState():null;
-  var fjTaken=getFJTakenNames();
+  var fjResult=getFJTakenNames();
+  var fjTaken=fjResult.taken;var fjRaw=fjResult.raw;
   var total=active.length;
   var taken=0;
   var items=active.map(function(m,i){
     var isSunItem=i>=MEDS.length;
     var checkedLocal=isSunItem?sunState.checked.indexOf(i-MEDS.length)>-1:dailyState.checked.indexOf(i)>-1;
-    var medBase=m.replace(/\s*\d+\s*(mg|g|mcg|ml|iu)/gi,'').toLowerCase().trim();
-    var checkedFJ=!!(fjTaken[m.toLowerCase().trim()]||fjTaken[medBase]);
+    var mKey=m.toLowerCase().trim();
+    var medBase=m.replace(/\s*[\d.]+\s*(mg|g|mcg|ml|iu)/gi,'').toLowerCase().trim();
+    var checkedFJ=fjTaken[mKey]===true||fjTaken[medBase]===true;
+    var rawVal=fjRaw[mKey]!==undefined?fjRaw[mKey]:(fjRaw[medBase]!==undefined?fjRaw[medBase]:'n/a');
     var checked=checkedLocal||checkedFJ;
     if(checked)taken++;
-    return{m:m,i:i,checked:checked,fromFJ:checkedFJ&&!checkedLocal};
+    return{m:m,i:i,checked:checked,fromFJ:checkedFJ&&!checkedLocal,rawVal:rawVal};
   });
   if(medOpen){
     var html=items.map(function(obj){
       var done=obj.checked;
       var fjBadge=obj.fromFJ?'<span style="font-size:10px;font-weight:800;color:var(--ok);margin-left:6px;letter-spacing:.5px">FJ</span>':'';
-      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div onclick="toggleMedItem('+obj.i+')" style="width:26px;height:26px;min-width:26px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:8px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer">'+(done?'<span style="color:#fff;font-size:14px;font-weight:800">✓</span>':'')+'</div><span style="font-size:17px;color:'+(done?'var(--t3)':'var(--text)')+(done?';text-decoration:line-through':'')+'">'+obj.m+fjBadge+'</span></div>';
+      var fjDebug='<span style="font-size:10px;color:var(--t2);margin-left:4px;font-family:monospace">[raw:'+JSON.stringify(obj.rawVal)+']</span>';
+      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div onclick="toggleMedItem('+obj.i+')" style="width:26px;height:26px;min-width:26px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:8px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer">'+(done?'<span style="color:#fff;font-size:14px;font-weight:800">✓</span>':'')+'</div><span style="font-size:17px;color:'+(done?'var(--t3)':'var(--text)')+(done?';text-decoration:line-through':'')+'">'+obj.m+fjBadge+fjDebug+'</span></div>';
     }).join('');
     mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none"><span class="hcard-label">Did You Take Today? ▲</span></div>'+html;
   }else{
