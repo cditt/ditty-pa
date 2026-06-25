@@ -392,6 +392,7 @@ var GID='397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.co
 var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var JSONBIN_ID='69fbc6d7adc21f119a63898a';
+var latestFatJourneyData=null;
 var S={},T={},GT=null,CUR='home';
 var portfolioOpen=localStorage.getItem('dpa_portOpen')==='true';
 var portfolioRows='';
@@ -814,24 +815,38 @@ function getActiveMeds(){
   var isSunday=new Date().getDay()===0;
   return isSunday?MEDS.concat(MEDS_SUNDAY):MEDS;
 }
+function getFJTakenNames(){
+  try{
+    var pills=(latestFatJourneyData&&latestFatJourneyData.pills)
+      ||JSON.parse(localStorage.getItem('ditty_v3')||'{}').pills||[];
+    var taken={};
+    pills.forEach(function(p){if(p.taken)taken[p.name.toLowerCase().trim()]=true;});
+    return taken;
+  }catch(e){return {};}
+}
 function renderMedCard(){
   var mc=document.getElementById('med-card');if(!mc)return;
   var active=getActiveMeds();
   var isSunday=new Date().getDay()===0;
   var dailyState=getMedState();
   var sunState=isSunday?getSunState():null;
+  var fjTaken=getFJTakenNames();
   var total=active.length;
   var taken=0;
   var items=active.map(function(m,i){
     var isSunItem=i>=MEDS.length;
-    var checked=isSunItem?sunState.checked.indexOf(i-MEDS.length)>-1:dailyState.checked.indexOf(i)>-1;
+    var checkedLocal=isSunItem?sunState.checked.indexOf(i-MEDS.length)>-1:dailyState.checked.indexOf(i)>-1;
+    var medBase=m.replace(/\s*\d+\s*(mg|g|mcg|ml|iu)/gi,'').toLowerCase().trim();
+    var checkedFJ=!!(fjTaken[m.toLowerCase().trim()]||fjTaken[medBase]);
+    var checked=checkedLocal||checkedFJ;
     if(checked)taken++;
-    return{m:m,i:i,checked:checked};
+    return{m:m,i:i,checked:checked,fromFJ:checkedFJ&&!checkedLocal};
   });
   if(medOpen){
     var html=items.map(function(obj){
       var done=obj.checked;
-      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div onclick="toggleMedItem('+obj.i+')" style="width:26px;height:26px;min-width:26px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:8px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer">'+(done?'<span style="color:#fff;font-size:14px;font-weight:800">✓</span>':'')+'</div><span style="font-size:17px;color:'+(done?'var(--t3)':'var(--text)')+(done?';text-decoration:line-through':'')+'">'+obj.m+'</span></div>';
+      var fjBadge=obj.fromFJ?'<span style="font-size:10px;font-weight:800;color:var(--ok);margin-left:6px;letter-spacing:.5px">FJ</span>':'';
+      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div onclick="toggleMedItem('+obj.i+')" style="width:26px;height:26px;min-width:26px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:8px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer">'+(done?'<span style="color:#fff;font-size:14px;font-weight:800">✓</span>':'')+'</div><span style="font-size:17px;color:'+(done?'var(--t3)':'var(--text)')+(done?';text-decoration:line-through':'')+'">'+obj.m+fjBadge+'</span></div>';
     }).join('');
     mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none"><span class="hcard-label">Did You Take Today? ▲</span></div>'+html;
   }else{
@@ -970,65 +985,29 @@ function togglePT(i){
 
 
 function fetchFatJourney(){
-  var dbg={lsRaw:null,lsKey:null,status:null,hasRecord:null,hasDV3:null,dataKeys:[],weight:null,goalWeight:null,calories:null,protein:null,water:null,fetchErr:null};
-  try{dbg.lsRaw=localStorage.getItem('ditty_v3');dbg.lsKey=JSON.parse(dbg.lsRaw||'{}').jsonbinKey||null;}catch(e){dbg.fetchErr='LS parse: '+e.message;}
-  if(!dbg.lsKey)return Promise.resolve({_noKey:true,dbg:dbg});
-  return fetch('https://api.jsonbin.io/v3/b/'+JSONBIN_ID+'/latest',{headers:{'X-Master-Key':dbg.lsKey}})
-    .then(function(r){
-      dbg.status=r.status;
-      return r.json().then(function(d){
-        dbg.hasRecord=!!(d&&d.record);
-        dbg.hasDV3=!!(d&&d.record&&d.record.ditty_v3);
-        var result=d&&d.record?(d.record.ditty_v3||d.record):null;
-        if(result){
-          dbg.dataKeys=Object.keys(result);
-          dbg.weight=result.weight||null;dbg.goalWeight=result.goalWeight||null;
-          dbg.calories=result.calories||null;dbg.protein=result.protein||null;dbg.water=result.water||null;
-        }
-        return {data:result,dbg:dbg};
-      }).catch(function(e){dbg.fetchErr='JSON parse: '+e.message;return {data:null,dbg:dbg};});
-    })
-    .catch(function(e){dbg.fetchErr='Fetch: '+e.message;return {data:null,dbg:dbg};});
+  var fjKey=null;try{fjKey=JSON.parse(localStorage.getItem('ditty_v3')||'{}').jsonbinKey||null;}catch(e){}
+  if(!fjKey)return Promise.resolve({_noKey:true});
+  return fetch('https://api.jsonbin.io/v3/b/'+JSONBIN_ID+'/latest',{headers:{'X-Master-Key':fjKey}})
+    .then(function(r){return r.json();})
+    .then(function(d){return d.record?(d.record.ditty_v3||d.record):null;})
+    .catch(function(){return null;});
 }
 
-function updateFatJourneyCard(payload){
+function updateFatJourneyCard(data){
   var card=document.getElementById('fj-card');if(!card)return;
-  var data=payload&&payload.data!==undefined?payload.data:payload;
-  var dbg=payload&&payload.dbg?payload.dbg:null;
   var open=localStorage.getItem('dpa_fjOpen')==='true';
-
-  function dbgHtml(d){
-    var h='<div style="font-size:12px;line-height:2;margin-top:10px;font-family:monospace;color:var(--text)">';
-    h+='ditty_v3 in LS: <b>'+(d.lsRaw?'YES':'NO')+'</b><br>';
-    h+='jsonbinKey found: <b>'+(d.lsKey?'YES':'NO')+'</b><br>';
-    h+='HTTP status: <b>'+(d.status!==null?d.status:'n/a')+'</b><br>';
-    h+='d.record exists: <b>'+(d.hasRecord!==null?(d.hasRecord?'YES':'NO'):'n/a')+'</b><br>';
-    h+='d.record.ditty_v3 exists: <b>'+(d.hasDV3!==null?(d.hasDV3?'YES':'NO'):'n/a')+'</b><br>';
-    h+='data keys: <b>'+(d.dataKeys&&d.dataKeys.length?d.dataKeys.join(', '):'none')+'</b><br>';
-    h+='weight: <b>'+(d.weight||'--')+'</b> &nbsp; goalWeight: <b>'+(d.goalWeight||'--')+'</b><br>';
-    h+='calories: <b>'+(d.calories||'--')+'</b> &nbsp; protein: <b>'+(d.protein||'--')+'</b> &nbsp; water: <b>'+(d.water||'--')+'</b>';
-    if(d.fetchErr)h+='<br>error: <b style="color:var(--danger)">'+d.fetchErr+'</b>';
-    h+='</div>';
-    return h;
-  }
-
-  if(data&&data._noKey){
-    var h='<div class="hcard-label" style="color:var(--danger)">Fat Journey DEBUG</div>';
-    if(dbg)h+=dbgHtml(dbg);
-    else h+='<div class="hcard-empty">Open Fat Journey on this device first, then return here.</div>';
-    card.innerHTML=h;return;
-  }
-  if(!data){
-    var h='<div class="hcard-label" style="color:var(--danger)">Fat Journey DEBUG</div>';
-    if(dbg)h+=dbgHtml(dbg);
-    else h+='<div class="hcard-empty">Fat Journey Offline</div>';
-    card.innerHTML=h;return;
-  }
-  var w=data.weight||'--',g=data.goalWeight||'--',cal=data.calories||'--',pro=data.protein||'--',wat=data.water||'--',syn=data.lastSync||'';
-  var dbgBlock=dbg?dbgHtml(dbg):'';
   var chev=open?'▲':'▼';
+  if(data&&data._noKey){
+    card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Open Fat Journey on this device first, then return here.</div>';return;
+  }
+  var w=(data&&data.weight)||'--';
+  var g=(data&&data.goalWeight)||'--';
+  var cal=(data&&data.calories)||'--';
+  var pro=(data&&data.protein)||'--';
+  var wat=(data&&data.water)||'--';
+  var syn=(data&&data.lastSync)||'';
   if(!open){
-    card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span> <span style="font-size:16px;color:var(--text);font-weight:700">'+w+' lb</span></div>'+dbgBlock;
+    card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span> <span style="font-size:16px;color:var(--text);font-weight:700">'+w+' lb</span></div>';
   }else{
     card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span></div>'
       +'<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
@@ -1037,20 +1016,20 @@ function updateFatJourneyCard(payload){
       +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Calories</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+cal+'<span style="font-size:11px;color:var(--t2)"> / 1800</span></div></div>'
       +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Protein</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+pro+'<span style="font-size:11px;color:var(--t2)"> g</span></div></div>'
       +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Water</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+wat+'<span style="font-size:11px;color:var(--t2)"> / 128 oz</span></div></div>'
-      +'</div>'+(syn?'<div style="margin-top:10px;font-size:11px;color:var(--t3)">Last sync: '+syn+'</div>':'')+dbgBlock;
+      +'</div>'+(syn?'<div style="margin-top:10px;font-size:11px;color:var(--t3)">Last sync: '+syn+'</div>':'');
   }
 }
 
 function toggleFJ(){
   var open=localStorage.getItem('dpa_fjOpen')==='true';
   localStorage.setItem('dpa_fjOpen',open?'false':'true');
-  fetchFatJourney().then(function(d){updateFatJourneyCard(d);});
+  fetchFatJourney().then(function(d){latestFatJourneyData=d;updateFatJourneyCard(d);renderMedCard();});
 }
 
 function loadFatJourney(){
   var card=document.getElementById('fj-card');
   if(card)card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Loading...</div>';
-  fetchFatJourney().then(function(d){updateFatJourneyCard(d);});
+  fetchFatJourney().then(function(d){latestFatJourneyData=d;updateFatJourneyCard(d);renderMedCard();});
 }
 
 window.onload=boot;
