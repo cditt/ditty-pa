@@ -343,7 +343,7 @@ input,textarea{font-family:var(--font);}
       </button>
       <button class="sbtn sbtn-acc" onclick="saveSettings()">Save Settings</button>
       <button class="sbtn sbtn-danger" onclick="doSignOut()" style="margin-top:4px">Sign Out & Reset</button>
-      <div style="text-align:center;color:var(--t3);font-size:12px;letter-spacing:1px;margin:24px 0">DITTY PA · V4.1</div>
+      <div style="text-align:center;color:var(--t3);font-size:12px;letter-spacing:1px;margin:24px 0">DITTY PA · V4.2-test</div>
     </div>
   </div>
 
@@ -856,9 +856,9 @@ function renderMedCard(){
       var fjDebug='<span style="font-size:10px;color:var(--t2);margin-left:4px;font-family:monospace">[raw:'+JSON.stringify(obj.rawVal)+']</span>';
       return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div onclick="toggleMedItem('+obj.i+')" style="width:26px;height:26px;min-width:26px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:8px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer">'+(done?'<span style="color:#fff;font-size:14px;font-weight:800">✓</span>':'')+'</div><span style="font-size:17px;color:'+(done?'var(--t3)':'var(--text)')+(done?';text-decoration:line-through':'')+'">'+obj.m+fjBadge+fjDebug+'</span></div>';
     }).join('');
-    mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none"><span class="hcard-label">Did You Take Today? ▲</span></div>'+html;
+    mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none"><span class="hcard-label">Did You Take Today? ▲</span></div><div style="font-size:10px;color:var(--danger);font-family:monospace;margin-bottom:6px">MED SYNC BUILD: strict-boolean-1</div>'+html;
   }else{
-    mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Did You Take Today? ▼</span><span style="font-size:15px;font-weight:700;color:'+(taken===total?'var(--ok)':'var(--accent)')+'">'+taken+'/'+total+' taken</span></div>';
+    mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Did You Take Today? ▼</span><span style="font-size:15px;font-weight:700;color:'+(taken===total?'var(--ok)':'var(--accent)')+'">'+taken+'/'+total+' taken</span></div><div style="font-size:10px;color:var(--danger);font-family:monospace;margin-top:4px">MED SYNC BUILD: strict-boolean-1</div>';
   }
 }
 function toggleMed(){
