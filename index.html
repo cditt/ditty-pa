@@ -352,7 +352,7 @@ input,textarea{font-family:var(--font);}
       </button>
       <button class="sbtn sbtn-acc" onclick="saveSettings()">Save Settings</button>
       <button class="sbtn sbtn-danger" onclick="doSignOut()" style="margin-top:4px">Sign Out & Reset</button>
-      <div style="text-align:center;color:var(--t3);font-size:12px;letter-spacing:1px;margin:24px 0">DITTY PA · V4.2-test</div>
+      <div style="text-align:center;color:var(--t3);font-size:12px;letter-spacing:1px;margin:24px 0">DITTY PA · V4.3</div>
     </div>
   </div>
 
@@ -609,13 +609,13 @@ function fetchEmail(){
 function loadHome(){
   var zip=ZIP;
   // Weather
-  callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","high":"84","low":"62","forecast":[{"day":"Sun","high":"82","low":"60"},{"day":"Mon","high":"79","low":"58"},{"day":"Tue","high":"77","low":"57"},{"day":"Wed","high":"80","low":"59"}]}',function(r){
+  callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","feelsLike":"75","high":"84","low":"62","humidity":"55%","wind":"SW 12 mph","sunrise":"6:42 AM","sunset":"8:31 PM","rain":"Rain expected around 3:00 PM","forecast":[{"day":"Sun","icon":"⛅","high":"82","low":"60"},{"day":"Mon","icon":"🌧","high":"79","low":"58"},{"day":"Tue","icon":"☀️","high":"77","low":"57"},{"day":"Wed","icon":"⛅","high":"80","low":"59"}]}. For rain field: if hourly data available, say exactly when rain begins like "Rain expected around 3:00 PM" or "Showers likely between 2 PM–5 PM" or "No rain expected today". Only use a percentage if no hourly timing is available.',function(r){
     try{
       var d=JSON.parse(r.replace(/```json|```/g,'').trim());
       var wc=document.getElementById('weather-card');
       if(!wc)return;
-      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'°</div>'+(f.low?'<div class="wh-day-low">'+f.low+'°</div>':'')+'</div>';}).join(''):'';
-      weatherData={loc:'Martinsville, IN '+zip,temp:(d.temp||'--'),cond:(d.condition||''),high:(d.high||''),low:(d.low||''),fhtml:fhtml};
+      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div>'+(f.icon?'<div style="font-size:18px;line-height:1.2">'+f.icon+'</div>':'')+'<div class="wh-day-temp">'+f.high+'°</div>'+(f.low?'<div class="wh-day-low">'+f.low+'°</div>':'')+'</div>';}).join(''):'';
+      weatherData={loc:'Martinsville, IN '+zip,temp:(d.temp||'--'),cond:(d.condition||''),feelsLike:(d.feelsLike||''),high:(d.high||''),low:(d.low||''),humidity:(d.humidity||''),wind:(d.wind||''),sunrise:(d.sunrise||''),sunset:(d.sunset||''),rain:(d.rain||''),fhtml:fhtml};
       renderWeatherCard();
       clearOffline('weather');
     }catch(e){
@@ -637,7 +637,7 @@ function loadHome(){
       var events=calData.items.slice(0,3).map(function(e){
         var s2=e.start.dateTime||e.start.date;var d2=new Date(s2);
         var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-        return{timeStr:t2,title:e.summary};
+        return{timeStr:t2,title:e.summary,location:e.location||''};
       });
       calSummary={timeStr:timeStr,title:ev.summary,events:events,empty:false};
     }else{
@@ -722,7 +722,7 @@ function renderHomeEmailCard(){
     return;
   }
   if(emailOpen){
-    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none"><span class="hcard-label">Email ▲</span></div><div style="margin-top:4px"><span style="font-size:36px;font-weight:900;color:var(--accent)">'+data.count+'</span><span style="font-size:15px;color:var(--t2);margin-left:8px">unread</span></div><div onclick="nav(\'mail\')" style="margin-top:10px;font-size:15px;font-weight:700;color:var(--accent);cursor:pointer">Open Mail tab →</div>';
+    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none"><span class="hcard-label">Email ▲</span></div><div style="margin-top:4px"><span style="font-size:36px;font-weight:900;color:var(--accent)">'+data.count+'</span><span style="font-size:15px;color:var(--t2);margin-left:8px">unread</span></div><div style="margin-top:12px;display:flex;gap:12px;align-items:center"><div onclick="nav(\'mail\')" style="font-size:15px;font-weight:700;color:var(--accent);cursor:pointer">Open Mail tab →</div><a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener" style="font-size:15px;font-weight:700;color:var(--t2);text-decoration:none">Open Gmail ↗</a></div>';
   }else{
     emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Email ▼</span><span style="font-size:15px;font-weight:700;color:var(--accent)">'+data.count+' unread</span></div>';
   }
@@ -793,12 +793,12 @@ function refreshAll(){
   function check(){done++;if(done>=total){if(ico)ico.classList.remove('refresh-spinning');updateTimestamp();}}
 
   // Weather
-  callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","high":"84","low":"62","forecast":[{"day":"Sun","high":"82","low":"60"},{"day":"Mon","high":"79","low":"58"},{"day":"Tue","high":"77","low":"57"},{"day":"Wed","high":"80","low":"59"}]}',function(r){
+  callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","feelsLike":"75","high":"84","low":"62","humidity":"55%","wind":"SW 12 mph","sunrise":"6:42 AM","sunset":"8:31 PM","rain":"Rain expected around 3:00 PM","forecast":[{"day":"Sun","icon":"⛅","high":"82","low":"60"},{"day":"Mon","icon":"🌧","high":"79","low":"58"},{"day":"Tue","icon":"☀️","high":"77","low":"57"},{"day":"Wed","icon":"⛅","high":"80","low":"59"}]}. For rain field: if hourly data available, say exactly when rain begins like "Rain expected around 3:00 PM" or "Showers likely between 2 PM–5 PM" or "No rain expected today". Only use a percentage if no hourly timing is available.',function(r){
     try{
       var d=JSON.parse(r.replace(/```json|```/g,'').trim());
       var wc=document.getElementById('weather-card');if(!wc)return;
-      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div><div class="wh-day-temp">'+f.high+'°</div>'+(f.low?'<div class="wh-day-low">'+f.low+'°</div>':'')+'</div>';}).join(''):'';
-      weatherData={loc:'Martinsville, IN '+ZIP,temp:(d.temp||'--'),cond:(d.condition||''),high:(d.high||''),low:(d.low||''),fhtml:fhtml};
+      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div>'+(f.icon?'<div style="font-size:18px;line-height:1.2">'+f.icon+'</div>':'')+'<div class="wh-day-temp">'+f.high+'°</div>'+(f.low?'<div class="wh-day-low">'+f.low+'°</div>':'')+'</div>';}).join(''):'';
+      weatherData={loc:'Martinsville, IN '+ZIP,temp:(d.temp||'--'),cond:(d.condition||''),feelsLike:(d.feelsLike||''),high:(d.high||''),low:(d.low||''),humidity:(d.humidity||''),wind:(d.wind||''),sunrise:(d.sunrise||''),sunset:(d.sunset||''),rain:(d.rain||''),fhtml:fhtml};
       renderWeatherCard();
       clearOffline('weather');
     }catch(e){toast('Weather refresh failed');setOffline('weather');}
@@ -815,7 +815,7 @@ function refreshAll(){
       var events=calData.items.slice(0,3).map(function(e){
         var s2=e.start.dateTime||e.start.date;var d2=new Date(s2);
         var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-        return{timeStr:t2,title:e.summary};
+        return{timeStr:t2,title:e.summary,location:e.location||''};
       });
       calSummary={timeStr:timeStr,title:ev.summary,events:events,empty:false};
     }else{calSummary={empty:true};}
@@ -941,13 +941,47 @@ function toggleMedItem(i){
   renderMedCard();
 }
 
+var PRI_DEFAULTS=['Drink 128 oz water','Hit protein goal','Check Fat Journey','Review calendar','Clear urgent email'];
+function getTodayPriorities(){
+  var today=new Date().toISOString().slice(0,10);
+  try{
+    var stored=JSON.parse(localStorage.getItem('dpa_today_priorities')||'null');
+    if(stored&&stored.date===today)return stored;
+  }catch(e){}
+  var fresh={date:today,items:PRI_DEFAULTS.map(function(t){return{text:t,done:false};})};
+  localStorage.setItem('dpa_today_priorities',JSON.stringify(fresh));
+  return fresh;
+}
+function saveTodayPriorities(obj){localStorage.setItem('dpa_today_priorities',JSON.stringify(obj));}
+function togglePriItem(idx){
+  var obj=getTodayPriorities();
+  if(!obj.items[idx])return;
+  obj.items[idx].done=!obj.items[idx].done;
+  saveTodayPriorities(obj);
+  renderPriorityCard();
+}
+function resetTodayPriorities(){
+  var today=new Date().toISOString().slice(0,10);
+  var fresh={date:today,items:PRI_DEFAULTS.map(function(t){return{text:t,done:false};})};
+  saveTodayPriorities(fresh);
+  renderPriorityCard();
+}
 function renderPriorityCard(){
   var pc=document.getElementById('priorities-card');if(!pc)return;
-  var pts=[].concat(FARM).slice(0,3);
+  var obj=getTodayPriorities();
+  var items=obj.items;
+  var doneCount=items.filter(function(i){return i.done;}).length;
+  var total=items.length;
   if(priOpen){
-    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none"><span class="hcard-label">Today\'s Priorities ▲</span></div>'+pts.map(function(p){return'<div class="pri-item"><div class="pri-dot"></div><div class="pri-txt">'+p+'</div></div>';}).join('');
+    var rows=items.map(function(item,idx){
+      var ck='<div onclick="togglePriItem('+idx+')" style="width:22px;height:22px;min-width:22px;border:2px solid '+(item.done?'var(--ok)':'var(--border)')+';border-radius:7px;background:'+(item.done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">'+(item.done?'<span style="color:#fff;font-size:12px;font-weight:800">✓</span>':'')+'</div>';
+      var txt='<span style="font-size:17px;color:'+(item.done?'var(--t3)':'var(--text)')+(item.done?';text-decoration:line-through':'')+'">'+item.text+'</span>';
+      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+ck+txt+'</div>';
+    }).join('');
+    var resetBtn='<div onclick="resetTodayPriorities()" style="margin-top:10px;font-size:12px;color:var(--t3);cursor:pointer;text-align:right">Reset Today</div>';
+    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none"><span class="hcard-label">Today\'s Priorities ▲</span></div>'+rows+resetBtn;
   }else{
-    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Today\'s Priorities ▼</span><span style="font-size:15px;font-weight:700;color:var(--text)">'+pts.length+' items</span></div>';
+    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Today\'s Priorities ▼</span><span style="font-size:15px;font-weight:700;color:'+(doneCount===total?'var(--ok)':'var(--accent)')+'">'+doneCount+'/'+total+' done</span></div>';
   }
 }
 function togglePriority(){
@@ -960,8 +994,23 @@ function renderWeatherCard(){
   var wc=document.getElementById('weather-card');if(!wc)return;
   if(!weatherData){wc.innerHTML='<div class="wh-loading">Loading weather...</div>';return;}
   if(weatherOpen){
-    var hiLo=weatherData.high&&weatherData.low?'<div style="font-size:15px;color:var(--t2);margin-bottom:20px">H: '+weatherData.high+'° · L: '+weatherData.low+'°</div>':'';
-    wc.innerHTML='<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer">'+weatherData.loc+' ▲</div><div class="wh-temp">'+weatherData.temp+'°</div><div class="wh-cond">'+weatherData.cond+'</div>'+hiLo+'<div class="wh-row">'+weatherData.fhtml+'</div>';
+    var d=weatherData;
+    var detailStyle='font-size:13px;color:var(--t2);margin-bottom:4px;';
+    var valStyle='font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;';
+    var details='';
+    if(d.feelsLike)details+='<div style="'+detailStyle+'">Feels Like</div><div style="'+valStyle+'">'+d.feelsLike+'°</div>';
+    if(d.high&&d.low)details+='<div style="'+detailStyle+'">High / Low</div><div style="'+valStyle+'">'+d.high+'° / '+d.low+'°</div>';
+    if(d.humidity)details+='<div style="'+detailStyle+'">Humidity</div><div style="'+valStyle+'">'+d.humidity+'</div>';
+    if(d.wind)details+='<div style="'+detailStyle+'">Wind</div><div style="'+valStyle+'">'+d.wind+'</div>';
+    var sunRow='';
+    if(d.sunrise||d.sunset)sunRow='<div style="display:flex;gap:24px;margin-bottom:16px"><div><div style="font-size:11px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Sunrise</div><div style="font-size:15px;font-weight:700;color:var(--text)">'+(d.sunrise||'--')+'</div></div><div><div style="font-size:11px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Sunset</div><div style="font-size:15px;font-weight:700;color:var(--text)">'+(d.sunset||'--')+'</div></div></div>';
+    var rainRow=d.rain?'<div style="font-size:14px;font-weight:700;color:#6bbfff;margin-bottom:16px">🌧 '+d.rain+'</div>':'';
+    var grid='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;margin-bottom:16px">'+details+'</div>';
+    wc.innerHTML='<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer">'+d.loc+' ▲</div>'
+      +'<div class="wh-temp">'+d.temp+'°</div>'
+      +'<div class="wh-cond">'+d.cond+'</div>'
+      +grid+sunRow+rainRow
+      +'<div class="wh-row">'+d.fhtml+'</div>';
   }else{
     wc.innerHTML='<div onclick="toggleWeather()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:13px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-right:8px">Weather ▼</span><span style="font-size:15px;font-weight:600;color:var(--text)">'+weatherData.temp+'° '+weatherData.cond+'</span></div>';
   }
@@ -977,19 +1026,20 @@ function renderCalCard(){
   if(!calSummary){ec.innerHTML='<div class="hcard-label">Next Event</div><div class="hcard-empty">Loading...</div>';return;}
   if(calSummary.empty){
     if(calOpen){
-      ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Next Event ▲</span></div><div class="hcard-empty" style="margin-top:8px">Calendar clear today</div>';
+      ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Upcoming Events ▲</span></div><div class="hcard-empty" style="margin-top:8px">No upcoming events.</div>';
     }else{
-      ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px">Next Event ▼</span><span style="font-size:14px;color:var(--t2);margin-left:8px">Calendar clear</span></div>';
+      ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px">Upcoming Events ▼</span><span style="font-size:14px;color:var(--t2);margin-left:8px">No upcoming events.</span></div>';
     }
     return;
   }
   if(calOpen){
-    var evHtml=(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title}]).map(function(e){
-      return'<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div class="event-time">'+e.timeStr+'</div><div class="event-title" style="font-size:17px">'+e.title+'</div></div>';
+    var evHtml=(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title,location:''}]).map(function(e){
+      var loc=e.location?'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+e.location+'</div>':'';
+      return'<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div class="event-time">'+e.timeStr+'</div><div class="event-title" style="font-size:17px">'+e.title+'</div>'+loc+'</div>';
     }).join('');
-    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Next Event ▲</span></div>'+evHtml;
+    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Upcoming Events ▲</span></div>'+evHtml;
   }else{
-    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Next Event ▼</span><span style="font-size:13px;font-weight:800;color:var(--accent);margin-right:6px">'+calSummary.timeStr+'</span><span style="font-size:15px;font-weight:600;color:var(--text)">'+calSummary.title+'</span></div>';
+    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Upcoming Events ▼</span><span style="font-size:13px;font-weight:800;color:var(--accent);margin-right:6px">'+calSummary.timeStr+'</span><span style="font-size:15px;font-weight:600;color:var(--text)">'+calSummary.title+'</span></div>';
   }
 }
 function toggleCal(){
