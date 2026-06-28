@@ -652,6 +652,25 @@ function parseReminderLocal(txt){
   return null; // cannot parse — fall back to personal task
 }
 
+function getCreatedReminders(){
+  try{return JSON.parse(localStorage.getItem('dpa_created_reminders')||'{"items":[]}');}
+  catch(e){return{items:[]};}
+}
+function saveCreatedReminders(obj){localStorage.setItem('dpa_created_reminders',JSON.stringify(obj));}
+function deleteCreatedReminder(googleId){
+  if(!confirm('Delete this reminder?'))return;
+  fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/'+googleId,{method:'DELETE',headers:{Authorization:'Bearer '+GT}})
+    .then(function(res){
+      if(res.ok||res.status===204){
+        var obj=getCreatedReminders();
+        obj.items=obj.items.filter(function(r){return r.id!==googleId;});
+        saveCreatedReminders(obj);
+        loadCal();loadHome();
+        toast('Reminder deleted');
+      }else{toast('Delete failed: '+res.status);}
+    })
+    .catch(function(e){toast('Delete error: '+e.message);});
+}
 function submitRemind(){
   var txt=document.getElementById('rtxt').value.trim();if(!txt)return;closeRemind();
   console.log('[REMIND] input:',txt);
@@ -668,14 +687,28 @@ function submitRemind(){
     var pt=ls('dpa3_pt')||[];pt.push({text:txt,done:false,ts:Date.now()});ls('dpa3_pt',pt);
     renderPersonalTasks();toast('Parser failed: task added');return;
   }
+  // Duplicate check
+  var existing=getCreatedReminders();
+  var isDup=existing.items.some(function(r){return r.title===parsed.title&&r.dateTime===parsed.dateTime;});
+  if(isDup){toast('Reminder already exists');return;}
   toast('Parser OK: '+parsed.title);
   var ev={summary:parsed.title,start:{dateTime:parsed.dateTime,timeZone:'America/Indiana/Indianapolis'},end:{dateTime:new Date(new Date(parsed.dateTime).getTime()+1800000).toISOString(),timeZone:'America/Indiana/Indianapolis'},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
   console.log('[REMIND] POSTing to Google Calendar:',JSON.stringify(ev));
   fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},body:JSON.stringify(ev)})
     .then(function(res){
       console.log('[REMIND] Google POST status:',res.status);
-      if(res.ok){toast('Reminder added: '+parsed.title);}
-      else{res.text().then(function(t){console.log('[REMIND] Google error body:',t);});toast('Calendar failed: '+res.status);}
+      if(res.ok){
+        return res.json().then(function(created){
+          var obj=getCreatedReminders();
+          obj.items.push({id:created.id,title:parsed.title,dateTime:parsed.dateTime,createdAt:Date.now()});
+          saveCreatedReminders(obj);
+          loadCal();loadHome();
+          toast('Reminder added: '+parsed.title);
+        });
+      }else{
+        res.text().then(function(t){console.log('[REMIND] Google error body:',t);});
+        toast('Calendar failed: '+res.status);
+      }
     })
     .catch(function(e){console.log('[REMIND] fetch error:',e.message);toast('Calendar error: '+e.message);});
 }
@@ -738,7 +771,7 @@ function loadHome(){
       var events=calData.items.slice(0,3).map(function(e){
         var s2=e.start.dateTime||e.start.date;var d2=new Date(s2);
         var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-        return{timeStr:t2,title:e.summary,location:e.location||''};
+        return{timeStr:t2,title:e.summary,location:e.location||'',id:e.id||''};
       });
       calSummary={timeStr:timeStr,title:ev.summary,events:events,empty:false};
     }else{
@@ -931,7 +964,7 @@ function refreshAll(){
       var events=calData.items.slice(0,3).map(function(e){
         var s2=e.start.dateTime||e.start.date;var d2=new Date(s2);
         var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-        return{timeStr:t2,title:e.summary,location:e.location||''};
+        return{timeStr:t2,title:e.summary,location:e.location||'',id:e.id||''};
       });
       calSummary={timeStr:timeStr,title:ev.summary,events:events,empty:false};
     }else{calSummary={empty:true};}
@@ -1166,13 +1199,15 @@ function renderCalCard(){
   }
   if(calOpen){
     var ack=getEventAck();
-    var evHtml=(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title,location:''}]).map(function(e){
+    var createdIds=getCreatedReminders().items.map(function(r){return r.id;});
+      var evHtml=(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title,location:'',id:''}]).map(function(e){
       var key=eventKey(e);
       var done=ack.checked.indexOf(key)>-1;
       var ck='<div onclick="toggleEventAck(\'' +key+ '\')" style="width:22px;height:22px;min-width:22px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:7px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">'+(done?'<span style="color:#fff;font-size:12px;font-weight:800">✓</span>':'')+'</div>';
       var loc=e.location?'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+e.location+'</div>':'';
       var titleStyle='font-size:17px;'+(done?'color:var(--t3);text-decoration:line-through':'');
-      return'<div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">'+ck+'<div><div class="event-time">'+e.timeStr+'</div><div class="event-title" style="'+titleStyle+'">'+e.title+'</div>'+loc+'</div></div>';
+      var delBtn=e.id&&createdIds.indexOf(e.id)>-1?'<div onclick="deleteCreatedReminder(\''+e.id+'\')" style="color:var(--danger);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0;line-height:1" title="Delete reminder">×</div>':'';
+      return'<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'+ck+'<div style="flex:1"><div class="event-time">'+e.timeStr+'</div><div class="event-title" style="'+titleStyle+'">'+e.title+'</div>'+loc+'</div>'+delBtn+'</div>';
     }).join('');
     ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Upcoming Events ▲</span></div>'+evHtml;
   }else{
