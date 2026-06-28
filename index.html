@@ -610,6 +610,7 @@ function loadHome(){
   var zip=ZIP;
   // Weather
   callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","feelsLike":"75","high":"84","low":"62","humidity":"55%","wind":"SW 12 mph","sunrise":"6:42 AM","sunset":"8:31 PM","rain":"Rain expected around 3:00 PM","forecast":[{"day":"Sun","icon":"⛅","high":"82","low":"60"},{"day":"Mon","icon":"🌧","high":"79","low":"58"},{"day":"Tue","icon":"☀️","high":"77","low":"57"},{"day":"Wed","icon":"⛅","high":"80","low":"59"}]}. For rain field: if hourly data available, say exactly when rain begins like "Rain expected around 3:00 PM" or "Showers likely between 2 PM–5 PM" or "No rain expected today". Only use a percentage if no hourly timing is available.',function(r){
+    console.log('WEATHER RAW',r);
     try{
       var d=JSON.parse(r.replace(/```json|```/g,'').trim());
       var wc=document.getElementById('weather-card');
@@ -619,7 +620,9 @@ function loadHome(){
       renderWeatherCard();
       clearOffline('weather');
     }catch(e){
-      var wc2=document.getElementById('weather-card');if(wc2)wc2.innerHTML='<div class="wh-loading">Weather unavailable</div>';
+      console.log('WEATHER PARSE ERROR',e.message,'RAW:',r);
+      var wc2=document.getElementById('weather-card');
+      if(wc2)wc2.innerHTML='<div class="wh-loading">Weather parse failed</div><div style="font-size:11px;color:var(--t2);margin-top:8px;word-break:break-all;font-family:monospace">'+String(r).substring(0,300)+'</div>';
       setOffline('weather');
     }
   });
@@ -794,6 +797,7 @@ function refreshAll(){
 
   // Weather
   callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","feelsLike":"75","high":"84","low":"62","humidity":"55%","wind":"SW 12 mph","sunrise":"6:42 AM","sunset":"8:31 PM","rain":"Rain expected around 3:00 PM","forecast":[{"day":"Sun","icon":"⛅","high":"82","low":"60"},{"day":"Mon","icon":"🌧","high":"79","low":"58"},{"day":"Tue","icon":"☀️","high":"77","low":"57"},{"day":"Wed","icon":"⛅","high":"80","low":"59"}]}. For rain field: if hourly data available, say exactly when rain begins like "Rain expected around 3:00 PM" or "Showers likely between 2 PM–5 PM" or "No rain expected today". Only use a percentage if no hourly timing is available.',function(r){
+    console.log('WEATHER RAW',r);
     try{
       var d=JSON.parse(r.replace(/```json|```/g,'').trim());
       var wc=document.getElementById('weather-card');if(!wc)return;
@@ -801,7 +805,12 @@ function refreshAll(){
       weatherData={loc:'Martinsville, IN '+ZIP,temp:(d.temp||'--'),cond:(d.condition||''),feelsLike:(d.feelsLike||''),high:(d.high||''),low:(d.low||''),humidity:(d.humidity||''),wind:(d.wind||''),sunrise:(d.sunrise||''),sunset:(d.sunset||''),rain:(d.rain||''),fhtml:fhtml};
       renderWeatherCard();
       clearOffline('weather');
-    }catch(e){toast('Weather refresh failed');setOffline('weather');}
+    }catch(e){
+      console.log('WEATHER PARSE ERROR',e.message,'RAW:',r);
+      var wc3=document.getElementById('weather-card');
+      if(wc3)wc3.innerHTML='<div class="wh-loading">Weather parse failed</div><div style="font-size:11px;color:var(--t2);margin-top:8px;word-break:break-all;font-family:monospace">'+String(r).substring(0,300)+'</div>';
+      toast('Weather refresh failed');setOffline('weather');
+    }
     check();
   });
 
