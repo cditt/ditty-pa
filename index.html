@@ -660,30 +660,22 @@ function deleteCreatedReminder(googleId){
 }
 function submitRemind(){
   var txt=document.getElementById('rtxt').value.trim();if(!txt)return;closeRemind();
-  console.log('[REMIND] input:',txt);
-  console.log('[REMIND] GT present:',!!GT,'GT value:',GT?GT.substring(0,20)+'...':'null');
   if(!GT){
-    console.log('[REMIND] No Google token — adding as task');
     var pt=ls('dpa3_pt')||[];pt.push({text:txt,done:false,ts:Date.now()});ls('dpa3_pt',pt);
-    renderPersonalTasks();toast('No Google — task added');return;
+    renderPersonalTasks();toast('Added to tasks');return;
   }
   var parsed=parseReminderLocal(txt);
-  console.log('[REMIND] parsed:',JSON.stringify(parsed));
   if(!parsed){
-    console.log('[REMIND] Parser returned null — adding as task');
     var pt=ls('dpa3_pt')||[];pt.push({text:txt,done:false,ts:Date.now()});ls('dpa3_pt',pt);
-    renderPersonalTasks();toast('Parser failed: task added');return;
+    renderPersonalTasks();toast('Added to tasks');return;
   }
   // Duplicate check
   var existing=getCreatedReminders();
   var isDup=existing.items.some(function(r){return r.title===parsed.title&&r.dateTime===parsed.dateTime;});
   if(isDup){toast('Reminder already exists');return;}
-  toast('Parser OK: '+parsed.title);
   var ev={summary:parsed.title,start:{dateTime:parsed.dateTime,timeZone:'America/Indiana/Indianapolis'},end:{dateTime:new Date(new Date(parsed.dateTime).getTime()+1800000).toISOString(),timeZone:'America/Indiana/Indianapolis'},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
-  console.log('[REMIND] POSTing to Google Calendar:',JSON.stringify(ev));
   fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},body:JSON.stringify(ev)})
     .then(function(res){
-      console.log('[REMIND] Google POST status:',res.status);
       if(res.ok){
         return res.json().then(function(created){
           var obj=getCreatedReminders();
@@ -693,11 +685,10 @@ function submitRemind(){
           toast('Reminder added: '+parsed.title);
         });
       }else{
-        res.text().then(function(t){console.log('[REMIND] Google error body:',t);});
         toast('Calendar failed: '+res.status);
       }
     })
-    .catch(function(e){console.log('[REMIND] fetch error:',e.message);toast('Calendar error: '+e.message);});
+    .catch(function(e){toast('Calendar error: '+e.message);});
 }
 
 function toast(msg){
