@@ -343,9 +343,8 @@ input,textarea{font-family:var(--font);}
         Reconnect Google
       </button>
       <button class="sbtn sbtn-acc" onclick="saveSettings()">Save Settings</button>
-      <button class="sbtn" onclick="testClaudeWorker()" style="margin-top:4px;background:var(--s2);border:1.5px solid var(--accent);color:var(--accent)">Test Claude Worker</button>
       <button class="sbtn sbtn-danger" onclick="doSignOut()" style="margin-top:4px">Sign Out & Reset</button>
-      <div style="text-align:center;color:var(--t3);font-size:12px;letter-spacing:1px;margin:24px 0">DITTY PA · V4.3</div>
+      <div style="text-align:center;color:var(--t3);font-size:12px;letter-spacing:1px;margin:24px 0">DITTY PA · V4.4</div>
     </div>
   </div>
 
@@ -533,25 +532,6 @@ function gConnect(){
 function saveSettings(){
   ls('dpa3_s',S);toast('Saved');
 }
-function testClaudeWorker(){
-  toast('Testing Worker...');
-  fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:32,messages:[{role:'user',content:'Reply with exactly: WORKER OK'}]})})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      console.log('[WORKER TEST] full response:',JSON.stringify(d));
-      var t='';
-      if(d.content)d.content.forEach(function(c){if(c.type==='text')t+=c.text;});
-      console.log('[WORKER TEST] extracted text:',t);
-      if(t.indexOf('WORKER OK')>-1){toast('Claude Worker OK');}
-      else{toast('Worker failed: '+t.substring(0,120));}
-    })
-    .catch(function(e){
-      console.error('[WORKER TEST] fetch error:',e.message);
-      toast('Worker error: '+e.message.substring(0,120));
-    });
-}
-
 function doSignOut(){if(!confirm('Reset everything?'))return;localStorage.clear();location.reload();}
 
 function openRemind(){document.getElementById('rmodal').classList.add('open');setTimeout(function(){document.getElementById('rtxt').focus();},100);}
@@ -782,16 +762,10 @@ function loadHome(){
 
     // Portfolio
     var port=document.getElementById('portfolio-card');
-    var stockUrl=PROXY+'/stocks?symbols=GOOGL,DKNG,LMT,MU,IHAK,SCZ,SPY,VO,VOO';
-    console.log('[PORTFOLIO] fetching:',stockUrl);
-    fetch(stockUrl)
-      .then(function(r){
-        console.log('[PORTFOLIO] response status:',r.status);
-        return r.json();
-      })
+    fetch(PROXY+'/stocks?symbols=GOOGL,DKNG,LMT,MU,IHAK,SCZ,SPY,VO,VOO')
+      .then(function(r){return r.json();})
       .then(function(d){
         if(!d.stocks||!d.stocks.length){
-          console.error('[PORTFOLIO] Stock API empty:',d);
           if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock API unavailable</div>';
           return;
         }
@@ -809,7 +783,6 @@ function loadHome(){
         updateTimestamp();
       })
       .catch(function(e){
-        console.error('[PORTFOLIO] Stock API failed:',e.message,'url:',stockUrl);
         if(port)port.innerHTML='<div class="hcard-label">Portfolio</div><div class="hcard-empty">Stock API unavailable</div>';
         setOffline('portfolio');
       });
