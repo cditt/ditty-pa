@@ -665,7 +665,7 @@ function deleteCreatedReminder(googleId){
         var obj=getCreatedReminders();
         obj.items=obj.items.filter(function(r){return r.id!==googleId;});
         saveCreatedReminders(obj);
-        loadCal();loadHome();
+        refreshCalendar();
         toast('Reminder deleted');
       }else{toast('Delete failed: '+res.status);}
     })
@@ -702,7 +702,7 @@ function submitRemind(){
           var obj=getCreatedReminders();
           obj.items.push({id:created.id,title:parsed.title,dateTime:parsed.dateTime,createdAt:Date.now()});
           saveCreatedReminders(obj);
-          loadCal();loadHome();
+          refreshCalendar();
           toast('Reminder added: '+parsed.title);
         });
       }else{
@@ -763,21 +763,7 @@ function loadHome(){
     var calData=res[0],emailData=res[1];
 
     // Next event
-    if(calData&&calData.items&&calData.items.length){
-      var ev=calData.items[0];
-      var st=ev.start.dateTime||ev.start.date;
-      var dt=new Date(st);
-      var timeStr=ev.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-      var events=calData.items.slice(0,3).map(function(e){
-        var s2=e.start.dateTime||e.start.date;var d2=new Date(s2);
-        var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-        return{timeStr:t2,title:e.summary,location:e.location||'',id:e.id||''};
-      });
-      calSummary={timeStr:timeStr,title:ev.summary,events:events,empty:false};
-    }else{
-      calSummary={empty:true};
-    }
-    renderCalCard();
+    applyCalData(calData);
 
     // Priorities (top 3 tasks)
     renderPriorityCard();
@@ -818,29 +804,61 @@ function loadHome(){
   });
 }
 
+function dedupCalItems(items){
+  var seen={};
+  return(items||[]).filter(function(e){
+    var key=(e.start.dateTime||e.start.date)+'|'+(e.summary||'');
+    if(seen[key])return false;seen[key]=true;return true;
+  });
+}
+function applyCalData(data){
+  // Update calSummary (Home card)
+  if(data&&data.items&&data.items.length){
+    var deduped=dedupCalItems(data.items);
+    var ev=deduped[0];
+    var st=ev.start.dateTime||ev.start.date;var dt=new Date(st);
+    var timeStr=ev.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
+    var events=deduped.slice(0,3).map(function(e){
+      var s2=e.start.dateTime||e.start.date;var d2=new Date(s2);
+      var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
+      return{timeStr:t2,title:e.summary,location:e.location||'',id:e.id||''};
+    });
+    calSummary={timeStr:timeStr,title:ev.summary,events:events,empty:false};
+  }else{
+    calSummary={empty:true};
+  }
+  renderCalCard();
+  // Update Calendar screen
+  var el=document.getElementById('cal-content');if(!el)return;
+  if(!data||!data.items||!data.items.length){el.innerHTML='<div class="cal-empty">No events in the next 48 hours</div>';return;}
+  var deduped2=dedupCalItems(data.items);
+  var now=new Date();
+  var todayEnd=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59);
+  var today=[],tmrw=[];
+  deduped2.forEach(function(e){
+    var st=new Date(e.start.dateTime||e.start.date);
+    if(st<=todayEnd)today.push(e);else tmrw.push(e);
+  });
+  function renderDay(evts,label){
+    if(!evts.length)return'';
+    return'<div class="cal-day"><div class="cal-day-label">'+label+'</div>'+evts.map(function(e){
+      var st=e.start.dateTime||e.start.date;var dt=new Date(st);
+      var t=e.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
+      return'<div class="cal-event"><div class="cal-time">'+t+'</div><div class="cal-title">'+e.summary+'</div></div>';
+    }).join('')+'</div>';
+  }
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var tomorrow=new Date(now.getTime()+86400000);
+  el.innerHTML=renderDay(today,'Today')+renderDay(tmrw,days[tomorrow.getDay()]+' · Tomorrow');
+}
+function refreshCalendar(){
+  fetchCal().then(function(data){applyCalData(data);});
+}
 function loadCal(){
   fetchCal().then(function(data){
     var el=document.getElementById('cal-content');if(!el)return;
     if(!GT){el.innerHTML='<div class="cal-empty">Connect Google to see your calendar</div>';return;}
-    if(!data||!data.items||!data.items.length){el.innerHTML='<div class="cal-empty">No events in the next 48 hours</div>';return;}
-    var now=new Date();
-    var todayEnd=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59);
-    var today=[],tmrw=[];
-    data.items.forEach(function(e){
-      var st=new Date(e.start.dateTime||e.start.date);
-      if(st<=todayEnd)today.push(e);else tmrw.push(e);
-    });
-    function renderDay(evts,label){
-      if(!evts.length)return'';
-      return'<div class="cal-day"><div class="cal-day-label">'+label+'</div>'+evts.map(function(e){
-        var st=e.start.dateTime||e.start.date;var dt=new Date(st);
-        var t=e.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-        return'<div class="cal-event"><div class="cal-time">'+t+'</div><div class="cal-title">'+e.summary+'</div></div>';
-      }).join('')+'</div>';
-    }
-    var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    var tomorrow=new Date(now.getTime()+86400000);
-    el.innerHTML=renderDay(today,'Today')+renderDay(tmrw,days[tomorrow.getDay()]+' · Tomorrow');
+    applyCalData(data);
   });
 }
 
@@ -958,17 +976,7 @@ function refreshAll(){
   Promise.all([fetchCal(),fetchEmail()]).then(function(res){
     var calData=res[0],emailData=res[1];
     // Calendar
-    if(calData&&calData.items&&calData.items.length){
-      var ev=calData.items[0];var st=ev.start.dateTime||ev.start.date;var dt=new Date(st);
-      var timeStr=ev.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-      var events=calData.items.slice(0,3).map(function(e){
-        var s2=e.start.dateTime||e.start.date;var d2=new Date(s2);
-        var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-        return{timeStr:t2,title:e.summary,location:e.location||'',id:e.id||''};
-      });
-      calSummary={timeStr:timeStr,title:ev.summary,events:events,empty:false};
-    }else{calSummary={empty:true};}
-    renderCalCard();
+    applyCalData(calData);
     // Email
     updateHomeEmailCard(emailData);
     if(emailData)clearOffline('email');else setOffline('email');
