@@ -398,7 +398,7 @@ input,textarea{font-family:var(--font);}
 
 <script>
 var GID='397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.com';
-var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
+var GSCOPE='https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/gmail.readonly';
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var JSONBIN_ID='69fbc6d7adc21f119a63898a';
 var latestFatJourneyData=null;
@@ -417,7 +417,7 @@ var medOpen=localStorage.getItem('dpa_medOpen')==='true';
 var MEDS=['Lisinopril 40mg','Omeprazole 40mg','Tadalafil 5mg','Creatine 5g','Alpha Brain'];
 var MEDS_SUNDAY=['Testosterone','Retatrutide'];
 var ZIP='46151';
-var FARM=['Chicken water','Chicken food','Check bees','Garden check'];
+var FARM_DEFAULTS=['Chicken water','Chicken food','Check bees','Garden check'];
 var PRIORITY_FROM=['tami','elks','edward jones','ducks unlimited'];
 var PRIORITY_SUBJECT=['payment','invoice','statement','bill due','amount due','past due','claim','appointment','your bill','account summary'];
 
@@ -654,19 +654,30 @@ function parseReminderLocal(txt){
 
 function submitRemind(){
   var txt=document.getElementById('rtxt').value.trim();if(!txt)return;closeRemind();
+  console.log('[REMIND] input:',txt);
+  console.log('[REMIND] GT present:',!!GT,'GT value:',GT?GT.substring(0,20)+'...':'null');
   if(!GT){
-    // No Google — always add as task
+    console.log('[REMIND] No Google token — adding as task');
     var pt=ls('dpa3_pt')||[];pt.push({text:txt,done:false,ts:Date.now()});ls('dpa3_pt',pt);
-    renderPersonalTasks();toast('Added to tasks');return;
+    renderPersonalTasks();toast('No Google — task added');return;
   }
   var parsed=parseReminderLocal(txt);
-  if(parsed){
-    var ev={summary:parsed.title,start:{dateTime:parsed.dateTime,timeZone:'America/Indiana/Indianapolis'},end:{dateTime:new Date(new Date(parsed.dateTime).getTime()+1800000).toISOString(),timeZone:'America/Indiana/Indianapolis'},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
-    fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},body:JSON.stringify(ev)}).then(function(res){toast(res.ok?'Reminder added to calendar':'Failed');});
-  }else{
+  console.log('[REMIND] parsed:',JSON.stringify(parsed));
+  if(!parsed){
+    console.log('[REMIND] Parser returned null — adding as task');
     var pt=ls('dpa3_pt')||[];pt.push({text:txt,done:false,ts:Date.now()});ls('dpa3_pt',pt);
-    renderPersonalTasks();toast('Added to tasks');
+    renderPersonalTasks();toast('Parser failed: task added');return;
   }
+  toast('Parser OK: '+parsed.title);
+  var ev={summary:parsed.title,start:{dateTime:parsed.dateTime,timeZone:'America/Indiana/Indianapolis'},end:{dateTime:new Date(new Date(parsed.dateTime).getTime()+1800000).toISOString(),timeZone:'America/Indiana/Indianapolis'},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
+  console.log('[REMIND] POSTing to Google Calendar:',JSON.stringify(ev));
+  fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},body:JSON.stringify(ev)})
+    .then(function(res){
+      console.log('[REMIND] Google POST status:',res.status);
+      if(res.ok){toast('Reminder added: '+parsed.title);}
+      else{res.text().then(function(t){console.log('[REMIND] Google error body:',t);});toast('Calendar failed: '+res.status);}
+    })
+    .catch(function(e){console.log('[REMIND] fetch error:',e.message);toast('Calendar error: '+e.message);});
 }
 
 function toast(msg){
@@ -1195,14 +1206,49 @@ function togglePortfolio(){
   renderPortfolioCard();
 }
 
+function getFarmList(){
+  var today=new Date().toDateString();
+  try{
+    var stored=JSON.parse(localStorage.getItem('dpa_farm_checks')||'null');
+    if(stored){
+      if(stored.date!==today){stored.date=today;stored.items.forEach(function(i){i.done=false;});localStorage.setItem('dpa_farm_checks',JSON.stringify(stored));}
+      return stored;
+    }
+  }catch(e){}
+  var fresh={date:today,items:FARM_DEFAULTS.map(function(t){return{text:t,done:false};})};
+  localStorage.setItem('dpa_farm_checks',JSON.stringify(fresh));
+  return fresh;
+}
+function saveFarmList(obj){localStorage.setItem('dpa_farm_checks',JSON.stringify(obj));}
+function toggleFarmItem(idx){
+  var obj=getFarmList();if(!obj.items[idx])return;
+  obj.items[idx].done=!obj.items[idx].done;
+  saveFarmList(obj);renderFarmTasks();
+}
+function deleteFarmItem(idx){
+  if(!confirm('Delete this farm check?'))return;
+  var obj=getFarmList();obj.items.splice(idx,1);
+  saveFarmList(obj);renderFarmTasks();
+}
+function addFarmItem(){
+  var val=prompt('New farm check:');if(!val||!val.trim())return;
+  var obj=getFarmList();
+  obj.items.push({text:val.trim(),done:false});
+  saveFarmList(obj);renderFarmTasks();
+}
 function renderFarmTasks(){
   var el=document.getElementById('farm-tasks');if(!el)return;
-  el.innerHTML=FARM.map(function(f,i){
-    var tid='farm-'+i,done=T[tid]||false;
-    return'<div class="task-item"><div class="task-chk'+(done?' on':'')+'" id="ck-'+tid+'" onclick="toggleTask(\''+tid+'\')"></div><div class="task-body"><div class="task-title'+(done?' done':'')+'" id="tl-'+tid+'">'+f+'</div></div></div>';
+  var obj=getFarmList();
+  var rows=obj.items.map(function(item,idx){
+    var done=item.done;
+    var ck='<div onclick="toggleFarmItem('+idx+')" class="task-chk'+(done?' on':'')+'"></div>';
+    var txt='<div class="task-body"><div class="task-title'+(done?' done':'')+'">'+item.text+'</div></div>';
+    var del='<div onclick="deleteFarmItem('+idx+')" style="color:var(--t3);font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0" title="Delete">\xc3\x97</div>';
+    return'<div class="task-item">'+ck+txt+del+'</div>';
   }).join('');
+  var addBtn='<button onclick="addFarmItem()" class="add-btn" style="width:100%;margin:10px 0 0">+ Add Farm Check</button>';
+  el.innerHTML=rows+addBtn;
 }
-
 function renderPersonalTasks(){
   var el=document.getElementById('personal-tasks');if(!el)return;
   var pts=ls('dpa3_pt')||[];
