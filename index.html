@@ -470,6 +470,25 @@ function checkOAuth(){
 function bootApp(){
   updateG();setGreeting();renderFarmTasks();renderPersonalTasks();renderMedCard();
   loadHome();loadCal();loadMail();loadFatJourney();
+  startMidnightWatch();
+}
+
+var _watchDate=new Date().toDateString();
+function startMidnightWatch(){
+  setInterval(function(){
+    var today=new Date().toDateString();
+    if(today!==_watchDate){
+      _watchDate=today;
+      // Day has changed — reset and re-render med card, reload Fat Journey
+      setGreeting();
+      renderMedCard();
+      fetchFatJourney().then(function(d){
+        latestFatJourneyData=d;
+        updateFatJourneyCard(d);
+        renderMedCard();
+      });
+    }
+  },60000); // check every 60 seconds
 }
 
 function updateG(){
