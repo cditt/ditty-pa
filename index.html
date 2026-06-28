@@ -609,25 +609,9 @@ function fetchEmail(){
 function loadHome(){
   var zip=ZIP;
   // Weather
-  callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","feelsLike":"75","high":"84","low":"62","humidity":"55%","wind":"SW 12 mph","sunrise":"6:42 AM","sunset":"8:31 PM","rain":"Rain expected around 3:00 PM","forecast":[{"day":"Sun","icon":"⛅","high":"82","low":"60"},{"day":"Mon","icon":"🌧","high":"79","low":"58"},{"day":"Tue","icon":"☀️","high":"77","low":"57"},{"day":"Wed","icon":"⛅","high":"80","low":"59"}]}. For rain field: if hourly data available, say exactly when rain begins like "Rain expected around 3:00 PM" or "Showers likely between 2 PM–5 PM" or "No rain expected today". Only use a percentage if no hourly timing is available.',function(r){
-    console.log('WEATHER RAW',r);
-    try{
-      var d=JSON.parse(r.replace(/```json|```/g,'').trim());
-      var wc=document.getElementById('weather-card');
-      if(!wc)return;
-      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div>'+(f.icon?'<div style="font-size:18px;line-height:1.2">'+f.icon+'</div>':'')+'<div class="wh-day-temp">'+f.high+'°</div>'+(f.low?'<div class="wh-day-low">'+f.low+'°</div>':'')+'</div>';}).join(''):'';
-      weatherData={loc:'Martinsville, IN '+zip,temp:(d.temp||'--'),cond:(d.condition||''),feelsLike:(d.feelsLike||''),high:(d.high||''),low:(d.low||''),humidity:(d.humidity||''),wind:(d.wind||''),sunrise:(d.sunrise||''),sunset:(d.sunset||''),rain:(d.rain||''),fhtml:fhtml};
-      renderWeatherCard();
-      clearOffline('weather');
-    }catch(e){
-      console.log('WEATHER PARSE ERROR',e.message,'RAW:',r);
-      var wc2=document.getElementById('weather-card');
-      if(wc2)wc2.innerHTML='<div class="wh-loading">Weather parse failed</div><div style="font-size:11px;color:var(--t2);margin-top:8px;word-break:break-all;font-family:monospace">'+String(r).substring(0,300)+'</div>';
-      setOffline('weather');
-    }
-  });
+  fetchWeather();
 
-  // Calendar + Email in parallel
+    // Calendar + Email in parallel
   Promise.all([fetchCal(),fetchEmail()]).then(function(res){
     var calData=res[0],emailData=res[1];
 
@@ -796,25 +780,9 @@ function refreshAll(){
   function check(){done++;if(done>=total){if(ico)ico.classList.remove('refresh-spinning');updateTimestamp();}}
 
   // Weather
-  callClaude('Use web search to get current weather for Martinsville Indiana 46151. Return ONLY a JSON object with no markdown, no backticks, no explanation. Format: {"temp":"78","condition":"Partly Cloudy","feelsLike":"75","high":"84","low":"62","humidity":"55%","wind":"SW 12 mph","sunrise":"6:42 AM","sunset":"8:31 PM","rain":"Rain expected around 3:00 PM","forecast":[{"day":"Sun","icon":"⛅","high":"82","low":"60"},{"day":"Mon","icon":"🌧","high":"79","low":"58"},{"day":"Tue","icon":"☀️","high":"77","low":"57"},{"day":"Wed","icon":"⛅","high":"80","low":"59"}]}. For rain field: if hourly data available, say exactly when rain begins like "Rain expected around 3:00 PM" or "Showers likely between 2 PM–5 PM" or "No rain expected today". Only use a percentage if no hourly timing is available.',function(r){
-    console.log('WEATHER RAW',r);
-    try{
-      var d=JSON.parse(r.replace(/```json|```/g,'').trim());
-      var wc=document.getElementById('weather-card');if(!wc)return;
-      var fhtml=d.forecast?d.forecast.slice(0,4).map(function(f){return'<div class="wh-day"><div class="wh-day-name">'+f.day+'</div>'+(f.icon?'<div style="font-size:18px;line-height:1.2">'+f.icon+'</div>':'')+'<div class="wh-day-temp">'+f.high+'°</div>'+(f.low?'<div class="wh-day-low">'+f.low+'°</div>':'')+'</div>';}).join(''):'';
-      weatherData={loc:'Martinsville, IN '+ZIP,temp:(d.temp||'--'),cond:(d.condition||''),feelsLike:(d.feelsLike||''),high:(d.high||''),low:(d.low||''),humidity:(d.humidity||''),wind:(d.wind||''),sunrise:(d.sunrise||''),sunset:(d.sunset||''),rain:(d.rain||''),fhtml:fhtml};
-      renderWeatherCard();
-      clearOffline('weather');
-    }catch(e){
-      console.log('WEATHER PARSE ERROR',e.message,'RAW:',r);
-      var wc3=document.getElementById('weather-card');
-      if(wc3)wc3.innerHTML='<div class="wh-loading">Weather parse failed</div><div style="font-size:11px;color:var(--t2);margin-top:8px;word-break:break-all;font-family:monospace">'+String(r).substring(0,300)+'</div>';
-      toast('Weather refresh failed');setOffline('weather');
-    }
-    check();
-  });
+  fetchWeather().then(check).catch(check);
 
-  // Calendar + Email
+    // Calendar + Email
   Promise.all([fetchCal(),fetchEmail()]).then(function(res){
     var calData=res[0],emailData=res[1];
     // Calendar
@@ -1155,6 +1123,88 @@ function loadFatJourney(){
   var card=document.getElementById('fj-card');
   if(card)card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Loading...</div>';
   fetchFatJourney().then(function(d){latestFatJourneyData=d;updateFatJourneyCard(d);renderMedCard();});
+}
+
+
+var WX_URL='https://api.open-meteo.com/v1/forecast?latitude=39.4278&longitude=-86.4283&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&hourly=precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FIndiana%2FIndianapolis&forecast_days=5';
+
+function wxCode(code){
+  if(code===0)return{c:'Clear',i:'\u2600\ufe0f'};
+  if(code<=2)return{c:'Partly Cloudy',i:'\u26c5'};
+  if(code===3)return{c:'Overcast',i:'\u2601\ufe0f'};
+  if(code<=49)return{c:'Foggy',i:'\ud83c\udf2b\ufe0f'};
+  if(code<=57)return{c:'Drizzle',i:'\ud83c\udf27\ufe0f'};
+  if(code<=67)return{c:'Rain',i:'\ud83c\udf27\ufe0f'};
+  if(code<=77)return{c:'Snow',i:'\u2744\ufe0f'};
+  if(code<=82)return{c:'Showers',i:'\ud83c\udf26\ufe0f'};
+  if(code<=86)return{c:'Snow Showers',i:'\ud83c\udf28\ufe0f'};
+  return{c:'Thunderstorm',i:'\u26a1'};
+}
+
+function wxDir(deg){
+  var dirs=['N','NE','E','SE','S','SW','W','NW'];
+  return dirs[Math.round(deg/45)%8];
+}
+
+function wxRain(hourly){
+  try{
+    var now=new Date();
+    var todayStr=now.toISOString().slice(0,10);
+    var times=hourly.time;var probs=hourly.precipitation_probability;
+    var starts=null,ends=null;
+    for(var i=0;i<times.length;i++){
+      if(times[i].slice(0,10)!==todayStr)continue;
+      var h=new Date(times[i]);if(h<now)continue;
+      if(probs[i]>=40){
+        if(starts===null)starts=h;
+        ends=h;
+      }else{
+        if(starts!==null)break;
+      }
+    }
+    if(starts===null)return'No rain expected today';
+    var fmt=function(d){return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});};
+    if(ends&&ends.getTime()!==starts.getTime())return'Showers likely '+fmt(starts)+'\u2013'+fmt(ends);
+    return'Rain expected around '+fmt(starts);
+  }catch(e){return'';}
+}
+
+function fetchWeather(){
+  return fetch(WX_URL)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var cur=d.current;var daily=d.daily;var hourly=d.hourly;
+      var wx=wxCode(cur.weather_code);
+      var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var fhtml=daily.time.slice(1,5).map(function(t,i){
+        var fi=wxCode(daily.weather_code[i+1]);
+        var day=days[new Date(t+'T12:00:00').getDay()];
+        return'<div class="wh-day"><div class="wh-day-name">'+day+'</div><div style="font-size:18px;line-height:1.2">'+fi.i+'</div><div class="wh-day-temp">'+Math.round(daily.temperature_2m_max[i+1])+'\u00b0</div><div class="wh-day-low">'+Math.round(daily.temperature_2m_min[i+1])+'\u00b0</div></div>';
+      }).join('');
+      var sunriseRaw=daily.sunrise[0];var sunsetRaw=daily.sunset[0];
+      var fmtTime=function(iso){try{return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}catch(e){return iso;}};
+      weatherData={
+        loc:'Martinsville, IN 46151',
+        temp:Math.round(cur.temperature_2m)+'',
+        cond:wx.c,
+        feelsLike:Math.round(cur.apparent_temperature)+'',
+        high:Math.round(daily.temperature_2m_max[0])+'',
+        low:Math.round(daily.temperature_2m_min[0])+'',
+        humidity:cur.relative_humidity_2m+'%',
+        wind:wxDir(cur.wind_direction_10m)+' '+Math.round(cur.wind_speed_10m)+' mph',
+        sunrise:fmtTime(sunriseRaw),
+        sunset:fmtTime(sunsetRaw),
+        rain:wxRain(hourly),
+        fhtml:fhtml
+      };
+      renderWeatherCard();
+      clearOffline('weather');
+    })
+    .catch(function(){
+      var wc=document.getElementById('weather-card');
+      if(wc)wc.innerHTML='<div class="wh-loading">Weather unavailable</div>';
+      setOffline('weather');
+    });
 }
 
 window.onload=boot;
