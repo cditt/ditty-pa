@@ -549,21 +549,124 @@ function doSignOut(){if(!confirm('Reset everything?'))return;localStorage.clear(
 
 function openRemind(){document.getElementById('rmodal').classList.add('open');setTimeout(function(){document.getElementById('rtxt').focus();},100);}
 function closeRemind(){document.getElementById('rmodal').classList.remove('open');document.getElementById('rtxt').value='';}
+function parseReminderLocal(txt){
+  var s=txt.toLowerCase().trim();
+  var now=new Date();
+  var dt=new Date(now);
+  var title=txt;
+
+  // Strip filler phrases to extract title
+  function cleanTitle(raw,removes){
+    var t=raw;
+    removes.forEach(function(r){t=t.replace(new RegExp(r,'gi'),'');});
+    return t.trim().replace(/^(to|and)\s+/i,'').trim();
+  }
+
+  // Parse time string like "4:45", "4:45pm", "9am", "3:30 pm"
+  function parseTime(timeStr,base){
+    var m=timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+    if(!m)return null;
+    var h=parseInt(m[1]),min=parseInt(m[2]||'0'),mer=(m[3]||'').toLowerCase();
+    if(mer==='pm'&&h<12)h+=12;
+    if(mer==='am'&&h===12)h=0;
+    if(!mer&&h<7)h+=12; // assume PM for ambiguous small hours (1-6)
+    var d=new Date(base);d.setHours(h,min,0,0);
+    return d;
+  }
+
+  // Named time of day
+  function timeOfDay(word,base){
+    var d=new Date(base);
+    if(/morning/i.test(word))  {d.setHours(8,0,0,0);return d;}
+    if(/afternoon/i.test(word)){d.setHours(13,0,0,0);return d;}
+    if(/evening/i.test(word))  {d.setHours(18,0,0,0);return d;}
+    if(/night/i.test(word))    {d.setHours(20,0,0,0);return d;}
+    return null;
+  }
+
+  // Day-of-week offset
+  var DOW=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  function nextDow(name){
+    var target=DOW.indexOf(name.toLowerCase());
+    if(target<0)return null;
+    var d=new Date(now);var diff=(target-d.getDay()+7)%7||7;
+    d.setDate(d.getDate()+diff);d.setHours(9,0,0,0);return d;
+  }
+
+  // "in X minutes/hours"
+  var inMatch=s.match(/^in\s+(\d+)\s+(minute|hour)s?\s+(.+)/i);
+  if(inMatch){
+    var amt=parseInt(inMatch[1]),unit=inMatch[2],rest=inMatch[3];
+    dt=new Date(now.getTime()+(unit==='hour'?amt*3600000:amt*60000));
+    title=cleanTitle(rest,[]);
+    return{title:title,dateTime:dt.toISOString()};
+  }
+
+  // "today at TIME ...", "... at TIME today", "... today at TIME"
+  var todayAt=s.match(/(?:today\s+at\s+|at\s+([\d:]+\s*(?:am|pm)?)\s+today)([\d:]+\s*(?:am|pm)?)?/i);
+  var timeMatch=s.match(/\bat\s+([\d]{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+  var todayRef=/\btoday\b/i.test(s);
+  var tomorrowRef=/\btomorrow\b/i.test(s);
+
+  if(todayRef&&timeMatch){
+    var parsed=parseTime(timeMatch[1],now);
+    if(parsed){
+      dt=parsed;
+      title=cleanTitle(txt,[/\bat\s+[\d:]+\s*(?:am|pm)?\b/i,/\btoday\b/i,/^remind\s+me\s+/i,/^to\s+/i]);
+      return{title:title,dateTime:dt.toISOString()};
+    }
+  }
+
+  // "tomorrow [morning/afternoon/evening/at TIME] ..."
+  if(tomorrowRef){
+    var tmrw=new Date(now);tmrw.setDate(tmrw.getDate()+1);
+    var tod=s.match(/\b(morning|afternoon|evening|night)\b/i);
+    if(tod){dt=timeOfDay(tod[1],tmrw);}
+    else if(timeMatch){var tp=parseTime(timeMatch[1],tmrw);if(tp)dt=tp;}
+    else{dt=new Date(tmrw);dt.setHours(9,0,0,0);}
+    title=cleanTitle(txt,[/\btomorrow\b/i,/\b(morning|afternoon|evening|night)\b/i,/\bat\s+[\d:]+\s*(?:am|pm)?\b/i,/^remind\s+me\s+/i,/^to\s+/i]);
+    return{title:title,dateTime:dt.toISOString()};
+  }
+
+  // "monday at 9 ...", "friday at 3:30pm ..."
+  var dowMatch=s.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i);
+  if(dowMatch){
+    var base=nextDow(dowMatch[1]);
+    if(base){
+      if(timeMatch){var tp2=parseTime(timeMatch[1],base);if(tp2)base=tp2;}
+      title=cleanTitle(txt,[/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i,/\bat\s+[\d:]+\s*(?:am|pm)?\b/i,/^remind\s+me\s+/i,/^to\s+/i]);
+      return{title:title,dateTime:base.toISOString()};
+    }
+  }
+
+  // Bare "at TIME" with no day reference — assume today, or tomorrow if time already passed
+  if(timeMatch&&!todayRef&&!tomorrowRef&&!dowMatch){
+    var p=parseTime(timeMatch[1],now);
+    if(p){
+      if(p<=now)p.setDate(p.getDate()+1);
+      title=cleanTitle(txt,[/\bat\s+[\d:]+\s*(?:am|pm)?\b/i,/^remind\s+me\s+/i,/^to\s+/i]);
+      return{title:title,dateTime:p.toISOString()};
+    }
+  }
+
+  return null; // cannot parse — fall back to personal task
+}
+
 function submitRemind(){
   var txt=document.getElementById('rtxt').value.trim();if(!txt)return;closeRemind();
-  if(!GT){toast('Connect Google to set calendar reminders');return;}
-  var now=new Date();
-  callClaude('Parse this reminder and return ONLY JSON: {title,dateTime(ISO8601 based on today '+now.toISOString()+')}. No markdown. Reminder: "'+txt+'"',function(r){
-    try{
-      var d=JSON.parse(r.replace(/```json|```/g,'').trim());
-      var ev={summary:d.title,start:{dateTime:d.dateTime,timeZone:'America/Indiana/Indianapolis'},end:{dateTime:new Date(new Date(d.dateTime).getTime()+1800000).toISOString(),timeZone:'America/Indiana/Indianapolis'},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
-      fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},body:JSON.stringify(ev)}).then(function(res){toast(res.ok?'Reminder added to calendar':'Failed');});
-    }catch(e){
-      // Add as personal task instead
-      var pt=ls('dpa3_pt')||[];pt.push({text:txt,done:false,ts:Date.now()});ls('dpa3_pt',pt);
-      renderPersonalTasks();toast('Added to tasks');
-    }
-  });
+  if(!GT){
+    // No Google — always add as task
+    var pt=ls('dpa3_pt')||[];pt.push({text:txt,done:false,ts:Date.now()});ls('dpa3_pt',pt);
+    renderPersonalTasks();toast('Added to tasks');return;
+  }
+  var parsed=parseReminderLocal(txt);
+  if(parsed){
+    var ev={summary:parsed.title,start:{dateTime:parsed.dateTime,timeZone:'America/Indiana/Indianapolis'},end:{dateTime:new Date(new Date(parsed.dateTime).getTime()+1800000).toISOString(),timeZone:'America/Indiana/Indianapolis'},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
+    fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},body:JSON.stringify(ev)}).then(function(res){toast(res.ok?'Reminder added to calendar':'Failed');});
+  }else{
+    var pt=ls('dpa3_pt')||[];pt.push({text:txt,done:false,ts:Date.now()});ls('dpa3_pt',pt);
+    renderPersonalTasks();toast('Added to tasks');
+  }
 }
 
 function toast(msg){
@@ -709,7 +812,32 @@ function renderHomeEmailCard(){
     return;
   }
   if(emailOpen){
-    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none"><span class="hcard-label">Email ▲</span></div><div style="margin-top:4px"><span style="font-size:36px;font-weight:900;color:var(--accent)">'+data.count+'</span><span style="font-size:15px;color:var(--t2);margin-left:8px">unread</span></div><div style="margin-top:12px;display:flex;gap:12px;align-items:center"><div onclick="nav(\'mail\')" style="font-size:15px;font-weight:700;color:var(--accent);cursor:pointer">Open Mail tab →</div><a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener" style="font-size:15px;font-weight:700;color:var(--t2);text-decoration:none">Open Gmail ↗</a></div>';
+    var priRows='';
+    if(data.messages&&data.messages.length){
+      var seen={};
+      var pri=data.messages.filter(function(m){
+        var hh=(m.payload&&m.payload.headers)||[];
+        var from='',sub='';
+        hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
+        var key=from.toLowerCase().trim()+'|'+sub.toLowerCase().trim();
+        if(seen[key])return false;seen[key]=true;
+        return PRIORITY_FROM.some(function(s){return from.toLowerCase().indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub.toLowerCase().indexOf(s)>-1;});
+      }).slice(0,3);
+      if(pri.length){
+        priRows=pri.map(function(m){
+          var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
+          hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
+          var fromClean=from.replace(/<[^>]*>/g,'').trim();
+          return'<div class="ep-item"><div class="ep-from">'+fromClean+'</div><div>'+sub+'</div></div>';
+        }).join('');
+      }else{
+        priRows='<div style="font-size:14px;color:var(--t2);padding:8px 0">No priority unread emails.</div>';
+      }
+    }
+    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none"><span class="hcard-label">Email ▲</span></div>'
+      +'<div style="margin-top:4px"><span style="font-size:36px;font-weight:900;color:var(--accent)">'+data.count+'</span><span style="font-size:15px;color:var(--t2);margin-left:8px">unread</span></div>'
+      +'<div class="email-priority" style="margin-top:10px">'+priRows+'</div>'
+      +'<div style="margin-top:12px;display:flex;gap:12px;align-items:center"><div onclick="nav(\'mail\')" style="font-size:15px;font-weight:700;color:var(--accent);cursor:pointer">Open Mail tab →</div><a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener" style="font-size:15px;font-weight:700;color:var(--t2);text-decoration:none">Open Gmail ↗</a></div>';
   }else{
     emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Email ▼</span><span style="font-size:15px;font-weight:700;color:var(--accent)">'+data.count+' unread</span></div>';
   }
@@ -998,6 +1126,22 @@ function toggleWeather(){
   renderWeatherCard();
 }
 
+function getEventAck(){
+  var today=new Date().toISOString().slice(0,10);
+  try{
+    var stored=JSON.parse(localStorage.getItem('dpa_event_ack')||'null');
+    if(stored&&stored.date===today)return stored;
+  }catch(e){}
+  return{date:today,checked:[]};
+}
+function eventKey(e){return(e.timeStr+'|'+e.title).replace(/[^a-zA-Z0-9|: ]/g,'').trim();}
+function toggleEventAck(key){
+  var ack=getEventAck();
+  var idx=ack.checked.indexOf(key);
+  if(idx>-1)ack.checked.splice(idx,1);else ack.checked.push(key);
+  localStorage.setItem('dpa_event_ack',JSON.stringify(ack));
+  renderCalCard();
+}
 function renderCalCard(){
   var ec=document.getElementById('next-event-card');if(!ec)return;
   if(!calSummary){ec.innerHTML='<div class="hcard-label">Next Event</div><div class="hcard-empty">Loading...</div>';return;}
@@ -1010,9 +1154,14 @@ function renderCalCard(){
     return;
   }
   if(calOpen){
+    var ack=getEventAck();
     var evHtml=(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title,location:''}]).map(function(e){
+      var key=eventKey(e);
+      var done=ack.checked.indexOf(key)>-1;
+      var ck='<div onclick="toggleEventAck(\'' +key+ '\')" style="width:22px;height:22px;min-width:22px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:7px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">'+(done?'<span style="color:#fff;font-size:12px;font-weight:800">✓</span>':'')+'</div>';
       var loc=e.location?'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+e.location+'</div>':'';
-      return'<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div class="event-time">'+e.timeStr+'</div><div class="event-title" style="font-size:17px">'+e.title+'</div>'+loc+'</div>';
+      var titleStyle='font-size:17px;'+(done?'color:var(--t3);text-decoration:line-through':'');
+      return'<div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">'+ck+'<div><div class="event-time">'+e.timeStr+'</div><div class="event-title" style="'+titleStyle+'">'+e.title+'</div>'+loc+'</div></div>';
     }).join('');
     ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Upcoming Events ▲</span></div>'+evHtml;
   }else{
