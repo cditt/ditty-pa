@@ -1430,6 +1430,53 @@ function rebuildPortfolio(){
     .catch(function(){renderPortfolioCard();});
 }
 
+// ── TRANSACTION IMPORTER ─────────────────────────────────────────────
+// Accepts an array of transaction objects and merges them into PORTFOLIO_LEDGER.
+// Transactions are preserved exactly as provided -- no normalization.
+// Duplicate txIds are skipped so re-running an import is always safe.
+// Returns a summary object and logs it to the console.
+//
+// Required fields per type:
+//   BUY / SELL / DIVIDEND_REINVESTMENT: {txId, type, ticker, name, date, shares, price}
+//   DIVIDEND:                           {txId, type, ticker, name, date, amount}
+//   STOCK_SPLIT:                        {txId, type, ticker, name, date, ratio}
+//
+function importTransactions(transactions){
+  var summary={imported:0,skippedDuplicates:0,skippedInvalid:0,errors:[]};
+
+  if(!Array.isArray(transactions)||!transactions.length){
+    summary.errors.push('No transactions provided');
+    console.warn('importTransactions:',summary);
+    return summary;
+  }
+
+  // Index existing txIds so duplicates are detected without mutating existing entries
+  var existing={};
+  PORTFOLIO_LEDGER.forEach(function(tx){existing[tx.txId]=true;});
+
+  transactions.forEach(function(tx){
+    // Validate fields required by every transaction type
+    if(!tx.txId||!tx.ticker||!tx.name||!tx.date){
+      var msg='Missing required field(s) on transaction: '+JSON.stringify(tx);
+      summary.errors.push(msg);
+      summary.skippedInvalid++;
+      return;
+    }
+    if(existing[tx.txId]){
+      summary.skippedDuplicates++;
+      return;
+    }
+    // Preserve exactly as received
+    PORTFOLIO_LEDGER.push(tx);
+    existing[tx.txId]=true;
+    summary.imported++;
+  });
+
+  console.log('importTransactions summary:',JSON.stringify(summary,null,2));
+  rebuildPortfolio();
+  return summary;
+}
+
 function getFarmList(){
   var today=new Date().toDateString();
   try{
