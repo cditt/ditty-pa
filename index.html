@@ -111,15 +111,24 @@ input,textarea{font-family:var(--font);}
 .ep-from{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:1px;}
 
 /* PORTFOLIO STRIP */
-.port-row{display:grid;grid-template-columns:52px 48px minmax(0,1fr) 90px;align-items:center;column-gap:8px;min-height:52px;padding:8px 0 8px 8px;border-bottom:1px solid var(--border);overflow:hidden;border-left:3px solid var(--border);cursor:pointer;}
+.port-row{display:grid;grid-template-columns:6px 68px 1fr 86px;align-items:center;column-gap:0;min-height:52px;padding:6px 8px 6px 0;border-bottom:1px solid var(--border);overflow:hidden;cursor:pointer;}
 .port-row:last-child{border-bottom:none;}
-.port-row.up-row{border-left-color:var(--ok);}
-.port-row.dn-row{border-left-color:var(--danger);}
 .port-row:active{opacity:.7;}
-.port-ticker{font-size:15px;font-weight:800;color:var(--accent);min-width:0;}
-.port-shares{font-size:12px;color:var(--t2);min-width:0;font-weight:600;}
-.port-price{font-size:15px;color:var(--text);min-width:0;text-align:right;overflow:hidden;}
-.port-chg{font-size:14px;font-weight:800;text-align:right;min-width:0;white-space:nowrap;}
+.port-bar{width:3px;align-self:stretch;border-radius:2px;margin-right:10px;}
+.port-row.up-row .port-bar{background:var(--ok);}
+.port-row.dn-row .port-bar{background:var(--danger);}
+.port-left{display:flex;flex-direction:column;justify-content:center;min-width:0;padding-left:4px;}
+.port-ticker{font-size:16px;font-weight:900;min-width:0;line-height:1.1;}
+.port-row.up-row .port-ticker{color:var(--ok);}
+.port-row.dn-row .port-ticker{color:var(--danger);}
+.port-shares{font-size:11px;color:var(--t2);min-width:0;font-weight:500;margin-top:2px;}
+.port-sparkline{display:flex;align-items:center;justify-content:center;padding:0 6px;}
+.port-right{font-size:14px;font-weight:800;text-align:right;min-width:0;white-space:nowrap;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;}
+.port-price{font-size:15px;font-weight:700;color:var(--text);}
+.port-chg{font-size:13px;font-weight:800;}
+.port-row.up-row .port-chg{color:var(--ok);}
+.port-row.dn-row .port-chg{color:var(--danger);}
+.port-footer{text-align:center;font-size:11px;color:var(--t3);padding:10px 0 2px;letter-spacing:.5px;}
 /* PORTFOLIO DETAIL OVERLAY */
 .pdet-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:400;flex-direction:column;overflow:hidden;}
 .pdet-overlay.open{display:flex;}
@@ -1290,25 +1299,36 @@ function toggleCal(){
 }
 
 // ── PORTFOLIO CARD ───────────────────────────────────────────────────
+function fmtShares(n){
+  // Whole: "100 shares"  Fractional: "18.65 shares"
+  return(n%1===0?n.toString():n.toFixed(2))+' shares';
+}
+
 function buildPortfolioRows(stocks){
   var totalDayChange=0;
   stocks.forEach(function(s){lastStockData[s.ticker]=s;});
   var rows=POSITIONS.map(function(pos){
     var s=lastStockData[pos.ticker]||{price:0,change:0,percent:0};
     var isUp=(s.change||0)>=0;
-    totalDayChange+=(s.change||0)*pos.shares;
-    var sharesStr=pos.shares%1===0?pos.shares.toString():pos.shares.toFixed(2);
+    totalDayChange=round2(totalDayChange+(s.change||0)*pos.shares);
     var priceStr=s.price?'$'+s.price.toFixed(2):'--';
     var chgStr=s.change!=null?(isUp?'+':'')+s.change.toFixed(2):'--';
     var pctStr=s.percent!=null?(isUp?'+':'')+s.percent.toFixed(2)+'%':'';
     return'<div class="port-row '+(isUp?'up-row':'dn-row')+'" onclick="openPortDetail(\'' +pos.ticker+ '\')">'
-      +'<div class="port-ticker">'+pos.ticker+'</div>'
-      +'<div class="port-shares">'+sharesStr+'sh</div>'
-      +'<div class="port-price">'+priceStr+'</div>'
-      +'<div class="port-chg '+(isUp?'up':'dn')+'">'+chgStr+'<div style="font-size:11px">'+pctStr+'</div></div>'
+      +'<div class="port-bar"></div>'
+      +'<div class="port-left">'
+        +'<div class="port-ticker">'+pos.ticker+'</div>'
+        +'<div class="port-shares">'+fmtShares(pos.shares)+'</div>'
+      +'</div>'
+      +'<div class="port-sparkline"></div>'
+      +'<div class="port-right">'
+        +'<div class="port-price">'+priceStr+'</div>'
+        +'<div class="port-chg">'+chgStr+'</div>'
+        +'<div style="font-size:11px;font-weight:600;color:'+(isUp?'var(--ok)':'var(--danger)')+'">'+pctStr+'</div>'
+      +'</div>'
       +'</div>';
   }).join('');
-  portfolioRows=rows;
+  portfolioRows=rows+'<div class="port-footer">Only active positions shown</div>';
   portfolioSummary={count:POSITIONS.length,change:totalDayChange};
 }
 
