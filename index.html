@@ -96,10 +96,14 @@ input,textarea{font-family:var(--font);}
 .event-more{font-size:14px;color:var(--t2);margin-top:8px;}
 
 /* PRIORITIES */
-.pri-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border);}
-.pri-item:last-child{border-bottom:none;}
-.pri-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0;}
-.pri-txt{font-size:18px;color:var(--text);font-weight:500;}
+.pri-item{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.pri-item:last-child{border-bottom:none;padding-bottom:4px;}
+.pri-chk{width:24px;height:24px;min-width:24px;border:2px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .12s,border-color .12s;}
+.pri-chk.done{background:var(--ok);border-color:var(--ok);}
+.pri-chk-mark{color:#fff;font-size:13px;font-weight:900;line-height:1;}
+.pri-txt{font-size:16px;color:var(--text);font-weight:500;line-height:1.3;}
+.pri-txt.done{color:var(--t3);text-decoration:line-through;}
+.pri-reset{margin-top:10px;font-size:11px;color:var(--t3);cursor:pointer;text-align:right;letter-spacing:.3px;}
 
 /* EMAIL BADGE */
 .email-row{display:flex;align-items:center;justify-content:space-between;}
@@ -1283,11 +1287,11 @@ function renderPriorityCard(){
   var total=items.length;
   if(priOpen){
     var rows=items.map(function(item,idx){
-      var ck='<div onclick="togglePriItem('+idx+')" style="width:22px;height:22px;min-width:22px;border:2px solid '+(item.done?'var(--ok)':'var(--border)')+';border-radius:7px;background:'+(item.done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">'+(item.done?'<span style="color:#fff;font-size:12px;font-weight:800">✓</span>':'')+'</div>';
-      var txt='<span style="font-size:17px;color:'+(item.done?'var(--t3)':'var(--text)')+(item.done?';text-decoration:line-through':'')+'">'+item.text+'</span>';
-      return'<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+ck+txt+'</div>';
+      var ck='<div class="pri-chk'+(item.done?' done':'')+'" onclick="togglePriItem('+idx+')">'+(item.done?'<span class="pri-chk-mark">✓</span>':'')+'</div>';
+      var txt='<span class="pri-txt'+(item.done?' done':'')+'">'+item.text+'</span>';
+      return'<div class="pri-item">'+ck+txt+'</div>';
     }).join('');
-    var resetBtn='<div onclick="resetTodayPriorities()" style="margin-top:10px;font-size:12px;color:var(--t3);cursor:pointer;text-align:right">Reset Today</div>';
+    var resetBtn='<div class="pri-reset" onclick="resetTodayPriorities()">Reset Today</div>';
     pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none"><span class="hcard-label">Today\'s Priorities ▲</span></div>'+rows+resetBtn;
   }else{
     pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Today\'s Priorities ▼</span><span style="font-size:15px;font-weight:700;color:'+(doneCount===total?'var(--ok)':'var(--accent)')+'">'+doneCount+'/'+total+' done</span></div>';
