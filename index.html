@@ -606,7 +606,7 @@ var weatherData=null;
 var calOpen=localStorage.getItem('dpa_calOpen')==='true';
 var calSummary=null;
 var priOpen=localStorage.getItem('dpa_priOpen')==='true';
-var emailOpen=localStorage.getItem('dpa_emailOpen')!=='false';
+var emailOpen=localStorage.getItem('dpa_emailOpen')==='true';
 var lastEmailData=null;
 var medOpen=localStorage.getItem('dpa_medOpen')==='true';
 var MEDS=['Lisinopril 40mg','Omeprazole 40mg','Tadalafil 5mg','Creatine 5g','Alpha Brain'];
@@ -1044,6 +1044,16 @@ function emailAge(dateStr){
     return Math.floor(diff/1440)+'d';
   }catch(e){return'';}
 }
+function emailSeverity(from,sub){
+  // red: urgent senders or financial alerts
+  var red=['tami','iu health','past due','amount due','bill due','claim'];
+  // yellow: financial/statement senders
+  var yellow=['edward jones','elks','ducks unlimited','payment','invoice','statement','your bill','account summary'];
+  var fl=from.toLowerCase(),sl=sub.toLowerCase();
+  if(red.some(function(k){return fl.indexOf(k)>-1||sl.indexOf(k)>-1;}))return{dot:'var(--danger)',sub:'var(--text)',from:'var(--danger)'};
+  if(yellow.some(function(k){return fl.indexOf(k)>-1||sl.indexOf(k)>-1;}))return{dot:'var(--accent)',sub:'var(--text)',from:'var(--accent)'};
+  return{dot:'var(--ok)',sub:'var(--t2)',from:'var(--t2)'};
+}
 function renderHomeEmailCard(){
   var emlc=document.getElementById('email-card');if(!emlc)return;
   var data=lastEmailData;
@@ -1078,16 +1088,17 @@ function renderHomeEmailCard(){
           });
           var fromClean=from.replace(/<[^>]*>/g,'').trim();
           var age=emailAge(date);
+          var sev=emailSeverity(from,sub);
           return'<div class="ep-item">'
             +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">'
-            +'<div class="ep-from">'+fromClean+'</div>'
-            +(age?'<div style="font-size:11px;color:var(--t3);white-space:nowrap">'+age+'</div>':'')
+            +'<div style="font-size:15px;font-weight:600;color:'+sev.sub+';line-height:1.3">'+sub+'</div>'
+            +(age?'<div style="font-size:11px;color:var(--t3);white-space:nowrap;flex-shrink:0">'+age+'</div>':'')
             +'</div>'
-            +'<div style="font-size:14px;color:var(--text);margin-top:2px;line-height:1.3">'+sub+'</div>'
+            +'<div style="font-size:12px;color:'+sev.from+';margin-top:3px;font-weight:600">'+fromClean+'</div>'
             +'</div>';
         }).join('');
     emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none"><span class="hcard-label">Email ▲</span></div>'
-      +'<div style="margin-top:4px"><span style="font-size:36px;font-weight:900;color:var(--accent)">'+data.count+'</span><span style="font-size:15px;color:var(--t2);margin-left:8px">unread</span></div>'
+      +'<div style="margin-top:4px"><span style="font-size:26px;font-weight:900;color:var(--accent)">'+data.count+'</span><span style="font-size:14px;color:var(--t2);margin-left:8px">unread</span></div>'
       +'<div class="email-priority" style="margin-top:10px">'+priRows+'</div>'
       +'<div style="margin-top:12px;display:flex;gap:12px;align-items:center">'
       +'<div onclick="nav(\'mail\')" style="font-size:15px;font-weight:700;color:var(--accent);cursor:pointer">Open Mail tab →</div>'
