@@ -929,7 +929,7 @@ function fetchEmail(){
     var seen={};
     var unique=priData.messages.filter(function(m){if(seen[m.id])return false;seen[m.id]=true;return true;}).slice(0,5);
     return Promise.all(unique.map(function(m){
-      return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
+      return fetch('https://www.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();});
     })).then(function(msgs){return{messages:msgs,count:count};});
   }).catch(function(){return null;});
 }
@@ -1034,6 +1034,16 @@ function updateHomeEmailCard(emailData){
   if(emailData)lastEmailData=emailData;
   renderHomeEmailCard();
 }
+function emailAge(dateStr){
+  if(!dateStr)return'';
+  try{
+    var d=new Date(dateStr),now=new Date();
+    var diff=Math.floor((now-d)/60000);
+    if(diff<60)return diff+'m';
+    if(diff<1440)return Math.floor(diff/60)+'h';
+    return Math.floor(diff/1440)+'d';
+  }catch(e){return'';}
+}
 function renderHomeEmailCard(){
   var emlc=document.getElementById('email-card');if(!emlc)return;
   var data=lastEmailData;
@@ -1041,35 +1051,56 @@ function renderHomeEmailCard(){
     emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
     return;
   }
+  // Build priority list (used in both collapsed and expanded)
+  var pri=[];
+  if(data.messages&&data.messages.length){
+    var seen={};
+    pri=data.messages.filter(function(m){
+      var hh=(m.payload&&m.payload.headers)||[];
+      var from='',sub='';
+      hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
+      var key=from.toLowerCase().trim()+'|'+sub.toLowerCase().trim();
+      if(seen[key])return false;seen[key]=true;
+      return PRIORITY_FROM.some(function(s){return from.toLowerCase().indexOf(s)>-1;})
+        ||PRIORITY_SUBJECT.some(function(s){return sub.toLowerCase().indexOf(s)>-1;});
+    }).slice(0,5);
+  }
+  var priCount=pri.length;
   if(emailOpen){
-    var priRows='';
-    if(data.messages&&data.messages.length){
-      var seen={};
-      var pri=data.messages.filter(function(m){
-        var hh=(m.payload&&m.payload.headers)||[];
-        var from='',sub='';
-        hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
-        var key=from.toLowerCase().trim()+'|'+sub.toLowerCase().trim();
-        if(seen[key])return false;seen[key]=true;
-        return PRIORITY_FROM.some(function(s){return from.toLowerCase().indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub.toLowerCase().indexOf(s)>-1;});
-      }).slice(0,3);
-      if(pri.length){
-        priRows=pri.map(function(m){
-          var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
-          hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
+    var priRows=priCount===0
+      ?'<div style="font-size:14px;color:var(--t2);padding:8px 0">No priority emails.</div>'
+      :pri.map(function(m){
+          var hh=(m.payload&&m.payload.headers)||[];var from='',sub='',date='';
+          hh.forEach(function(h){
+            if(h.name==='From')from=h.value;
+            if(h.name==='Subject')sub=h.value;
+            if(h.name==='Date')date=h.value;
+          });
           var fromClean=from.replace(/<[^>]*>/g,'').trim();
-          return'<div class="ep-item"><div class="ep-from">'+fromClean+'</div><div>'+sub+'</div></div>';
+          var age=emailAge(date);
+          return'<div class="ep-item">'
+            +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">'
+            +'<div class="ep-from">'+fromClean+'</div>'
+            +(age?'<div style="font-size:11px;color:var(--t3);white-space:nowrap">'+age+'</div>':'')
+            +'</div>'
+            +'<div style="font-size:14px;color:var(--text);margin-top:2px;line-height:1.3">'+sub+'</div>'
+            +'</div>';
         }).join('');
-      }else{
-        priRows='<div style="font-size:14px;color:var(--t2);padding:8px 0">No priority unread emails.</div>';
-      }
-    }
     emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none"><span class="hcard-label">Email ▲</span></div>'
       +'<div style="margin-top:4px"><span style="font-size:36px;font-weight:900;color:var(--accent)">'+data.count+'</span><span style="font-size:15px;color:var(--t2);margin-left:8px">unread</span></div>'
       +'<div class="email-priority" style="margin-top:10px">'+priRows+'</div>'
-      +'<div style="margin-top:12px;display:flex;gap:12px;align-items:center"><div onclick="nav(\'mail\')" style="font-size:15px;font-weight:700;color:var(--accent);cursor:pointer">Open Mail tab →</div><a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener" style="font-size:15px;font-weight:700;color:var(--t2);text-decoration:none">Open Gmail ↗</a></div>';
+      +'<div style="margin-top:12px;display:flex;gap:12px;align-items:center">'
+      +'<div onclick="nav(\'mail\')" style="font-size:15px;font-weight:700;color:var(--accent);cursor:pointer">Open Mail tab →</div>'
+      +'<a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener" style="font-size:15px;font-weight:700;color:var(--t2);text-decoration:none">Open Gmail ↗</a>'
+      +'</div>';
   }else{
-    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Email ▼</span><span style="font-size:15px;font-weight:700;color:var(--accent)">'+data.count+' unread</span></div>';
+    var priTxt=priCount>0?' · '+priCount+' priority':'';
+    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none;padding:4px 0">'
+      +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Email ▼</span>'
+      +'<span style="font-size:15px;font-weight:700;color:var(--accent)">'+data.count+' unread'
+      +(priTxt?'<span style="color:var(--danger)">'+priTxt+'</span>':'')
+      +'</span>'
+      +'</div>';
   }
 }
 function toggleEmail(){
