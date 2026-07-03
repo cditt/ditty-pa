@@ -93,6 +93,18 @@ input,textarea{font-family:var(--font);}
 .wh-day-rain{font-size:10px;color:#6bbfff;margin-top:1px;}
 .wh-alert{background:#2a1010;border:1px solid var(--danger);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--danger);font-weight:600;}
 .wh-loading{color:var(--t2);font-size:16px;padding:16px 0;}
+.ad-input{width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-size:16px;outline:none;resize:none;font-family:var(--font);line-height:1.4;box-sizing:border-box;}
+.ad-input:focus{border-color:var(--accent);}
+.ad-btn{width:100%;height:46px;border-radius:10px;background:var(--accent);color:#000;font-size:15px;font-weight:800;border:none;cursor:pointer;font-family:var(--font);margin-top:10px;}
+.ad-btn:active{opacity:.8;}
+.ad-clarify{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:10px;}
+.ad-clarify-lbl{font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.ad-status{font-size:13px;margin-top:8px;min-height:18px;}
+.ad-confirm{background:var(--s2);border:1px solid rgba(39,174,96,.35);border-radius:12px;padding:14px 16px;margin-top:12px;}
+.ad-confirm-title{font-size:13px;font-weight:800;color:var(--ok);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.ad-confirm-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;}
+.ad-confirm-val{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;}
+.ad-confirm-val:last-child{margin-bottom:0;}
 .wh-day.sel{background:var(--s2);}
 .wh-detail{background:var(--s2);border-radius:12px;padding:14px 16px;margin-top:10px;font-size:13px;line-height:1.6;}
 .wh-detail-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;}
@@ -308,13 +320,13 @@ input,textarea{font-family:var(--font);}
         <div class="greeting-date" id="h-date">Loading...</div>
         <div id="h-updated" style="font-size:12px;color:var(--t3);margin-bottom:16px;margin-top:-18px;"></div>
 
-        <div class="weather-hero" id="weather-card">
-          <div class="wh-loading">Loading weather...</div>
-        </div>
-
-        <div class="hcard" id="next-event-card">
-          <div class="hcard-label">Next Event</div>
-          <div class="hcard-empty">Loading calendar...</div>
+        <div class="hcard" id="ask-ditty-card">
+          <div class="hcard-label" style="margin-bottom:10px">Ask Ditty</div>
+          <textarea id="ad-txt" class="ad-input" rows="2" placeholder="Remind me in 3 months to check the furnace filter..."></textarea>
+          <div id="ad-clarify-area"></div>
+          <div id="ad-confirm-area"></div>
+          <button class="ad-btn" id="ad-submit-btn" onclick="adSubmit()">Do It</button>
+          <div id="ad-status" class="ad-status"></div>
         </div>
 
         <div class="hcard" id="priorities-card">
@@ -322,14 +334,18 @@ input,textarea{font-family:var(--font);}
           <div class="hcard-empty">Loading...</div>
         </div>
 
+        <div class="hcard" id="next-event-card">
+          <div class="hcard-label">Next Event</div>
+          <div class="hcard-empty">Loading calendar...</div>
+        </div>
+
         <div class="hcard" id="email-card">
           <div class="hcard-label">Email</div>
           <div class="hcard-empty">Loading...</div>
         </div>
 
-        <div class="hcard" id="med-card">
-          <div class="hcard-label">Did You Take Today?</div>
-          <div class="hcard-empty">Loading...</div>
+        <div class="weather-hero" id="weather-card">
+          <div class="wh-loading">Loading weather...</div>
         </div>
 
         <div class="hcard" id="portfolio-card">
@@ -339,6 +355,11 @@ input,textarea{font-family:var(--font);}
 
         <div class="hcard" id="fj-card">
           <div class="hcard-label">Fat Journey</div>
+          <div class="hcard-empty">Loading...</div>
+        </div>
+
+        <div class="hcard" id="med-card">
+          <div class="hcard-label">Did You Take Today?</div>
           <div class="hcard-empty">Loading...</div>
         </div>
       </div>
@@ -2077,6 +2098,175 @@ function fetchWeather(){
       setOffline('weather');
     });
 }
+// ── ASK DITTY HISTORY ─────────────────────────────────────────────────
+var AD_HISTORY_KEY='dpa_ad_history';
+function adHistoryGet(){try{return JSON.parse(localStorage.getItem(AD_HISTORY_KEY)||'[]');}catch(e){return[];}}
+function adHistoryLog(request,intent,result){
+  var h=adHistoryGet();
+  h.unshift({ts:Date.now(),request:request,intent:intent||'unknown',result:result});
+  if(h.length>50)h.length=50;
+  try{localStorage.setItem(AD_HISTORY_KEY,JSON.stringify(h));}catch(e){}
+}
+
+// ── ASK DITTY: INTENT ROUTER ──────────────────────────────────────────
+// Add new intents by adding one key to DITTY_HANDLERS. No other changes needed.
+var DITTY_HANDLERS={
+
+  calendar:function(payload,originalText,done){
+    if(!payload.dateTime){done({ok:false,msg:'Could not determine a date. Try: "remind me next Tuesday at 9am to..."'});return;}
+    if(!GT){done({ok:false,msg:'Connect Google to create calendar events.'});return;}
+    var start=payload.dateTime;
+    var end=payload.endDateTime||new Date(new Date(start).getTime()+1800000).toISOString();
+    var ev={
+      summary:payload.title||'Reminder',
+      description:'Ditty PA: '+originalText+(payload.notes?'\n\n'+payload.notes:''),
+      start:{dateTime:start,timeZone:'America/Indiana/Indianapolis'},
+      end:{dateTime:end,timeZone:'America/Indiana/Indianapolis'},
+      reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}
+    };
+    if(payload.recurrence)ev.recurrence=[payload.recurrence];
+    fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
+      method:'POST',
+      headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},
+      body:JSON.stringify(ev)
+    }).then(function(res){
+      if(res.ok){
+        refreshCalendar();
+        done({ok:true,msg:'',confirm:{
+          title:ev.summary,
+          when:new Date(start).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
+          repeats:payload.recurrence||'None',
+          calendar:'Primary'
+        }});
+      }else{done({ok:false,msg:'Calendar error '+res.status});}
+    }).catch(function(e){done({ok:false,msg:'Network error: '+e.message});});
+  },
+
+  task:         function(p,o,done){done({ok:false,msg:'Task routing coming soon.',stub:true});},
+  email:        function(p,o,done){done({ok:false,msg:'Email actions coming soon.',stub:true});},
+  shopping:     function(p,o,done){done({ok:false,msg:'Shopping list coming soon.',stub:true});},
+  fatjourney:   function(p,o,done){done({ok:false,msg:'Fat Journey logging coming soon.',stub:true});},
+  homeassistant:function(p,o,done){done({ok:false,msg:'Home Assistant coming soon.',stub:true});},
+  note:         function(p,o,done){done({ok:false,msg:'Notes coming soon.',stub:true});}
+};
+
+function dittyRoute(text,clarifyAnswer,onStatus){
+  var now=new Date();
+  var ctx='Today: '+now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    +'. Time: '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
+    +'. Timezone: America/Indiana/Indianapolis.';
+  var fullText=clarifyAnswer?text+' (clarification: '+clarifyAnswer+')':text;
+  var prompt=
+    'You are an intent router for a personal assistant app. '+ctx+'\n\n'
+    +'Classify the request and return ONLY a valid JSON object. No markdown, no code fences.\n\n'
+    +'Request: "'+fullText+'"\n\n'
+    +'Supported intents: calendar, task, email, shopping, fatjourney, homeassistant, note\n\n'
+    +'Return: {"intent":"calendar","confidence":97,"clarifyQuestion":null,"payload":{"title":"Check furnace filter","dateTime":"2025-10-03T09:00:00","endDateTime":"2025-10-03T09:30:00","recurrence":null,"notes":"Changed filter today"}}\n\n'
+    +'Rules:\n'
+    +'"in 3 months" = 3 calendar months from today at 9am\n'
+    +'"every Thursday" = recurrence RRULE:FREQ=WEEKLY;BYDAY=TH, dateTime = next Thursday 9am\n'
+    +'"next April" = April 1 next year 9am\n'
+    +'"in 5000 miles" = not measurable, confidence 55, clarifyQuestion = when to remind\n'
+    +'If confidence < 95 set clarifyQuestion to ONE short question string\n'
+    +'Always return valid JSON';
+
+  callClaude(prompt,function(resp){
+    var parsed=null;
+    try{
+      var clean=resp.replace(/```json|```/g,'').trim();
+      var fi=clean.indexOf('{'),li=clean.lastIndexOf('}');
+      if(fi>-1&&li>-1)clean=clean.substring(fi,li+1);
+      parsed=JSON.parse(clean);
+    }catch(e){onStatus({ok:false,msg:'Could not understand that. Try rephrasing.'});return;}
+    if(!parsed.intent||!DITTY_HANDLERS[parsed.intent]){onStatus({ok:false,msg:'Unknown request type.'});return;}
+    if((parsed.confidence||0)<95||parsed.clarifyQuestion){
+      onStatus({clarify:parsed.clarifyQuestion||'Can you be more specific?',intent:parsed.intent});return;
+    }
+    DITTY_HANDLERS[parsed.intent](parsed.payload||{},text,function(result){
+      result._intent=parsed.intent;
+      onStatus(result);
+    });
+  });
+}
+
+var AD_RAW_TEXT='';
+
+function adSetStatus(msg,isErr){
+  var el=document.getElementById('ad-status');
+  if(el){el.textContent=msg;el.style.color=isErr?'var(--danger)':'var(--ok)';}
+}
+function adClearStatus(){var el=document.getElementById('ad-status');if(el)el.textContent='';}
+
+function adShowConfirm(c){
+  var area=document.getElementById('ad-confirm-area');
+  if(!area)return;
+  // Format recurrence for display
+  var repeatsDisplay=c.repeats&&c.repeats!=='None'
+    ?c.repeats.replace(/RRULE:FREQ=WEEKLY;BYDAY=(\w+)/,function(m,d){
+        var map={MO:'Every Monday',TU:'Every Tuesday',WE:'Every Wednesday',TH:'Every Thursday',FR:'Every Friday',SA:'Every Saturday',SU:'Every Sunday'};
+        return map[d]||c.repeats;
+      }).replace(/RRULE:FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)/,'Every '+'{$1}'.toLowerCase())
+    :'None';
+  area.innerHTML=
+    '<div class="ad-confirm">'
+    +'<div class="ad-confirm-title">\u2705 Reminder Created</div>'
+    +'<div class="ad-confirm-lbl">Title</div><div class="ad-confirm-val">'+c.title+'</div>'
+    +'<div class="ad-confirm-lbl">When</div><div class="ad-confirm-val">'+c.when+'</div>'
+    +'<div class="ad-confirm-lbl">Repeats</div><div class="ad-confirm-val">'+repeatsDisplay+'</div>'
+    +'<div class="ad-confirm-lbl">Calendar</div><div class="ad-confirm-val">'+c.calendar+'</div>'
+    +'</div>';
+}
+
+function adSubmit(){
+  var txtel=document.getElementById('ad-txt');
+  var clarifyArea=document.getElementById('ad-clarify-area');
+  var confirmArea=document.getElementById('ad-confirm-area');
+  if(!txtel)return;
+  var raw=txtel.value.trim();
+  if(!raw)return;
+  var clarifyInp=document.getElementById('ad-clarify-inp');
+  var clarifyAnswer=(clarifyInp&&clarifyInp.value.trim())?clarifyInp.value.trim():null;
+  if(!clarifyAnswer)AD_RAW_TEXT=raw;
+  adSetStatus('Thinking...',false);
+  document.getElementById('ad-submit-btn').disabled=true;
+  if(clarifyArea)clarifyArea.innerHTML='';
+  if(confirmArea)confirmArea.innerHTML='';
+
+  dittyRoute(AD_RAW_TEXT,clarifyAnswer,function(result){
+    document.getElementById('ad-submit-btn').disabled=false;
+
+    if(result.clarify){
+      adHistoryLog(AD_RAW_TEXT,result.intent||'unknown','clarification');
+      if(clarifyArea){
+        clarifyArea.innerHTML=
+          '<div class="ad-clarify">'
+          +'<div class="ad-clarify-lbl">One question</div>'
+          +'<div style="font-size:14px;color:var(--text);margin-bottom:8px">'+result.clarify+'</div>'
+          +'<input id="ad-clarify-inp" type="text" class="ad-input" style="height:42px" placeholder="Your answer...">'
+          +'</div>';
+        var ci=document.getElementById('ad-clarify-inp');
+        if(ci){ci.onkeydown=function(e){if(e.key==='Enter')adSubmit();};setTimeout(function(){ci.focus();},80);}
+      }
+      adClearStatus();return;
+    }
+
+    if(result.ok){
+      adHistoryLog(AD_RAW_TEXT,result._intent||'calendar','success');
+      if(txtel)txtel.value='';
+      if(clarifyArea)clarifyArea.innerHTML='';
+      AD_RAW_TEXT='';
+      adClearStatus();
+      // Show confirmation card -- stays visible until next submission
+      if(result.confirm)adShowConfirm(result.confirm);
+    }else if(result.stub){
+      adSetStatus(result.msg,false);
+    }else{
+      adHistoryLog(AD_RAW_TEXT,result._intent||'unknown','failed');
+      adSetStatus(result.msg,true);
+    }
+  });
+}
+
 window.onload=boot;
 </script>
 </body>
