@@ -98,7 +98,7 @@ input,textarea{font-family:var(--font);}
 /* PRIORITIES */
 .pri-item{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06);}
 .pri-item:last-child{border-bottom:none;padding-bottom:4px;}
-.pri-chk{width:24px;height:24px;min-width:24px;border:2px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .12s,border-color .12s;}
+.pri-chk{width:24px;height:24px;min-width:24px;border:2px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
 .pri-chk.done{background:var(--ok);border-color:var(--ok);}
 .pri-chk-mark{color:#fff;font-size:13px;font-weight:900;line-height:1;}
 .pri-txt{font-size:16px;color:var(--text);font-weight:500;line-height:1.3;}
@@ -1288,7 +1288,7 @@ function renderPriorityCard(){
   if(priOpen){
     var rows=items.map(function(item,idx){
       var ck='<div class="pri-chk'+(item.done?' done':'')+'" onclick="togglePriItem('+idx+')">'+(item.done?'<span class="pri-chk-mark">✓</span>':'')+'</div>';
-      var txt='<span class="pri-txt'+(item.done?' done':'')+'">'+item.text+'</span>';
+      var txt='<span class="pri-txt'+(item.done?' done':'')+'"">'+item.text+'</span>';
       return'<div class="pri-item">'+ck+txt+'</div>';
     }).join('');
     var resetBtn='<div class="pri-reset" onclick="resetTodayPriorities()">Reset Today</div>';
