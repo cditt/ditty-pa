@@ -440,7 +440,7 @@ var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var JSONBIN_ID='69fbc6d7adc21f119a63898a';
 var latestFatJourneyData=null;
 var S={},T={},GT=null,CUR='home';
-var portfolioOpen=localStorage.getItem('dpa_portOpen')==='true';
+var portfolioOpen=localStorage.getItem('dpa_portOpen')!=='false';
 var portfolioRows='';
 var portfolioSummary=null;
 var lastStockData={};
