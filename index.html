@@ -104,6 +104,13 @@ input,textarea{font-family:var(--font);}
 .pri-txt{font-size:16px;color:var(--text);font-weight:500;line-height:1.3;}
 .pri-txt.done{color:var(--t3);text-decoration:line-through;}
 .pri-reset{margin-top:10px;font-size:11px;color:var(--t3);cursor:pointer;text-align:right;letter-spacing:.3px;}
+/* TODAY'S FOCUS CARD */
+.focus-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.focus-item:last-child{border-bottom:none;}
+.focus-icon{font-size:16px;line-height:1;flex-shrink:0;}
+.focus-text{font-size:15px;color:var(--text);font-weight:500;flex:1;line-height:1.3;}
+.focus-val{font-size:13px;color:var(--t2);font-weight:600;white-space:nowrap;text-align:right;}
+.focus-empty{font-size:15px;color:var(--ok);font-weight:500;padding:8px 0;}
 
 /* EMAIL BADGE */
 .email-row{display:flex;align-items:center;justify-content:space-between;}
@@ -1279,22 +1286,99 @@ function resetTodayPriorities(){
   saveTodayPriorities(fresh);
   renderPriorityCard();
 }
+// == TODAY'S FOCUS CARD ================================================
+// Reads live in-memory data only. No new fetches, no new storage.
+function buildFocusItems(){
+  var items=[];
+
+  // Priority emails
+  if(lastEmailData&&lastEmailData.messages&&lastEmailData.messages.length){
+    var priCount=lastEmailData.messages.filter(function(m){
+      var hh=(m.payload&&m.payload.headers)||[];
+      var from='',sub='';
+      hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
+      return PRIORITY_FROM.some(function(s){return from.toLowerCase().indexOf(s)>-1;})
+        ||PRIORITY_SUBJECT.some(function(s){return sub.toLowerCase().indexOf(s)>-1;});
+    }).length;
+    if(priCount>0)items.push({icon:'🔴',text:priCount+' priority email'+(priCount>1?'s':'')+' waiting',val:'',level:1});
+  }
+
+  // Meds not taken
+  var active=getActiveMeds();
+  var dState=getMedState();
+  var sState=new Date().getDay()===0?getSunState():null;
+  var fjT=getFJTakenNames();
+  var notTaken=active.filter(function(med){
+    var isSun=MEDS_SUNDAY.indexOf(med)>-1;
+    var chk=isSun?(sState||{checked:[]}).checked:dState.checked;
+    return chk.indexOf(med)===-1&&fjT[med.toLowerCase().trim()]!==true;
+  });
+  if(notTaken.length>0)items.push({icon:'🔴',text:notTaken.length+' medication'+(notTaken.length>1?'s':'')+' not taken',val:notTaken.slice(0,2).join(', ')+(notTaken.length>2?'...':''),level:1});
+
+  // Calendar events -- informational, always green
+  if(calSummary&&!calSummary.empty&&calSummary.events&&calSummary.events.length){
+    var ev=calSummary.events[0];
+    items.push({icon:'🟢',text:calSummary.events.length+' event'+(calSummary.events.length>1?'s':'')+' today',val:ev.timeStr+' — '+ev.title,level:3});
+  }
+
+  // Fat Journey
+  var fj=latestFatJourneyData;
+  if(fj&&!fj._noKey){
+    var waterGoal=128,water=fj.water||0;
+    var protGoal=fj.proteinGoal||180,prot=fj.protein||0;
+    if(water<waterGoal/2)items.push({icon:'🟡',text:'Water low',val:water+' / '+waterGoal+' oz',level:2});
+    if(prot<protGoal/2)items.push({icon:'🟡',text:'Protein low',val:prot+'g / '+protGoal+'g',level:2});
+    if(!fj.calories)items.push({icon:'🟡',text:'No calories logged yet',val:'',level:2});
+    if(fj.weight==null)items.push({icon:'🟡',text:'Weight not logged today',val:'',level:2});
+  }
+
+  // Weather
+  if(weatherData){
+    var high=parseInt(weatherData.high||'0',10);
+    if(high>=90)items.push({icon:'🟡',text:'High heat today',val:high+'°',level:2});
+    if(weatherData.rain)items.push({icon:'🟡',text:'Rain in forecast',val:weatherData.rain,level:2});
+  }
+
+  // Portfolio: compare daily move vs current market value (not cost basis)
+  if(portfolioSummary&&portfolioSummary.count>0&&POSITIONS.length){
+    var totalMV=POSITIONS.reduce(function(s,p){
+      var q=lastStockData[p.ticker];
+      return s+(q&&q.price?q.price*p.shares:0);
+    },0);
+    if(totalMV>0&&Math.abs(portfolioSummary.change)/totalMV>=0.02){
+      var up=portfolioSummary.change>0;
+      var pct=Math.round(portfolioSummary.change/totalMV*10000)/100;
+      items.push({icon:up?'🟢':'🔴',text:'Portfolio '+(up?'up':'down')+' significantly today',val:(up?'+':'')+pct+'%',level:up?3:1});
+    }
+  }
+
+  // Sort by level (1=red first, 2=yellow, 3=green), cap at 5
+  items.sort(function(a,b){return a.level-b.level;});
+  return items.slice(0,5);
+}
+
 function renderPriorityCard(){
   var pc=document.getElementById('priorities-card');if(!pc)return;
-  var obj=getTodayPriorities();
-  var items=obj.items;
-  var doneCount=items.filter(function(i){return i.done;}).length;
-  var total=items.length;
+  var items=buildFocusItems();
+  var count=items.length;
   if(priOpen){
-    var rows=items.map(function(item,idx){
-      var ck='<div class="pri-chk'+(item.done?' done':'')+'" onclick="togglePriItem('+idx+')">'+(item.done?'<span class="pri-chk-mark">✓</span>':'')+'</div>';
-      var txt='<span class="pri-txt'+(item.done?' done':'')+'"">'+item.text+'</span>';
-      return'<div class="pri-item">'+ck+txt+'</div>';
-    }).join('');
-    var resetBtn='<div class="pri-reset" onclick="resetTodayPriorities()">Reset Today</div>';
-    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none"><span class="hcard-label">Today\'s Priorities ▲</span></div>'+rows+resetBtn;
+    var rows=count===0
+      ?'<div class="focus-empty">✅ Everything looks good today.</div>'
+      :items.map(function(it){
+        return'<div class="focus-item">'
+          +'<span class="focus-icon">'+it.icon+'</span>'
+          +'<span class="focus-text">'+it.text+'</span>'
+          +(it.val?'<span class="focus-val">'+it.val+'</span>':'')
+          +'</div>';
+      }).join('');
+    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none"><span class="hcard-label">Today\'s Focus ▲</span></div>'+rows;
   }else{
-    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Today\'s Priorities ▼</span><span style="font-size:15px;font-weight:700;color:'+(doneCount===total?'var(--ok)':'var(--accent)')+'">'+doneCount+'/'+total+' done</span></div>';
+    var label=count===0?'All clear':(count+' item'+(count>1?'s':'|'));
+    label=label.replace('|','');
+    pc.innerHTML='<div onclick="togglePriority()" style="cursor:pointer;user-select:none;padding:4px 0">'
+      +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Today\'s Focus ▼</span>'
+      +'<span style="font-size:15px;font-weight:700;color:'+(count===0?'var(--ok)':'var(--accent)')+'">'+label+'</span>'
+      +'</div>';
   }
 }
 function togglePriority(){
