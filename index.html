@@ -1672,7 +1672,12 @@ function updateFatJourneyCard(data){
   if(data&&data._noKey){
     card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Open Fat Journey on this device first, then return here.</div>';return;
   }
-  var w=(data&&data.weight)||'--';
+  // Use today's weight if present; fall back to most recent weightHistory entry
+  var w='--';
+  if(data){
+    if(data.weight!=null){w=data.weight;}
+    else if(data.weightHistory&&data.weightHistory.length){w=data.weightHistory[0].weight!=null?data.weightHistory[0].weight:'--';}
+  }
   var g=(data&&data.goalWeight)||'--';
   var cal=(data&&data.calories)||'--';
   var pro=(data&&data.protein)||'--';
