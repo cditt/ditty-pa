@@ -76,8 +76,8 @@ input,textarea{font-family:var(--font);}
 .weather-hero{background:linear-gradient(135deg,#0a1540 0%,#0d1a60 60%,#081230 100%);border:1px solid #1e3080;border-radius:var(--rl);padding:28px 22px 24px;margin-bottom:16px;position:relative;overflow:hidden;}
 .weather-hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(204,30,30,.08);pointer-events:none;}
 .wh-loc{font-size:11px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;}
-.wh-temp{font-size:64px;font-weight:900;color:var(--text);line-height:1;letter-spacing:-3px;}
-.wh-cond{font-size:17px;color:var(--text);font-weight:600;margin:4px 0 2px;}
+.wh-temp{font-size:56px;font-weight:900;color:var(--text);line-height:1;letter-spacing:-2px;}
+.wh-cond{font-size:17px;color:var(--text);font-weight:600;margin:6px 0 2px;}
 .wh-sub{font-size:13px;color:var(--t2);margin-bottom:14px;}
 .wh-divider{height:1px;background:rgba(255,255,255,.06);margin:12px 0;}
 .wh-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
@@ -1471,11 +1471,16 @@ function renderWeatherCard(){
     var detailPanel='';
     if(wxSelDay!==null&&wxForecastDays[wxSelDay]){
       var fd=wxForecastDays[wxSelDay];
+      var windVal=weatherData&&weatherData.wind?weatherData.wind:null;
       detailPanel='<div class="wh-detail">'
-        +'<div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">'+fd.dayLabel+' — '+fd.high+'° / '+fd.low+'°'+(fd.rp!=null?' · '+fd.rp+'% rain':'')+'</div>'
-        +'<div class="wh-detail-lbl">Daytime</div><div class="wh-detail-val">'+(fd.dayIcon?fd.dayIcon+' ':'')+fd.dayCond+'</div>'
-        +'<div class="wh-detail-lbl">Evening</div><div class="wh-detail-val">'+(fd.nightIcon?fd.nightIcon+' ':'')+fd.nightCond+'</div>'
-        +(fd.uvMax!=null?'<div class="wh-detail-lbl">UV Index (max)</div><div class="wh-detail-val">'+fd.uvMax+'</div>':'')
+        +'<div style="font-weight:800;font-size:14px;color:var(--text);margin-bottom:10px">'+fd.dayLabel+' — '+fd.high+'° / '+fd.low+'°'+(fd.rp!=null?' · '+fd.rp+'% rain':'')+'</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+        +'<div><div class="wh-detail-lbl">☀️ Day</div><div class="wh-detail-val">'+fd.dayCond+'</div></div>'
+        +'<div><div class="wh-detail-lbl">🌙 Night</div><div class="wh-detail-val">'+fd.nightCond+'</div></div>'
+        +(fd.rp!=null?'<div><div class="wh-detail-lbl">Rain</div><div class="wh-detail-val">'+fd.rp+'%</div></div>':'')
+        +(fd.uvMax!=null?'<div><div class="wh-detail-lbl">UV Max</div><div class="wh-detail-val">'+fd.uvMax+'</div></div>':'')
+        +(windVal?'<div><div class="wh-detail-lbl">Wind</div><div class="wh-detail-val">'+windVal+'</div></div>':'')
+        +'</div>'
         +'</div>';
     }
     wc.innerHTML=
@@ -1483,11 +1488,8 @@ function renderWeatherCard(){
         +'<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer;user-select:none;margin-bottom:0">'+cityName+' ▲</div>'
         +'<div>'+changeBtn+resetBtn+'</div>'
       +'</div>'
-      +'<div style="display:flex;align-items:baseline;gap:12px">'
-        +'<div class="wh-temp">'+d.temp+'°</div>'
-        +'<div style="font-size:22px;line-height:1">'+(d.icon||'')+'</div>'
-      +'</div>'
-      +'<div class="wh-cond">'+d.cond+'</div>'
+      +'<div class="wh-temp">'+d.temp+'°</div>'
+      +'<div class="wh-cond">'+(d.icon?d.icon+' ':'')+d.cond+'</div>'
       +'<div class="wh-sub">'+(d.high&&d.low?'H: '+d.high+'°  L: '+d.low+'°':'')+'</div>'
       +'<div class="wh-divider"></div>'
       +grid
