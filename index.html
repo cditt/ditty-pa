@@ -93,6 +93,12 @@ input,textarea{font-family:var(--font);}
 .wh-day-rain{font-size:10px;color:#6bbfff;margin-top:2px;}
 .wh-alert{background:#2a1010;border:1px solid var(--danger);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--danger);font-weight:600;}
 .wh-loading{color:var(--t2);font-size:16px;padding:16px 0;}
+.wh-day.sel{background:var(--s2);}
+.wh-detail{background:var(--s2);border-radius:12px;padding:14px 16px;margin-top:10px;font-size:13px;line-height:1.6;}
+.wh-detail-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;}
+.wh-detail-val{font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;}
+.wh-city-btn{font-size:11px;font-weight:700;color:var(--t2);cursor:pointer;text-decoration:underline;margin-left:10px;}
+.wh-city-btn:hover{color:var(--accent);}
 
 /* HOME CARDS */
 .hcard{background:var(--s1);border:1px solid #2a2a2a;border-radius:var(--rl);padding:20px 20px;margin-bottom:14px;}
@@ -612,6 +618,9 @@ function round4(n){return Math.round(n*10000)/10000;}
 prepareLedger();
 var weatherOpen=localStorage.getItem('dpa_wxOpen')==='true';
 var weatherData=null;
+var _wxc=localStorage.getItem('dpa_wxCity');var weatherCity=_wxc?JSON.parse(_wxc):null; // null = default Martinsville
+var wxForecastDays=[]; // stores daily forecast objects for tap-expand
+var wxSelDay=null; // index of tapped forecast day (0-4), null = none
 var calOpen=localStorage.getItem('dpa_calOpen')==='true';
 var calSummary=null;
 var priOpen=localStorage.getItem('dpa_priOpen')==='true';
@@ -1442,37 +1451,53 @@ function renderWeatherCard(){
   var wc=document.getElementById('weather-card');if(!wc)return;
   if(!weatherData){wc.innerHTML='<div class="wh-loading">Loading weather...</div>';return;}
   var d=weatherData;
+  var cityName=(d.city||'').toUpperCase().split(',')[0]; // 'MARTINSVILLE'
+  var changeBtn='<span class="wh-city-btn" onclick="promptChangeCity()">Change City</span>';
+  var resetBtn=d.isCustom?'<span class="wh-city-btn" onclick="resetWeatherCity()" style="color:var(--t3)">Reset to Martinsville</span>':'';
   if(weatherOpen){
-    function stat(lbl,val){return val?'<div class="wh-stat"><div class="wh-stat-lbl">'+lbl+'</div><div class="wh-stat-val">'+val+'</div></div>':''}
-    var rainChance=(d.precipMax&&d.precipMax[0]!=null)?d.precipMax[0]+'%':'';
+    function stat(lbl,val){return val!=null&&val!==''?'<div class="wh-stat"><div class="wh-stat-lbl">'+lbl+'</div><div class="wh-stat-val">'+val+'</div></div>':''}
+    var rainChance=(d.precipMax&&d.precipMax[0]!=null)?d.precipMax[0]+'%':null;
     var grid='<div class="wh-grid">'
-      +stat('Feels Like',d.feelsLike?d.feelsLike+'°':'')
-      +stat('High / Low',(d.high&&d.low)?d.high+'° / '+d.low+'°':'')
-      +stat('Rain',rainChance)
+      +stat('Feels Like',d.feelsLike?d.feelsLike+'\xc2\xb0':null)
+      +stat('High / Low',(d.high&&d.low)?d.high+'\xc2\xb0 / '+d.low+'\xc2\xb0':null)
+      +stat('Rain Today',rainChance!==null?rainChance:null)
       +stat('Humidity',d.humidity)
       +stat('Wind',d.wind)
+      +stat('UV Index',d.uv)
       +stat('Sunrise',d.sunrise)
       +stat('Sunset',d.sunset)
     +'</div>';
-    var rainRow='';
-    if(d.rain&&d.rain.indexOf('No rain')===-1)rainRow='<div style="font-size:13px;font-weight:600;color:#6bbfff;margin-bottom:12px">🌧 '+d.rain+'</div>';
+    // Forecast day detail panel
+    var detailPanel='';
+    if(wxSelDay!==null&&wxForecastDays[wxSelDay]){
+      var fd=wxForecastDays[wxSelDay];
+      detailPanel='<div class="wh-detail">'
+        +'<div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">'+fd.dayLabel+' \xe2\x80\x94 '+fd.high+'\xc2\xb0 / '+fd.low+'\xc2\xb0'+(fd.rp!=null?' \xc2\xb7 '+fd.rp+'% rain':'')+'</div>'
+        +'<div class="wh-detail-lbl">Daytime</div><div class="wh-detail-val">'+(fd.dayIcon?fd.dayIcon+' ':'')+fd.dayCond+'</div>'
+        +'<div class="wh-detail-lbl">Evening</div><div class="wh-detail-val">'+(fd.nightIcon?fd.nightIcon+' ':'')+fd.nightCond+'</div>'
+        +(fd.uvMax!=null?'<div class="wh-detail-lbl">UV Index (max)</div><div class="wh-detail-val">'+fd.uvMax+'</div>':'')
+        +'</div>';
+    }
     wc.innerHTML=
-      '<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer;user-select:none">'+d.loc+' ▲</div>'
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+        +'<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer;user-select:none;margin-bottom:0">'+cityName+' \xe2\x96\xb2</div>'
+        +'<div>'+changeBtn+resetBtn+'</div>'
+      +'</div>'
       +'<div style="display:flex;align-items:baseline;gap:12px">'
-        +'<div class="wh-temp">'+d.temp+'°</div>'
+        +'<div class="wh-temp">'+d.temp+'\xc2\xb0</div>'
         +'<div style="font-size:22px;line-height:1">'+(d.icon||'')+'</div>'
       +'</div>'
       +'<div class="wh-cond">'+d.cond+'</div>'
-      +'<div class="wh-sub">'+(d.high&&d.low?'H: '+d.high+'°  L: '+d.low+'°':'')+'</div>'
+      +'<div class="wh-sub">'+(d.high&&d.low?'H: '+d.high+'\xc2\xb0  L: '+d.low+'\xc2\xb0':'')+'</div>'
       +'<div class="wh-divider"></div>'
       +grid
-      +rainRow
       +'<div class="wh-divider"></div>'
-      +'<div class="wh-row">'+d.fhtml+'</div>';
+      +'<div class="wh-row">'+d.fhtml+'</div>'
+      +detailPanel;
   }else{
     wc.innerHTML='<div onclick="toggleWeather()" style="cursor:pointer;user-select:none;padding:4px 0">'
-      +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Weather ▼</span>'
-      +'<span style="font-size:15px;font-weight:600;color:var(--text)">'+d.temp+'° '+d.cond+'</span>'
+      +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Weather \xe2\x96\xbc</span>'
+      +'<span style="font-size:15px;font-weight:600;color:var(--text)">'+d.temp+'\xc2\xb0 '+(d.icon?d.icon+' ':'')+d.cond+'</span>'
       +'</div>';
   }
 }
@@ -1862,7 +1887,9 @@ function loadFatJourney(){
 }
 
 
-var WX_URL='https://api.open-meteo.com/v1/forecast?latitude=39.4278&longitude=-86.4283&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&hourly=precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FIndiana%2FIndianapolis&forecast_days=5';
+var WX_URL_BASE='https://api.open-meteo.com/v1/forecast';
+var WX_PARAMS='&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max,uv_index_max&hourly=precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FIndiana%2FIndianapolis&forecast_days=5';
+var WX_DEFAULT={lat:'39.4278',lon:'-86.4283',city:'Martinsville, IN'};
 
 function wxCode(code){
   if(code===0)return{c:'Clear',i:'\u2600\ufe0f'};
@@ -1905,38 +1932,106 @@ function wxRain(hourly){
   }catch(e){return'';}
 }
 
+function wxBuildUrl(lat,lon){
+  return WX_URL_BASE+'?latitude='+lat+'&longitude='+lon+WX_PARAMS;
+}
+
+function wxGeocode(query,cb){
+  var url='https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(query.trim())+'&count=1&language=en&format=json';
+  fetch(url).then(function(r){return r.json();})
+    .then(function(d){
+      if(d.results&&d.results.length){
+        var r=d.results[0];
+        cb(null,{lat:r.latitude+'',lon:r.longitude+'',city:r.name+(r.admin1?', '+r.admin1:'')});
+      }else{cb('Location not found');}
+    }).catch(function(){cb('Geocode failed');});
+}
+
+function promptChangeCity(){
+  var q=window.prompt('Enter city name or ZIP code:');
+  if(!q||!q.trim())return;
+  var wc=document.getElementById('weather-card');
+  if(wc)wc.innerHTML='<div class="wh-loading">Looking up location...</div>';
+  wxGeocode(q,function(err,loc){
+    if(err){alert('Could not find that location. Try a different city or ZIP.');fetchWeather();return;}
+    weatherCity=loc;
+    localStorage.setItem('dpa_wxCity',JSON.stringify(loc));
+    wxSelDay=null;
+    fetchWeather();
+  });
+}
+
+function resetWeatherCity(){
+  weatherCity=null;
+  localStorage.removeItem('dpa_wxCity');
+  wxSelDay=null;
+  fetchWeather();
+}
+
+function wxTapDay(idx){
+  wxSelDay=(wxSelDay===idx)?null:idx;
+  renderWeatherCard();
+}
+
 function fetchWeather(){
-  return fetch(WX_URL)
+  var loc=weatherCity||WX_DEFAULT;
+  if(typeof loc==='string'){try{loc=JSON.parse(loc);}catch(e){loc=WX_DEFAULT;}}
+  return fetch(wxBuildUrl(loc.lat,loc.lon))
     .then(function(r){return r.json();})
     .then(function(d){
       var cur=d.current;var daily=d.daily;var hourly=d.hourly;
       var wx=wxCode(cur.weather_code);
       var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      var fhtml=daily.time.slice(1,6).map(function(t,i){
-        var fi=wxCode(daily.weather_code[i+1]);
-        var day=days[new Date(t+'T12:00:00').getDay()];
-        var rp=(daily.precipitation_probability_max&&daily.precipitation_probability_max[i+1]!=null)?daily.precipitation_probability_max[i+1]:null;
-        var rainBit=rp!==null&&rp>=20?'<div class="wh-day-rain">'+rp+'%</div>':'';
-        return'<div class="wh-day"><div class="wh-day-name">'+day+'</div><div class="wh-day-icon">'+fi.i+'</div><div class="wh-day-temp">'+Math.round(daily.temperature_2m_max[i+1])+'\u00b0</div><div class="wh-day-low">'+Math.round(daily.temperature_2m_min[i+1])+'\u00b0</div>'+rainBit+'</div>';
+      // Build full daily forecast array (index 0 = today)
+      wxForecastDays=daily.time.map(function(t,i){
+        var fi=wxCode(daily.weather_code[i]);
+        var dayLabel=days[new Date(t+'T12:00:00').getDay()];
+        var dayCode=null,nightCode=null;
+        if(hourly&&hourly.time){
+          for(var h=0;h<hourly.time.length;h++){
+            if(hourly.time[h]===t+'T12:00')dayCode=hourly.weather_code[h];
+            if(hourly.time[h]===t+'T21:00')nightCode=hourly.weather_code[h];
+          }
+        }
+        var rp=(daily.precipitation_probability_max&&daily.precipitation_probability_max[i]!=null)?daily.precipitation_probability_max[i]:null;
+        return{
+          date:t,dayLabel:dayLabel,icon:fi.i,cond:fi.c,
+          high:Math.round(daily.temperature_2m_max[i]),
+          low:Math.round(daily.temperature_2m_min[i]),
+          rp:rp,
+          dayCond:dayCode!==null?wxCode(dayCode).c:'Description unavailable',
+          dayIcon:dayCode!==null?wxCode(dayCode).i:'',
+          nightCond:nightCode!==null?wxCode(nightCode).c:'Description unavailable',
+          nightIcon:nightCode!==null?wxCode(nightCode).i:'',
+          uvMax:(daily.uv_index_max&&daily.uv_index_max[i]!=null)?Math.round(daily.uv_index_max[i]):null
+        };
+      });
+      // fhtml: days 1-5
+      var fhtml=wxForecastDays.slice(1,6).map(function(fd,i){
+        var idx=i+1;
+        var rainBit=fd.rp!==null&&fd.rp>=20?'<div class="wh-day-rain">'+fd.rp+'%</div>':'';
+        return'<div class="wh-day" id="wxday-'+idx+'" onclick="wxTapDay('+idx+')">'+'<div class="wh-day-name">'+fd.dayLabel+'</div><div class="wh-day-icon">'+fd.icon+'</div><div class="wh-day-temp">'+fd.high+'\u00b0</div><div class="wh-day-low">'+fd.low+'\u00b0</div>'+rainBit+'</div>';
       }).join('');
-      var sunriseRaw=daily.sunrise[0];var sunsetRaw=daily.sunset[0];
       var fmtTime=function(iso){try{return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}catch(e){return iso;}};
+      var today=wxForecastDays[0];
       weatherData={
-        loc:'Martinsville, IN 46151',
+        city:loc.city,
+        isCustom:!!(weatherCity),
         temp:Math.round(cur.temperature_2m)+'',
         cond:wx.c,
         icon:wx.i,
         feelsLike:Math.round(cur.apparent_temperature)+'',
-        high:Math.round(daily.temperature_2m_max[0])+'',
-        low:Math.round(daily.temperature_2m_min[0])+'',
+        high:today.high+'',
+        low:today.low+'',
         humidity:cur.relative_humidity_2m+'%',
         wind:wxDir(cur.wind_direction_10m)+' '+Math.round(cur.wind_speed_10m)+' mph',
-        sunrise:fmtTime(sunriseRaw),
-        sunset:fmtTime(sunsetRaw),
-        rain:wxRain(hourly),
+        sunrise:fmtTime(daily.sunrise[0]),
+        sunset:fmtTime(daily.sunset[0]),
+        uv:(cur.uv_index!=null)?Math.round(cur.uv_index)+'':null,
         precipMax:daily.precipitation_probability_max||[],
         fhtml:fhtml
       };
+      wxSelDay=null;
       renderWeatherCard();
       clearOffline('weather');
     })
@@ -1946,7 +2041,6 @@ function fetchWeather(){
       setOffline('weather');
     });
 }
-
 window.onload=boot;
 </script>
 </body>
