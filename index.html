@@ -1652,11 +1652,16 @@ function togglePT(i){
 
 
 function fetchFatJourney(){
-  var fjKey=null;try{fjKey=JSON.parse(localStorage.getItem('ditty_v3')||'{}').jsonbinKey||null;}catch(e){}
-  if(!fjKey)return Promise.resolve({_noKey:true});
-  return fetch('https://api.jsonbin.io/v3/b/'+JSONBIN_ID+'/latest',{headers:{'X-Master-Key':fjKey}})
-    .then(function(r){return r.json();})
-    .then(function(d){return d.record?(d.record.ditty_v3||d.record):null;})
+  // Key lives in Cloudflare Worker secret JSONBIN_KEY -- never in client localStorage
+  return fetch(PROXY+'/fatjourney')
+    .then(function(r){
+      if(r.status===503)return {_noKey:true};
+      return r.json();
+    })
+    .then(function(d){
+      if(!d||d._noKey)return {_noKey:true};
+      return d;
+    })
     .catch(function(){return null;});
 }
 
