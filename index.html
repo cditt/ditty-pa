@@ -74,7 +74,7 @@ input,textarea{font-family:var(--font);}
 
 /* WEATHER HERO */
 .weather-hero{background:linear-gradient(135deg,#0a1540 0%,#0d1a60 60%,#081230 100%);border:1px solid #1e3080;border-radius:var(--rl);padding:28px 22px 24px;margin-bottom:16px;position:relative;overflow:hidden;}
-.weather-hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(204,30,30,.08);}
+.weather-hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(204,30,30,.08);pointer-events:none;}
 .wh-loc{font-size:11px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;}
 .wh-temp{font-size:64px;font-weight:900;color:var(--text);line-height:1;letter-spacing:-3px;}
 .wh-cond{font-size:17px;color:var(--text);font-weight:600;margin:4px 0 2px;}
@@ -97,7 +97,7 @@ input,textarea{font-family:var(--font);}
 .wh-detail{background:var(--s2);border-radius:12px;padding:14px 16px;margin-top:10px;font-size:13px;line-height:1.6;}
 .wh-detail-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;}
 .wh-detail-val{font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;}
-.wh-city-btn{font-size:11px;font-weight:700;color:var(--t2);cursor:pointer;text-decoration:underline;margin-left:10px;}
+.wh-city-btn{font-size:11px;font-weight:700;color:var(--t2);cursor:pointer;text-decoration:underline;margin-left:10px;position:relative;z-index:2;pointer-events:auto;}
 .wh-city-btn:hover{color:var(--accent);}
 
 /* HOME CARDS */
