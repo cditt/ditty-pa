@@ -1,4 +1,4 @@
-var VERSION = 'ditty-pa-v4.7';
+var VERSION = 'ditty-pa-v4.8';
 var CACHE = 'ditty-pa-' + VERSION;
 var SHELL = [
   '/ditty-pa/index.html',
