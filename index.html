@@ -1948,17 +1948,51 @@ function wxGeocode(query,cb){
 }
 
 function promptChangeCity(){
-  var q=window.prompt('Enter city name or ZIP code:');
-  if(!q||!q.trim())return;
-  var wc=document.getElementById('weather-card');
-  if(wc)wc.innerHTML='<div class="wh-loading">Looking up location...</div>';
-  wxGeocode(q,function(err,loc){
-    if(err){alert('Could not find that location. Try a different city or ZIP.');fetchWeather();return;}
+  // window.prompt is blocked in PWA standalone mode on Android.
+  // Inject an inline input form into the weather card instead.
+  var wc=document.getElementById('weather-card');if(!wc)return;
+  wc.insertAdjacentHTML('afterbegin',
+    '<div id="wx-city-form" style="position:relative;z-index:10;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;">'
+    +'<div style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Change Location</div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<input id="wx-city-inp" type="text" placeholder="City or ZIP..." autocomplete="off" '
+    +'style="flex:1;background:var(--s2);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:15px;outline:none;font-family:var(--font)" '
+    +'onkeydown="if(event.key===\'Enter\')wxSubmitCity()">'
+    +'<button onclick="wxSubmitCity()" style="background:var(--accent);color:#000;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font)">Go</button>'
+    +'<button onclick="wxCancelCity()" style="background:var(--s2);color:var(--t2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;cursor:pointer;font-family:var(--font)">X</button>'
+    +'</div>'
+    +'<div id="wx-city-err" style="font-size:12px;color:var(--danger);margin-top:6px;display:none">Location not found. Try again.</div>'
+    +'</div>'
+  );
+  var inp=document.getElementById('wx-city-inp');
+  if(inp)setTimeout(function(){inp.focus();},80);
+}
+
+function wxSubmitCity(){
+  var inp=document.getElementById('wx-city-inp');
+  var q=inp?inp.value.trim():'';
+  if(!q)return;
+  var err=document.getElementById('wx-city-err');
+  if(err)err.style.display='none';
+  inp.disabled=true;
+  wxGeocode(q,function(e,loc){
+    if(e){
+      if(err)err.style.display='block';
+      if(inp)inp.disabled=false;
+      return;
+    }
+    var form=document.getElementById('wx-city-form');
+    if(form)form.remove();
     weatherCity=loc;
     localStorage.setItem('dpa_wxCity',JSON.stringify(loc));
     wxSelDay=null;
     fetchWeather();
   });
+}
+
+function wxCancelCity(){
+  var form=document.getElementById('wx-city-form');
+  if(form)form.remove();
 }
 
 function resetWeatherCity(){
