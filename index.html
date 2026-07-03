@@ -1389,7 +1389,13 @@ function fmtShares(n){
 function buildPortfolioRows(stocks){
   var totalDayChange=0;
   stocks.forEach(function(s){lastStockData[s.ticker]=s;});
-  var rows=POSITIONS.map(function(pos){
+  // Sort by market value (shares x price) descending
+  var sorted=POSITIONS.slice().sort(function(a,b){
+    var mva=(lastStockData[a.ticker]&&lastStockData[a.ticker].price||0)*a.shares;
+    var mvb=(lastStockData[b.ticker]&&lastStockData[b.ticker].price||0)*b.shares;
+    return mvb-mva;
+  });
+  var rows=sorted.map(function(pos){
     var s=lastStockData[pos.ticker]||{price:0,change:0,percent:0};
     var isUp=(s.change||0)>=0;
     totalDayChange=round2(totalDayChange+(s.change||0)*pos.shares);
@@ -1406,7 +1412,7 @@ function buildPortfolioRows(stocks){
       +'<div class="port-right">'
         +'<div class="port-price">'+priceStr+'</div>'
         +'<div class="port-chg">'+chgStr+'</div>'
-        +'<div style="font-size:11px;font-weight:600;color:'+(isUp?'var(--ok)':'var(--danger)')+'">'+pctStr+'</div>'
+        +'<div class="port-chg" style="font-size:11px;font-weight:600">'+pctStr+'</div>'
       +'</div>'
       +'</div>';
   }).join('');
