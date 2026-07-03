@@ -1458,8 +1458,8 @@ function renderWeatherCard(){
     function stat(lbl,val){return val!=null&&val!==''?'<div class="wh-stat"><div class="wh-stat-lbl">'+lbl+'</div><div class="wh-stat-val">'+val+'</div></div>':''}
     var rainChance=(d.precipMax&&d.precipMax[0]!=null)?d.precipMax[0]+'%':null;
     var grid='<div class="wh-grid">'
-      +stat('Feels Like',d.feelsLike?d.feelsLike+'\xc2\xb0':null)
-      +stat('High / Low',(d.high&&d.low)?d.high+'\xc2\xb0 / '+d.low+'\xc2\xb0':null)
+      +stat('Feels Like',d.feelsLike?d.feelsLike+'°':null)
+      +stat('High / Low',(d.high&&d.low)?d.high+'° / '+d.low+'°':null)
       +stat('Rain Today',rainChance!==null?rainChance:null)
       +stat('Humidity',d.humidity)
       +stat('Wind',d.wind)
@@ -1472,7 +1472,7 @@ function renderWeatherCard(){
     if(wxSelDay!==null&&wxForecastDays[wxSelDay]){
       var fd=wxForecastDays[wxSelDay];
       detailPanel='<div class="wh-detail">'
-        +'<div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">'+fd.dayLabel+' \xe2\x80\x94 '+fd.high+'\xc2\xb0 / '+fd.low+'\xc2\xb0'+(fd.rp!=null?' \xc2\xb7 '+fd.rp+'% rain':'')+'</div>'
+        +'<div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">'+fd.dayLabel+' — '+fd.high+'° / '+fd.low+'°'+(fd.rp!=null?' · '+fd.rp+'% rain':'')+'</div>'
         +'<div class="wh-detail-lbl">Daytime</div><div class="wh-detail-val">'+(fd.dayIcon?fd.dayIcon+' ':'')+fd.dayCond+'</div>'
         +'<div class="wh-detail-lbl">Evening</div><div class="wh-detail-val">'+(fd.nightIcon?fd.nightIcon+' ':'')+fd.nightCond+'</div>'
         +(fd.uvMax!=null?'<div class="wh-detail-lbl">UV Index (max)</div><div class="wh-detail-val">'+fd.uvMax+'</div>':'')
@@ -1480,15 +1480,15 @@ function renderWeatherCard(){
     }
     wc.innerHTML=
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-        +'<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer;user-select:none;margin-bottom:0">'+cityName+' \xe2\x96\xb2</div>'
+        +'<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer;user-select:none;margin-bottom:0">'+cityName+' ▲</div>'
         +'<div>'+changeBtn+resetBtn+'</div>'
       +'</div>'
       +'<div style="display:flex;align-items:baseline;gap:12px">'
-        +'<div class="wh-temp">'+d.temp+'\xc2\xb0</div>'
+        +'<div class="wh-temp">'+d.temp+'°</div>'
         +'<div style="font-size:22px;line-height:1">'+(d.icon||'')+'</div>'
       +'</div>'
       +'<div class="wh-cond">'+d.cond+'</div>'
-      +'<div class="wh-sub">'+(d.high&&d.low?'H: '+d.high+'\xc2\xb0  L: '+d.low+'\xc2\xb0':'')+'</div>'
+      +'<div class="wh-sub">'+(d.high&&d.low?'H: '+d.high+'°  L: '+d.low+'°':'')+'</div>'
       +'<div class="wh-divider"></div>'
       +grid
       +'<div class="wh-divider"></div>'
@@ -1496,8 +1496,8 @@ function renderWeatherCard(){
       +detailPanel;
   }else{
     wc.innerHTML='<div onclick="toggleWeather()" style="cursor:pointer;user-select:none;padding:4px 0">'
-      +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Weather \xe2\x96\xbc</span>'
-      +'<span style="font-size:15px;font-weight:600;color:var(--text)">'+d.temp+'\xc2\xb0 '+(d.icon?d.icon+' ':'')+d.cond+'</span>'
+      +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Weather ▼</span>'
+      +'<span style="font-size:15px;font-weight:600;color:var(--text)">'+d.temp+'° '+(d.icon?d.icon+' ':'')+d.cond+'</span>'
       +'</div>';
   }
 }
@@ -1799,7 +1799,7 @@ function renderFarmTasks(){
     var done=item.done;
     var ck='<div onclick="toggleFarmItem('+idx+')" class="task-chk'+(done?' on':'')+'"></div>';
     var txt='<div class="task-body"><div class="task-title'+(done?' done':'')+'">'+item.text+'</div></div>';
-    var del='<div onclick="deleteFarmItem('+idx+')" style="color:var(--t3);font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0" title="Delete">\xc3\x97</div>';
+    var del='<div onclick="deleteFarmItem('+idx+')" style="color:var(--t3);font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0" title="Delete">×</div>';
     return'<div class="task-item">'+ck+txt+del+'</div>';
   }).join('');
   var addBtn='<button onclick="addFarmItem()" class="add-btn" style="width:100%;margin:10px 0 0">+ Add Farm Check</button>';
