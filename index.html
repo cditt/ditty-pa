@@ -2304,7 +2304,15 @@ function adSubmit(){
   var confirmArea=document.getElementById('ad-confirm-area');
   if(!txtel)return;
   var raw=txtel.value.trim();
-  if(!raw)return;
+  if(!raw){
+    var ca=document.getElementById('ad-confirm-area');
+    var cl=document.getElementById('ad-clarify-area');
+    var st=document.getElementById('ad-status');
+    if(ca)ca.innerHTML='';
+    if(cl)cl.innerHTML='';
+    if(st){st.textContent='Type something for Ditty first.';st.style.color='var(--t2)';}
+    return;
+  }
   var clarifyInp=document.getElementById('ad-clarify-inp');
   var clarifyAnswer=(clarifyInp&&clarifyInp.value.trim())?clarifyInp.value.trim():null;
   if(!clarifyAnswer)AD_RAW_TEXT=raw;
