@@ -321,12 +321,16 @@ input,textarea{font-family:var(--font);}
         <div id="h-updated" style="font-size:12px;color:var(--t3);margin-bottom:16px;margin-top:-18px;"></div>
 
         <div class="hcard" id="ask-ditty-card">
-          <div class="hcard-label" style="margin-bottom:10px">Ask Ditty</div>
-          <textarea id="ad-txt" class="ad-input" rows="2" placeholder="Remind me in 3 months to check the furnace filter..."></textarea>
-          <div id="ad-clarify-area"></div>
-          <div id="ad-confirm-area"></div>
-          <button class="ad-btn" id="ad-submit-btn" onclick="adSubmit()">Do It</button>
-          <div id="ad-status" class="ad-status"></div>
+          <div onclick="toggleAskDitty()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Ask Ditty</span><span id="ad-chevron" style="font-size:13px;color:var(--t2)">&#9660;</span></div>
+          <div id="ad-body" style="display:none">
+            <div style="margin-top:10px">
+              <textarea id="ad-txt" class="ad-input" rows="2" placeholder="Remind me in 3 months to check the furnace filter..."></textarea>
+              <div id="ad-clarify-area"></div>
+              <div id="ad-confirm-area"></div>
+              <button class="ad-btn" id="ad-submit-btn" onclick="adSubmit()">Do It</button>
+              <div id="ad-status" class="ad-status"></div>
+            </div>
+          </div>
         </div>
 
         <div class="hcard" id="priorities-card">
@@ -703,7 +707,7 @@ function checkOAuth(){
 }
 
 function bootApp(){
-  updateG();setGreeting();renderFarmTasks();renderPersonalTasks();renderMedCard();
+  updateG();setGreeting();renderFarmTasks();renderPersonalTasks();renderMedCard();initAskDitty();
   loadHome();loadCal();loadMail();loadFatJourney();
   startMidnightWatch();
 }
@@ -940,6 +944,14 @@ function toast(msg){
 
 function callClaude(prompt,cb){
   fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:3}],messages:[{role:'user',content:prompt}]})})
+    .then(function(r){return r.json();})
+    .then(function(d){var t='';if(d.content)d.content.forEach(function(c){if(c.type==='text')t+=c.text;});cb(t);})
+    .catch(function(e){cb('Error: '+e.message);});
+}
+// callClaudeJSON: no web search tools -- guarantees a plain text/JSON response.
+// Use for structured JSON generation where tool calls would break parsing.
+function callClaudeJSON(prompt,cb){
+  fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})})
     .then(function(r){return r.json();})
     .then(function(d){var t='';if(d.content)d.content.forEach(function(c){if(c.type==='text')t+=c.text;});cb(t);})
     .catch(function(e){cb('Error: '+e.message);});
@@ -2170,7 +2182,7 @@ function dittyRoute(text,clarifyAnswer,onStatus){
     +'If confidence < 95 set clarifyQuestion to ONE short question string\n'
     +'Always return valid JSON';
 
-  callClaude(prompt,function(resp){
+  callClaudeJSON(prompt,function(resp){
     var parsed=null;
     try{
       var clean=resp.replace(/```json|```/g,'').trim();
@@ -2215,6 +2227,19 @@ function adShowConfirm(c){
     +'<div class="ad-confirm-lbl">Repeats</div><div class="ad-confirm-val">'+repeatsDisplay+'</div>'
     +'<div class="ad-confirm-lbl">Calendar</div><div class="ad-confirm-val">'+c.calendar+'</div>'
     +'</div>';
+}
+
+var adOpen=localStorage.getItem('dpa_adOpen')=='true';
+function initAskDitty(){
+  var body=document.getElementById('ad-body');
+  var chev=document.getElementById('ad-chevron');
+  if(body)body.style.display=adOpen?'block':'none';
+  if(chev)chev.innerHTML=adOpen?'&#9650;':'&#9660;';
+}
+function toggleAskDitty(){
+  adOpen=!adOpen;
+  localStorage.setItem('dpa_adOpen',adOpen);
+  initAskDitty();
 }
 
 function adSubmit(){
