@@ -401,7 +401,7 @@ input,textarea{font-family:var(--font);}
     <div class="screen" id="scr-cal">
       <div class="screen-header">
         <div class="sh-title">Calendar</div>
-        <div class="sh-sub" id="cal-sub">Next 48 hours</div>
+        <div class="sh-sub" id="cal-sub">Next 7 days</div>
       </div>
       <div id="cal-content">
         <div class="spin-wrap"><div class="spinner"></div><div class="spin-txt">Fetching calendar...</div></div>
@@ -754,7 +754,7 @@ function setGreeting(){
   var de=document.getElementById('h-date');
   if(de)de.textContent=days[n.getDay()]+', '+mons[n.getMonth()]+' '+n.getDate()+', '+n.getFullYear();
   var cs=document.getElementById('cal-sub');
-  if(cs)cs.textContent=days[n.getDay()]+' + next 48 hrs';
+  if(cs)cs.textContent=days[n.getDay()]+' + next 7 days';
 }
 
 function nav(scr){
@@ -1098,27 +1098,41 @@ function applyCalData(data){
   renderCalCard();
   // Update Calendar screen
   var el=document.getElementById('cal-content');if(!el)return;
-  if(!data||!data.items||!data.items.length){el.innerHTML='<div class="cal-empty">No events in the next 48 hours</div>';return;}
+  if(!data||!data.items||!data.items.length){el.innerHTML='<div class="cal-empty">No events in the next 7 days</div>';return;}
   var deduped2=dedupCalItems(data.items);
   var now=new Date();
-  var todayEnd=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59);
-  var today=[],tmrw=[];
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Local calendar-day bucket for an event (handles all-day date-only values
+  // the same way evSortTime does in fetchCal, so grouping matches sort order).
+  function dayMidOf(e){
+    if(e.start.dateTime){var d=new Date(e.start.dateTime);return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+    var parts=(e.start.date||'').split('-');
+    if(parts.length===3)return new Date(+parts[0],+parts[1]-1,+parts[2]);
+    return new Date(e.start.date);
+  }
+  var groups=[],order=[];
   deduped2.forEach(function(e){
-    var st=new Date(e.start.dateTime||e.start.date);
-    if(st<=todayEnd)today.push(e);else tmrw.push(e);
+    var mid=dayMidOf(e),key=mid.getTime();
+    var idx=order.indexOf(key);
+    if(idx===-1){order.push(key);groups.push({mid:mid,events:[]});idx=order.length-1;}
+    groups[idx].events.push(e);
   });
-  function renderDay(evts,label){
-    if(!evts.length)return'';
-    return'<div class="cal-day"><div class="cal-day-label">'+label+'</div>'+evts.map(function(e){
+  var todayMid=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var tomorrowMid=new Date(todayMid.getTime()+86400000);
+  function renderDay(g){
+    var lbl;
+    if(g.mid.getTime()===todayMid.getTime())lbl='Today';
+    else if(g.mid.getTime()===tomorrowMid.getTime())lbl='Tomorrow';
+    else lbl=days[g.mid.getDay()]+' · '+mons[g.mid.getMonth()]+' '+g.mid.getDate();
+    return'<div class="cal-day"><div class="cal-day-label">'+lbl+'</div>'+g.events.map(function(e){
       var st=e.start.dateTime||e.start.date;var dt=new Date(st);
       var t=e.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
       var calLbl=e._calName?'<div style="font-size:11px;color:var(--accent);margin-top:2px;font-weight:700;text-transform:uppercase;letter-spacing:.3px">'+e._calName+'</div>':'';
       return'<div class="cal-event"><div class="cal-time">'+t+'</div><div class="cal-title">'+e.summary+'</div>'+calLbl+'</div>';
     }).join('')+'</div>';
   }
-  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var tomorrow=new Date(now.getTime()+86400000);
-  el.innerHTML=renderDay(today,'Today')+renderDay(tmrw,days[tomorrow.getDay()]+' · Tomorrow');
+  el.innerHTML=groups.map(renderDay).join('');
 }
 function refreshCalendar(){
   fetchCal().then(function(data){applyCalData(data);});
