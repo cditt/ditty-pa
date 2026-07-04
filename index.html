@@ -2299,27 +2299,24 @@ function toggleAskDitty(){
 }
 
 function adSubmit(){
-  var txtel=document.getElementById('ad-txt');
-  var clarifyArea=document.getElementById('ad-clarify-area');
   var confirmArea=document.getElementById('ad-confirm-area');
+  var clarifyArea=document.getElementById('ad-clarify-area');
+  var statusEl=document.getElementById('ad-status');
+  if(confirmArea)confirmArea.innerHTML='';
+  if(clarifyArea)clarifyArea.innerHTML='';
+  if(statusEl){statusEl.textContent='';statusEl.style.color='var(--t2)';}
+  var txtel=document.getElementById('ad-txt');
   if(!txtel)return;
   var raw=txtel.value.trim();
   if(!raw){
-    var ca=document.getElementById('ad-confirm-area');
-    var cl=document.getElementById('ad-clarify-area');
-    var st=document.getElementById('ad-status');
-    if(ca)ca.innerHTML='';
-    if(cl)cl.innerHTML='';
-    if(st){st.textContent='Type something for Ditty first.';st.style.color='var(--t2)';}
+    if(statusEl)statusEl.textContent='Type something for Ditty first.';
     return;
   }
   var clarifyInp=document.getElementById('ad-clarify-inp');
   var clarifyAnswer=(clarifyInp&&clarifyInp.value.trim())?clarifyInp.value.trim():null;
   if(!clarifyAnswer)AD_RAW_TEXT=raw;
-  adSetStatus('Thinking...',false);
+  if(statusEl){statusEl.textContent='Thinking...';}
   document.getElementById('ad-submit-btn').disabled=true;
-  if(clarifyArea)clarifyArea.innerHTML='';
-  if(confirmArea)confirmArea.innerHTML='';
 
   dittyRoute(AD_RAW_TEXT,clarifyAnswer,function(result){
     document.getElementById('ad-submit-btn').disabled=false;
@@ -2342,9 +2339,7 @@ function adSubmit(){
     if(result.ok){
       adHistoryLog(AD_RAW_TEXT,result._intent||'calendar','success');
       if(txtel)txtel.value='';
-      if(clarifyArea)clarifyArea.innerHTML='';
       AD_RAW_TEXT='';
-      adClearStatus();
       // Show confirmation card -- stays visible until next submission
       if(result.confirm)adShowConfirm(result.confirm);
     }else if(result.stub){
