@@ -95,6 +95,11 @@ input,textarea{font-family:var(--font);}
 .wh-loading{color:var(--t2);font-size:16px;padding:16px 0;}
 .ad-input{width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-size:16px;outline:none;resize:none;font-family:var(--font);line-height:1.4;box-sizing:border-box;}
 .ad-input:focus{border-color:var(--accent);}
+.ad-suggest-wrap{position:relative;}
+.ad-suggest{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--s2);border:1.5px solid var(--border);border-radius:10px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;}
+.ad-suggest-item{padding:10px 14px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);}
+.ad-suggest-item:last-child{border-bottom:none;}
+.ad-suggest-item.active{background:var(--s3);color:var(--accent);}
 .ad-btn{width:100%;height:46px;border-radius:10px;background:var(--accent);color:#000;font-size:15px;font-weight:800;border:none;cursor:pointer;font-family:var(--font);margin-top:10px;}
 .ad-btn:active{opacity:.8;}
 .ad-clarify{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:10px;}
@@ -324,7 +329,10 @@ input,textarea{font-family:var(--font);}
           <div onclick="toggleAskDitty()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Ask Ditty</span><span id="ad-chevron" style="font-size:13px;color:var(--t2)">&#9660;</span></div>
           <div id="ad-body" style="display:none">
             <div style="margin-top:10px">
-              <textarea id="ad-txt" class="ad-input" rows="2" placeholder="Remind me in 3 months to check the furnace filter..."></textarea>
+              <div class="ad-suggest-wrap">
+                <textarea id="ad-txt" class="ad-input" rows="2" placeholder="Remind me in 3 months to check the furnace filter..." autocomplete="off"></textarea>
+                <div id="ad-suggest" class="ad-suggest"></div>
+              </div>
               <div id="ad-clarify-area"></div>
               <div id="ad-confirm-area"></div>
               <button class="ad-btn" id="ad-submit-btn" onclick="adSubmit()">Do It</button>
@@ -2291,6 +2299,91 @@ function initAskDitty(){
   var chev=document.getElementById('ad-chevron');
   if(body)body.style.display=adOpen?'block':'none';
   if(chev)chev.innerHTML=adOpen?'&#9650;':'&#9660;';
+  adSuggestBind();
+}
+
+// ── ASK DITTY: SUGGESTION DROPDOWN ─────────────────────────────────────
+var AD_SUG_BOUND=false;
+var AD_SUG_ITEMS=[];
+var AD_SUG_INDEX=-1;
+var AD_EXAMPLES=[
+  'Remind me tomorrow at 6pm to...',
+  'Remind me next Friday to...',
+  'Remind me in 3 months to check the furnace filter',
+  'What\'s on my calendar today?',
+  'Remind me today at 5pm to...'
+];
+function adSuggestSource(){
+  var hist=adHistoryGet().slice(0,25);
+  if(hist&&hist.length){
+    var seen={},out=[];
+    for(var i=0;i<hist.length;i++){
+      var r=hist[i].request;
+      if(!r||seen[r])continue;
+      seen[r]=true;out.push(r);
+      if(out.length>=8)break;
+    }
+    if(out.length)return out;
+  }
+  return AD_EXAMPLES;
+}
+function adSuggestRender(filterText){
+  var box=document.getElementById('ad-suggest');if(!box)return;
+  var items=adSuggestSource();
+  if(filterText&&filterText.trim()){
+    var f=filterText.toLowerCase();
+    items=items.filter(function(s){return s.toLowerCase().indexOf(f)>-1;});
+  }
+  AD_SUG_ITEMS=items;AD_SUG_INDEX=-1;
+  if(!items.length){box.style.display='none';box.innerHTML='';return;}
+  box.innerHTML=items.map(function(s,i){
+    return'<div class="ad-suggest-item" onmousedown="event.preventDefault();adSuggestPick('+i+')">'+s.replace(/</g,'&lt;')+'</div>';
+  }).join('');
+  box.style.display='block';
+}
+function adSuggestPick(i){
+  var v=AD_SUG_ITEMS[i];if(v===undefined)return;
+  var el=document.getElementById('ad-txt');
+  if(el){el.value=v;el.focus();}
+  adSuggestHide();
+}
+function adSuggestHide(){
+  var box=document.getElementById('ad-suggest');
+  if(box){box.style.display='none';box.innerHTML='';}
+  AD_SUG_ITEMS=[];AD_SUG_INDEX=-1;
+}
+function adSuggestHighlight(){
+  var box=document.getElementById('ad-suggest');if(!box)return;
+  var kids=box.querySelectorAll('.ad-suggest-item');
+  kids.forEach(function(k,idx){k.classList.toggle('active',idx===AD_SUG_INDEX);});
+  if(AD_SUG_INDEX>=0&&kids[AD_SUG_INDEX])kids[AD_SUG_INDEX].scrollIntoView({block:'nearest'});
+}
+function adSuggestKeydown(e){
+  var box=document.getElementById('ad-suggest');
+  var open=box&&box.style.display==='block';
+  if(e.key==='ArrowDown'){
+    if(!open)adSuggestRender(e.target.value);
+    if(AD_SUG_ITEMS.length){e.preventDefault();AD_SUG_INDEX=(AD_SUG_INDEX+1)%AD_SUG_ITEMS.length;adSuggestHighlight();}
+  }else if(e.key==='ArrowUp'){
+    if(open&&AD_SUG_ITEMS.length){e.preventDefault();AD_SUG_INDEX=(AD_SUG_INDEX-1+AD_SUG_ITEMS.length)%AD_SUG_ITEMS.length;adSuggestHighlight();}
+  }else if(e.key==='Enter'){
+    if(open&&AD_SUG_INDEX>-1){e.preventDefault();adSuggestPick(AD_SUG_INDEX);}
+  }else if(e.key==='Escape'){
+    if(open){e.preventDefault();adSuggestHide();}
+  }
+}
+function adSuggestBind(){
+  if(AD_SUG_BOUND)return;
+  var txtel=document.getElementById('ad-txt');if(!txtel)return;
+  AD_SUG_BOUND=true;
+  txtel.addEventListener('focus',function(){adSuggestRender(txtel.value);});
+  txtel.addEventListener('input',function(){adSuggestRender(txtel.value);});
+  txtel.addEventListener('keydown',adSuggestKeydown);
+  txtel.addEventListener('blur',function(){setTimeout(adSuggestHide,150);});
+  document.addEventListener('mousedown',function(e){
+    var wrap=txtel.closest('.ad-suggest-wrap');
+    if(wrap&&!wrap.contains(e.target))adSuggestHide();
+  });
 }
 function toggleAskDitty(){
   adOpen=!adOpen;
@@ -2299,6 +2392,7 @@ function toggleAskDitty(){
 }
 
 function adSubmit(){
+  adSuggestHide();
   var confirmArea=document.getElementById('ad-confirm-area');
   var clarifyArea=document.getElementById('ad-clarify-area');
   var statusEl=document.getElementById('ad-status');
