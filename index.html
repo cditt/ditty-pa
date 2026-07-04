@@ -953,8 +953,13 @@ function callClaude(prompt,cb){
 function callClaudeJSON(prompt,cb){
   fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})})
     .then(function(r){return r.json();})
-    .then(function(d){var t='';if(d.content)d.content.forEach(function(c){if(c.type==='text')t+=c.text;});cb(t);})
-    .catch(function(e){cb('Error: '+e.message);});
+    .then(function(d){
+      if(d.type==='error'||(!d.content&&d.error)){cb('__API_ERROR__:'+(d.error&&d.error.message||'API error'));return;}
+      var t='';if(d.content)d.content.forEach(function(c){if(c.type==='text')t+=c.text;});
+      if(!t){cb('__API_ERROR__:Empty response');return;}
+      cb(t);
+    })
+    .catch(function(e){cb('__API_ERROR__:'+e.message);});
 }
 
 function fetchCal(){
@@ -2162,7 +2167,55 @@ var DITTY_HANDLERS={
   note:         function(p,o,done){done({ok:false,msg:'Notes coming soon.',stub:true});}
 };
 
+// Local reminder parser: handles "in X minutes/hours/days/weeks/months/years"
+// Returns a dittyRoute-compatible parsed object, or null if not matched.
+// Falls through to Claude for anything more complex.
+function dittyLocalParse(text){
+  var m=text.toLowerCase().match(/\bin\s+(\d+\.?\d*)\s*(minute|hour|day|week|month|year)s?\b/);
+  if(!m)return null;
+  var amt=parseFloat(m[1]),unit=m[2];
+  var d=new Date();d.setHours(9,0,0,0);
+  if(unit==='minute')d.setMinutes(d.getMinutes()+amt);
+  else if(unit==='hour')d.setHours(d.getHours()+amt);
+  else if(unit==='day')d.setDate(d.getDate()+Math.round(amt));
+  else if(unit==='week')d.setDate(d.getDate()+Math.round(amt*7));
+  else if(unit==='month')d.setMonth(d.getMonth()+Math.round(amt));
+  else if(unit==='year')d.setFullYear(d.getFullYear()+Math.round(amt));
+  var title=text
+    .replace(/\.\s*remind me in\s+[\d.]+\s*\w+s?\.?/i,'')
+    .replace(/remind me in\s+[\d.]+\s*\w+s?\.?/i,'')
+    .replace(/\bin\s+[\d.]+\s*\w+s?/i,'')
+    .replace(/\s*(today|tomorrow)\.?\s*/gi,' ')
+    .replace(/^(i\s+)?(changed|replaced|fixed|checked|updated|did|completed|finished|got)\s+/i,'')
+    .replace(/^(the|a|an)\s+/i,'')
+    .replace(/\s{2,}/g,' ').trim()
+    .replace(/^to\s+/i,'')
+    .replace(/[.,!?]+$/,'');
+  if(!title)title='Reminder';
+  title=title.charAt(0).toUpperCase()+title.slice(1);
+  var end=new Date(d.getTime()+1800000);
+  return{intent:'calendar',confidence:99,clarifyQuestion:null,payload:{
+    title:title,
+    dateTime:d.toISOString().slice(0,16)+':00',
+    endDateTime:end.toISOString().slice(0,16)+':00',
+    recurrence:null,
+    notes:'Original: '+text
+  }};
+}
+
 function dittyRoute(text,clarifyAnswer,onStatus){
+  // Try local parser first -- instant, no Claude call needed
+  if(!clarifyAnswer){
+    var local=dittyLocalParse(text);
+    if(local){
+      DITTY_HANDLERS.calendar(local.payload,text,function(result){
+        result._intent='calendar';
+        onStatus(result);
+      });
+      return;
+    }
+  }
+  // Fall through to Claude for complex requests
   var now=new Date();
   var ctx='Today: '+now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
     +'. Time: '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
@@ -2183,13 +2236,16 @@ function dittyRoute(text,clarifyAnswer,onStatus){
     +'Always return valid JSON';
 
   callClaudeJSON(prompt,function(resp){
+    if(resp&&resp.indexOf('__API_ERROR__:')===0){
+      onStatus({ok:false,msg:'Ditty is unavailable right now. Try again in a moment.'});return;
+    }
     var parsed=null;
     try{
       var clean=resp.replace(/```json|```/g,'').trim();
       var fi=clean.indexOf('{'),li=clean.lastIndexOf('}');
       if(fi>-1&&li>-1)clean=clean.substring(fi,li+1);
       parsed=JSON.parse(clean);
-    }catch(e){onStatus({ok:false,msg:'Could not understand that. Try rephrasing.'});return;}
+    }catch(e){onStatus({ok:false,msg:'Could not parse response. Try rephrasing.'});return;}
     if(!parsed.intent||!DITTY_HANDLERS[parsed.intent]){onStatus({ok:false,msg:'Unknown request type.'});return;}
     if((parsed.confidence||0)<95||parsed.clarifyQuestion){
       onStatus({clarify:parsed.clarifyQuestion||'Can you be more specific?',intent:parsed.intent});return;
