@@ -1091,7 +1091,7 @@ function applyCalData(data){
       var t2=e.start.dateTime?d2.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
       return{timeStr:t2,title:e.summary,location:e.location||'',id:e.id||'',calName:e._calName||''};
     });
-    calSummary={timeStr:timeStr,title:ev.summary,calName:ev._calName||'',events:events,empty:false};
+    calSummary={timeStr:timeStr,title:ev.summary,calName:ev._calName||'',events:events,allEvents:deduped,empty:false};
   }else{
     calSummary={empty:true};
   }
@@ -1636,16 +1636,54 @@ function renderCalCard(){
   if(calOpen){
     var ack=getEventAck();
     var createdIds=getCreatedReminders().items.map(function(r){return r.id;});
-      var evHtml=(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title,location:'',id:''}]).map(function(e){
-      var key=eventKey(e);
+    var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var now=new Date();
+    var todayMid=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    var tomorrowMid=new Date(todayMid.getTime()+86400000);
+    function dayMidOf(e){
+      if(e.start&&e.start.dateTime){var d=new Date(e.start.dateTime);return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+      var parts=((e.start&&e.start.date)||'').split('-');
+      if(parts.length===3)return new Date(+parts[0],+parts[1]-1,+parts[2]);
+      return todayMid;
+    }
+    function rowHtml(timeStr,title,location,id,calName){
+      var key=eventKey({timeStr:timeStr,title:title});
       var done=ack.checked.indexOf(key)>-1;
-      var ck='<div onclick="toggleEventAck(\'' +key+ '\')" style="width:22px;height:22px;min-width:22px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:7px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">'+(done?'<span style="color:#fff;font-size:12px;font-weight:800">✓</span>':'')+'</div>';
-      var loc=e.location?'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+e.location+'</div>':'';
-      var calLbl=e.calName?'<div style="font-size:11px;color:var(--accent);margin-top:2px;font-weight:700;text-transform:uppercase;letter-spacing:.3px">'+e.calName+'</div>':'';
+      var ck='<div onclick="toggleEventAck(\''+key+'\')" style="width:22px;height:22px;min-width:22px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:7px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">'+(done?'<span style="color:#fff;font-size:12px;font-weight:800">✓</span>':'')+'</div>';
+      var loc=location?'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+location+'</div>':'';
+      var calLbl=calName?'<div style="font-size:11px;color:var(--accent);margin-top:2px;font-weight:700;text-transform:uppercase;letter-spacing:.3px">'+calName+'</div>':'';
       var titleStyle='font-size:17px;'+(done?'color:var(--t3);text-decoration:line-through':'');
-      var delBtn=e.id&&createdIds.indexOf(e.id)>-1?'<div onclick="deleteCreatedReminder(\''+e.id+'\')" style="color:var(--danger);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0;line-height:1" title="Delete reminder">×</div>':'';
-      return'<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'+ck+'<div style="flex:1"><div class="event-time">'+e.timeStr+'</div><div class="event-title" style="'+titleStyle+'">'+e.title+'</div>'+loc+calLbl+'</div>'+delBtn+'</div>';
-    }).join('');
+      var delBtn=id&&createdIds.indexOf(id)>-1?'<div onclick="deleteCreatedReminder(\''+id+'\')" style="color:var(--danger);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0;line-height:1" title="Delete reminder">×</div>':'';
+      return'<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'+ck+'<div style="flex:1"><div class="event-time">'+timeStr+'</div><div class="event-title" style="'+titleStyle+'">'+title+'</div>'+loc+calLbl+'</div>'+delBtn+'</div>';
+    }
+    var src=(calSummary.allEvents&&calSummary.allEvents.length)?calSummary.allEvents:null;
+    var evHtml;
+    if(src){
+      var groups=[],order=[];
+      src.forEach(function(e){
+        var mid=dayMidOf(e),key=mid.getTime();
+        var idx=order.indexOf(key);
+        if(idx===-1){order.push(key);groups.push({mid:mid,events:[]});idx=order.length-1;}
+        groups[idx].events.push(e);
+      });
+      evHtml=groups.map(function(g){
+        var lbl;
+        if(g.mid.getTime()===todayMid.getTime())lbl='Today';
+        else if(g.mid.getTime()===tomorrowMid.getTime())lbl='Tomorrow';
+        else lbl=days[g.mid.getDay()]+' · '+mons[g.mid.getMonth()]+' '+g.mid.getDate();
+        var rows=g.events.map(function(e){
+          var st=e.start.dateTime||e.start.date;var dt=new Date(st);
+          var t=e.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
+          return rowHtml(t,e.summary,e.location||'',e.id||'',e._calName||'');
+        }).join('');
+        return'<div style="margin-top:12px"><div style="font-size:11px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">'+lbl+'</div>'+rows+'</div>';
+      }).join('');
+    }else{
+      evHtml=(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title,location:'',id:'',calName:calSummary.calName||''}]).map(function(e){
+        return rowHtml(e.timeStr,e.title,e.location||'',e.id||'',e.calName||'');
+      }).join('');
+    }
     ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Upcoming Events ▲</span></div>'+evHtml;
   }else{
     ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Upcoming Events ▼</span><span style="font-size:13px;font-weight:800;color:var(--accent);margin-right:6px">'+calSummary.timeStr+'</span><span style="font-size:15px;font-weight:600;color:var(--text)">'+calSummary.title+'</span>'+(calSummary.calName?'<span style="font-size:11px;color:var(--t2);margin-left:6px">· '+calSummary.calName+'</span>':'')+'</div>';
