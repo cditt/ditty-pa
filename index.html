@@ -95,6 +95,12 @@ input,textarea{font-family:var(--font);}
 .wh-loading{color:var(--t2);font-size:16px;padding:16px 0;}
 .ad-input{width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-size:16px;outline:none;resize:none;font-family:var(--font);line-height:1.4;box-sizing:border-box;}
 .ad-input:focus{border-color:var(--accent);}
+.ad-header{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;user-select:none;}
+.ad-header-left{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.ad-title{font-size:13px;font-weight:800;color:var(--text);letter-spacing:.3px;}
+.ad-subtext{font-size:12px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ad-chev{font-size:13px;color:var(--t2);flex-shrink:0;}
+.ad-body-inner{margin-top:14px;}
 .ad-suggest-wrap{position:relative;}
 .ad-suggest{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--s2);border:1.5px solid var(--border);border-radius:10px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;}
 .ad-suggest-item{padding:10px 14px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);}
@@ -354,9 +360,15 @@ input,textarea{font-family:var(--font);}
         <div id="h-updated" style="font-size:12px;color:var(--t3);margin-bottom:16px;margin-top:-18px;"></div>
 
         <div class="hcard" id="ask-ditty-card">
-          <div onclick="toggleAskDitty()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Ask Ditty</span><span id="ad-chevron" style="font-size:13px;color:var(--t2)">&#9660;</span></div>
+          <div class="ad-header" onclick="toggleAskDitty()">
+            <div class="ad-header-left">
+              <span class="ad-title">Ask Ditty</span>
+              <span class="ad-subtext">Type a reminder, task, or question</span>
+            </div>
+            <span id="ad-chevron" class="ad-chev">&#9660;</span>
+          </div>
           <div id="ad-body" style="display:none">
-            <div style="margin-top:10px">
+            <div class="ad-body-inner">
               <div class="ad-suggest-wrap">
                 <textarea id="ad-txt" class="ad-input" rows="2" placeholder="Remind me in 3 months to check the furnace filter..." autocomplete="off"></textarea>
                 <div id="ad-suggest" class="ad-suggest"></div>
