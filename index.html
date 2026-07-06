@@ -301,10 +301,12 @@ input,textarea{font-family:var(--font);}
 .toast.show{opacity:1;}
 
 /* Build-confirmation banner: fixed overlay, never reflows page content */
-.build-banner{position:fixed;top:calc(var(--sat) + 8px);left:16px;right:16px;background:#122010;border:1px solid #1e4a1e;border-radius:var(--r);padding:12px 18px;z-index:700;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 8px 24px rgba(0,0,0,.4);}
-.build-banner.show{opacity:1;}
-.build-banner-title{font-size:14px;font-weight:800;color:var(--ok);margin-bottom:2px;}
-.build-banner-sub{font-size:12px;color:#8fdb9f;}
+.build-banner{position:fixed;top:calc(var(--sat) + 8px);left:16px;right:16px;background:#122010;border:1px solid #1e4a1e;border-radius:var(--r);padding:16px 20px;z-index:700;text-align:center;opacity:0;transform:translateY(-14px);pointer-events:none;transition:opacity .35s ease,transform .35s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.build-banner.show{opacity:1;transform:translateY(0);}
+.build-banner-icon{font-size:20px;vertical-align:-2px;margin-right:2px;}
+.build-banner-title{font-size:16px;font-weight:800;color:var(--ok);margin-bottom:4px;}
+.build-banner-sub{font-size:12px;color:#8fdb9f;margin-bottom:4px;}
+.build-banner-id{font-size:13px;font-weight:800;color:var(--accent);letter-spacing:.5px;font-family:monospace;}
 .update-banner{display:none;position:fixed;top:calc(var(--sat) + 60px);left:12px;right:12px;background:#1a2a1a;border:1.5px solid var(--ok);border-radius:14px;padding:14px 18px;z-index:700;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,.5);}
 .update-banner-txt{font-size:14px;font-weight:700;color:var(--ok);}
 .update-banner-btn{height:36px;padding:0 16px;border-radius:10px;background:var(--ok);color:#000;font-size:13px;font-weight:800;letter-spacing:.5px;white-space:nowrap;}
@@ -531,8 +533,9 @@ input,textarea{font-family:var(--font);}
 
 <div class="toast" id="toast"></div>
 <div class="build-banner" id="build-banner">
-  <div class="build-banner-title">✅ New version loaded successfully</div>
-  <div class="build-banner-sub">This device is now running the latest Ditty PA build.</div>
+  <div class="build-banner-title"><span class="build-banner-icon">✅</span>Ditty PA Updated</div>
+  <div class="build-banner-sub">Running build:</div>
+  <div class="build-banner-id" id="build-banner-id"></div>
 </div>
 <div class="offline-bar" id="offline-bar"></div>
 
@@ -765,6 +768,8 @@ function checkBuildBanner(){
   localStorage.setItem('dpa_last_build_id',BUILD_ID);
   var b=document.getElementById('build-banner');
   if(!b)return;
+  var idEl=document.getElementById('build-banner-id');
+  if(idEl)idEl.textContent=BUILD_ID;
   b.classList.add('show');
   setTimeout(function(){b.classList.remove('show');},10000);
 }
