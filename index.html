@@ -766,8 +766,7 @@ function checkOAuth(){
 }
 
 function checkBuildBanner(){
-  var last=localStorage.getItem('dpa_last_build_id');
-  if(last===BUILD_ID)return;
+  if(sessionStorage.getItem('dpa_build_ok_'+BUILD_ID)==='1')return;
   var b=document.getElementById('build-banner');
   if(!b)return;
   var idEl=document.getElementById('build-banner-id');
@@ -777,7 +776,7 @@ function checkBuildBanner(){
 function dismissBuildBanner(){
   var b=document.getElementById('build-banner');
   if(b)b.classList.remove('show');
-  localStorage.setItem('dpa_last_build_id',BUILD_ID);
+  sessionStorage.setItem('dpa_build_ok_'+BUILD_ID,'1');
 }
 
 function bootApp(){
