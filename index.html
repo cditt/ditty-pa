@@ -544,7 +544,7 @@ input,textarea{font-family:var(--font);}
 
 <script>
 var GID='397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.com';
-var BUILD_ID='20260706T-BANNER-OK';
+var BUILD_ID='20260706T-BANNER-FINAL';
 var GSCOPE='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/gmail.readonly';
 var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var JSONBIN_ID='69fbc6d7adc21f119a63898a';
@@ -741,11 +741,11 @@ function boot(){
         });
       });
     }).catch(function(){});
-    // When SW activates, reload to get fresh files
-    var reloading=false;
-    navigator.serviceWorker.addEventListener('controllerchange',function(){
-      if(!reloading){reloading=true;window.location.reload();}
-    });
+    // NOTE: automatic reload on service-worker takeover removed. It was
+    // forcing a page reload during Google OAuth/login redirects, which
+    // interrupted the deploy-confirmation banner before it could be
+    // acknowledged with OK. Registration itself is kept; it no longer
+    // force-reloads the page.
   }
 
   function showUpdateBanner(swWaiting){
@@ -766,7 +766,7 @@ function checkOAuth(){
 }
 
 function checkBuildBanner(){
-  if(sessionStorage.getItem('dpa_build_ok_'+BUILD_ID)==='1')return;
+  if(localStorage.getItem('dpa_build_ack_final')===BUILD_ID)return;
   var b=document.getElementById('build-banner');
   if(!b)return;
   var idEl=document.getElementById('build-banner-id');
@@ -776,7 +776,7 @@ function checkBuildBanner(){
 function dismissBuildBanner(){
   var b=document.getElementById('build-banner');
   if(b)b.classList.remove('show');
-  sessionStorage.setItem('dpa_build_ok_'+BUILD_ID,'1');
+  localStorage.setItem('dpa_build_ack_final',BUILD_ID);
 }
 
 function bootApp(){
