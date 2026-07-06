@@ -222,6 +222,28 @@ input,textarea{font-family:var(--font);}
 .cal-title{font-size:17px;font-weight:700;color:var(--text);}
 .cal-empty{padding:20px 16px;font-size:15px;color:var(--t2);text-align:center;}
 
+/* Premium agenda styling, shared between Home Upcoming Events (expanded)
+   and the Calendar tab, so both look and behave consistently. */
+.agenda-day{margin-top:18px;}
+.agenda-day:first-child{margin-top:0;}
+.agenda-day-label{font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.2px;padding-bottom:8px;margin-bottom:10px;border-bottom:1px solid var(--border);}
+.agenda-day-label.is-today{color:var(--accent);}
+.agenda-row{display:flex;align-items:flex-start;gap:12px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;}
+.agenda-row:last-child{margin-bottom:0;}
+.agenda-time-col{min-width:64px;flex-shrink:0;padding-top:1px;}
+.agenda-time{font-size:13px;font-weight:800;color:var(--accent);letter-spacing:.3px;}
+.agenda-allday-badge{display:inline-block;font-size:10px;font-weight:800;color:#000;background:var(--accent);border-radius:6px;padding:2px 6px;letter-spacing:.3px;text-transform:uppercase;}
+.agenda-body{flex:1;min-width:0;}
+.agenda-title{font-size:16px;font-weight:700;color:var(--text);line-height:1.35;}
+.agenda-title.done{color:var(--t3);text-decoration:line-through;}
+.agenda-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:5px;}
+.agenda-pill{display:inline-block;font-size:10px;font-weight:800;color:var(--accent);background:rgba(240,165,0,.12);border:1px solid rgba(240,165,0,.3);border-radius:20px;padding:2px 8px;letter-spacing:.3px;text-transform:uppercase;}
+.agenda-loc{font-size:12px;color:var(--t2);}
+.agenda-check{width:22px;height:22px;min-width:22px;border:2px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;}
+.agenda-check.done{background:var(--ok);border-color:var(--ok);}
+.agenda-check.done::after{content:'✓';color:#fff;font-size:12px;font-weight:800;}
+.agenda-del{color:var(--danger);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0;line-height:1;}
+
 /* MAIL SCREEN */
 .mail-item{padding:16px 18px;border-bottom:1px solid var(--border);background:var(--s1);margin:0 16px 10px;border-radius:var(--r);border:1px solid var(--border);}
 .mail-from{font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
@@ -1143,16 +1165,21 @@ function applyCalData(data){
   var todayMid=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   var tomorrowMid=new Date(todayMid.getTime()+86400000);
   function renderDay(g){
-    var lbl;
-    if(g.mid.getTime()===todayMid.getTime())lbl='Today';
+    var lbl,isToday=false;
+    if(g.mid.getTime()===todayMid.getTime()){lbl='Today';isToday=true;}
     else if(g.mid.getTime()===tomorrowMid.getTime())lbl='Tomorrow';
     else lbl=days[g.mid.getDay()]+' · '+mons[g.mid.getMonth()]+' '+g.mid.getDate();
-    return'<div class="cal-day"><div class="cal-day-label">'+lbl+'</div>'+g.events.map(function(e){
+    var rows=g.events.map(function(e){
       var st=e.start.dateTime||e.start.date;var dt=new Date(st);
       var t=e.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
-      var calLbl=e._calName?'<div style="font-size:11px;color:var(--accent);margin-top:2px;font-weight:700;text-transform:uppercase;letter-spacing:.3px">'+e._calName+'</div>':'';
-      return'<div class="cal-event"><div class="cal-time">'+t+'</div><div class="cal-title">'+e.summary+'</div>'+calLbl+'</div>';
-    }).join('')+'</div>';
+      var isAllDay=(t==='All day');
+      var timeHtml=isAllDay?'<span class="agenda-allday-badge">All day</span>':'<div class="agenda-time">'+t+'</div>';
+      var loc=e.location?'<span class="agenda-loc">'+e.location+'</span>':'';
+      var calLbl=e._calName?'<span class="agenda-pill">'+e._calName+'</span>':'';
+      var meta=(calLbl||loc)?'<div class="agenda-meta">'+calLbl+loc+'</div>':'';
+      return'<div class="agenda-row"><div class="agenda-time-col">'+timeHtml+'</div><div class="agenda-body"><div class="agenda-title">'+e.summary+'</div>'+meta+'</div></div>';
+    }).join('');
+    return'<div class="agenda-day"><div class="agenda-day-label'+(isToday?' is-today':'')+'">'+lbl+'</div>'+rows+'</div>';
   }
   el.innerHTML=groups.map(renderDay).join('');
 }
@@ -1672,12 +1699,14 @@ function renderCalCard(){
     function rowHtml(timeStr,title,location,id,calName){
       var key=eventKey({timeStr:timeStr,title:title});
       var done=ack.checked.indexOf(key)>-1;
-      var ck='<div onclick="toggleEventAck(\''+key+'\')" style="width:22px;height:22px;min-width:22px;border:2px solid '+(done?'var(--ok)':'var(--border)')+';border-radius:7px;background:'+(done?'var(--ok)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">'+(done?'<span style="color:#fff;font-size:12px;font-weight:800">✓</span>':'')+'</div>';
-      var loc=location?'<div style="font-size:12px;color:var(--t2);margin-top:2px">'+location+'</div>':'';
-      var calLbl=calName?'<div style="font-size:11px;color:var(--accent);margin-top:2px;font-weight:700;text-transform:uppercase;letter-spacing:.3px">'+calName+'</div>':'';
-      var titleStyle='font-size:17px;'+(done?'color:var(--t3);text-decoration:line-through':'');
-      var delBtn=id&&createdIds.indexOf(id)>-1?'<div onclick="deleteCreatedReminder(\''+id+'\')" style="color:var(--danger);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0;line-height:1" title="Delete reminder">×</div>':'';
-      return'<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'+ck+'<div style="flex:1"><div class="event-time">'+timeStr+'</div><div class="event-title" style="'+titleStyle+'">'+title+'</div>'+loc+calLbl+'</div>'+delBtn+'</div>';
+      var ck='<div class="agenda-check'+(done?' done':'')+'" onclick="toggleEventAck(\''+key+'\')"></div>';
+      var isAllDay=(timeStr==='All day');
+      var timeHtml=isAllDay?'<span class="agenda-allday-badge">All day</span>':'<div class="agenda-time">'+timeStr+'</div>';
+      var loc=location?'<span class="agenda-loc">'+location+'</span>':'';
+      var calLbl=calName?'<span class="agenda-pill">'+calName+'</span>':'';
+      var meta=(calLbl||loc)?'<div class="agenda-meta">'+calLbl+loc+'</div>':'';
+      var delBtn=id&&createdIds.indexOf(id)>-1?'<div class="agenda-del" onclick="deleteCreatedReminder(\''+id+'\')" title="Delete reminder">×</div>':'';
+      return'<div class="agenda-row"><div class="agenda-time-col">'+timeHtml+'</div><div class="agenda-body"><div class="agenda-title'+(done?' done':'')+'">'+title+'</div>'+meta+'</div>'+ck+delBtn+'</div>';
     }
     var src=(calSummary.allEvents&&calSummary.allEvents.length)?calSummary.allEvents:null;
     var evHtml;
@@ -1690,8 +1719,8 @@ function renderCalCard(){
         groups[idx].events.push(e);
       });
       evHtml=groups.map(function(g){
-        var lbl;
-        if(g.mid.getTime()===todayMid.getTime())lbl='Today';
+        var lbl,isToday=false;
+        if(g.mid.getTime()===todayMid.getTime()){lbl='Today';isToday=true;}
         else if(g.mid.getTime()===tomorrowMid.getTime())lbl='Tomorrow';
         else lbl=days[g.mid.getDay()]+' · '+mons[g.mid.getMonth()]+' '+g.mid.getDate();
         var rows=g.events.map(function(e){
@@ -1699,12 +1728,12 @@ function renderCalCard(){
           var t=e.start.dateTime?dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'All day';
           return rowHtml(t,e.summary,e.location||'',e.id||'',e._calName||'');
         }).join('');
-        return'<div style="margin-top:12px"><div style="font-size:11px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">'+lbl+'</div>'+rows+'</div>';
+        return'<div class="agenda-day"><div class="agenda-day-label'+(isToday?' is-today':'')+'">'+lbl+'</div>'+rows+'</div>';
       }).join('');
     }else{
-      evHtml=(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title,location:'',id:'',calName:calSummary.calName||''}]).map(function(e){
+      evHtml='<div class="agenda-day">'+(calSummary.events||[{timeStr:calSummary.timeStr,title:calSummary.title,location:'',id:'',calName:calSummary.calName||''}]).map(function(e){
         return rowHtml(e.timeStr,e.title,e.location||'',e.id||'',e.calName||'');
-      }).join('');
+      }).join('')+'</div>';
     }
     ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Upcoming Events ▲</span></div>'+evHtml;
   }else{
