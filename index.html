@@ -1430,11 +1430,20 @@ function renderHomeEmailCard(){
       +'</div>';
   }else{
     var priTxt=priCount>0?' · '+priCount+' priority':'';
+    var priLines=pri.slice(0,3).map(function(m){
+      var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
+      hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
+      var fromClean=from.replace(/<[^>]*>/g,'').trim();
+      return '<div style="font-size:13px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
+        +'<span style="font-weight:700;color:var(--accent)">'+fromClean+'</span>'
+        +'<span style="color:var(--t2)"> — '+sub+'</span></div>';
+    }).join('');
     emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none;padding:4px 0">'
       +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Email ▼</span>'
       +'<span style="font-size:15px;font-weight:700;color:var(--accent)">'+data.count+' unread'
       +(priTxt?'<span style="color:var(--danger)">'+priTxt+'</span>':'')
       +'</span>'
+      +priLines
       +'</div>';
   }
 }
