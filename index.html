@@ -846,6 +846,7 @@ var calOpen=localStorage.getItem('dpa_calOpen')==='true';
 var calSummary=null;
 var priOpen=localStorage.getItem('dpa_priOpen')==='true';
 var emailOpen=localStorage.getItem('dpa_emailOpen')==='true';
+var tfHomeOpen=localStorage.getItem('dpa_tfHomeOpen')==='true';
 var lastEmailData=null;
 var medOpen=localStorage.getItem('dpa_medOpen')==='true';
 var MEDS=['Lisinopril 40mg','Omeprazole 40mg','Tadalafil 5mg','Creatine 5g','Alpha Brain'];
@@ -1430,20 +1431,11 @@ function renderHomeEmailCard(){
       +'</div>';
   }else{
     var priTxt=priCount>0?' · '+priCount+' priority':'';
-    var priLines=pri.slice(0,3).map(function(m){
-      var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
-      hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
-      var fromClean=from.replace(/<[^>]*>/g,'').trim();
-      return '<div style="font-size:13px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
-        +'<span style="font-weight:700;color:var(--accent)">'+fromClean+'</span>'
-        +'<span style="color:var(--t2)"> — '+sub+'</span></div>';
-    }).join('');
     emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none;padding:4px 0">'
       +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Email ▼</span>'
       +'<span style="font-size:15px;font-weight:700;color:var(--accent)">'+data.count+' unread'
       +(priTxt?'<span style="color:var(--danger)">'+priTxt+'</span>':'')
       +'</span>'
-      +priLines
       +'</div>';
   }
 }
@@ -1906,7 +1898,8 @@ function renderCalCard(){
     }
     ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none"><span class="hcard-label">Upcoming Events ▲</span></div>'+evHtml;
   }else{
-    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Upcoming Events ▼</span><span style="font-size:13px;font-weight:800;color:var(--accent);margin-right:6px">'+calSummary.timeStr+'</span><span style="font-size:15px;font-weight:600;color:var(--text)">'+calSummary.title+'</span>'+(calSummary.calName?'<span style="font-size:11px;color:var(--t2);margin-left:6px">· '+calSummary.calName+'</span>':'')+'</div>';
+    var upCount=(calSummary.allEvents&&calSummary.allEvents.length)?calSummary.allEvents.length:(calSummary.events?calSummary.events.length:1);
+    ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Upcoming Events ▼</span><span style="font-size:15px;font-weight:700;color:var(--accent)">'+upCount+' upcoming</span></div>';
   }
 }
 function toggleCal(){
@@ -2969,16 +2962,23 @@ function tfRenderFull(){
 function tfRenderHome(){
   var el=document.getElementById('tf-home');if(!el)return;
   var active=tfActiveAll(),st=tfTodayStats();
-  var html='<div class="hcard-label">Today\'s Tasks</div>';
-  if(!st.total&&!active.length){el.innerHTML=html+'<div class="hcard-empty">No tasks for today.</div><div class="tf-hmore" onclick="nav(\'tasks\')">Open Focus</div>';return;}
-  html+='<div class="tf-hprog"><div class="tf-hbar"><div class="tf-hfill" style="width:'+st.pct+'%"></div></div><div class="tf-hcount">'+st.done+'/'+st.total+'</div></div>';
-  if(!active.length){html+='<div class="tf-hdone">✓ Everything done for today</div>';}
-  else{
-    html+=active.slice(0,4).map(function(t){var pc=t.priority?' p-'+t.priority:'';return '<div class="tf-hitem"><div class="tf-hck'+pc+'" onclick="tfToggle(\''+t.id+'\')"></div><div class="tf-htxt">'+tfEsc(t.text)+'</div></div>';}).join('');
-    html+='<div class="tf-hmore" onclick="nav(\'tasks\')">'+(active.length>4?'+ '+(active.length-4)+' more · Open Focus':'Open Focus')+'</div>';
+  var caret=tfHomeOpen?'▲':'▼';
+  var head='<div class="hcard-label" onclick="toggleTfHome()" style="cursor:pointer;user-select:none">Today\'s Tasks '+caret+'</div>';
+  if(!st.total&&!active.length){el.innerHTML=head+(tfHomeOpen?'<div class="hcard-empty">No tasks for today.</div><div class="tf-hmore" onclick="nav(\'tasks\')">Open Focus</div>':'');return;}
+  if(!tfHomeOpen){
+    el.innerHTML='<div onclick="toggleTfHome()" style="cursor:pointer;user-select:none;padding:4px 0">'
+      +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Today\'s Tasks ▼</span>'
+      +'<span style="font-size:15px;font-weight:700;color:var(--focus)">'+st.done+'/'+st.total+'</span>'
+      +'</div>';
+    return;
   }
+  var html=head+'<div class="tf-hprog"><div class="tf-hbar"><div class="tf-hfill" style="width:'+st.pct+'%"></div></div><div class="tf-hcount">'+st.done+'/'+st.total+'</div></div>';
+  if(!active.length){html+='<div class="tf-hdone">✓ Everything done for today</div>';el.innerHTML=html;return;}
+  html+=active.slice(0,4).map(function(t){var pc=t.priority?' p-'+t.priority:'';return '<div class="tf-hitem"><div class="tf-hck'+pc+'" onclick="tfToggle(\''+t.id+'\')"></div><div class="tf-htxt">'+tfEsc(t.text)+'</div></div>';}).join('');
+  html+='<div class="tf-hmore" onclick="nav(\'tasks\')">'+(active.length>4?'+ '+(active.length-4)+' more · Open Focus':'Open Focus')+'</div>';
   el.innerHTML=html;
 }
+function toggleTfHome(){tfHomeOpen=!tfHomeOpen;localStorage.setItem('dpa_tfHomeOpen',String(tfHomeOpen));tfRenderHome();}
 function tfToggleCompleted(){TF.completedCollapsed=!TF.completedCollapsed;tfSave();}
 function tfToggleFarm(){TF.farmCollapsed=!TF.farmCollapsed;tfSave();}
 
