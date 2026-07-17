@@ -922,26 +922,110 @@ function dismissBuildBanner(){
   localStorage.setItem('dpa_build_ack_final',BUILD_ID);
 }
 
-function getDailyBrief(){
-  // Framework only. Each entry can later be replaced by live data from
-  // Weather, Calendar, Email, Fat Journey, Medications, or Ask Ditty.
-  return [
-    {title:"Transformer outage",detail:"Leave in 35 minutes."},
-    {title:"Rain after 3 PM",detail:"Tomorrow is the better mowing day."},
-    {title:"2 Duke emails",detail:"Review before 9 AM."},
-    {title:"Retatrutide due tonight",detail:"Stay on schedule."}
-  ];
+/* ---------- Today's Brief: live read-only view over existing data + existing handlers ---------- */
+function briefTaskRows(){
+  if(typeof tfActiveAll!=='function')return [];
+  return tfActiveAll().filter(function(t){return t.recur||t.due;}).slice(0,3).map(function(t){
+    return '<div data-bt="'+t.id+'" style="display:flex;align-items:flex-start;gap:12px;padding:12px 0">'
+      +'<div data-btck onclick="briefTaskToggle(\''+t.id+'\')" style="width:24px;height:24px;min-width:24px;border:2px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:1px"></div>'
+      +'<div onclick="nav(\'tasks\')" style="flex:1;cursor:pointer"><div data-bttxt style="font-size:16px;font-weight:700;color:var(--text);line-height:1.3">'+tfEsc(t.text)+'</div></div>'
+      +'</div>';
+  });
+}
+function briefTaskToggle(id){
+  var row=document.querySelector('#brief-body [data-bt="'+id+'"]');
+  if(row){
+    var tx=row.querySelector('[data-bttxt]');if(tx)tx.style.textDecoration='line-through';
+    var ck=row.querySelector('[data-btck]');if(ck){ck.style.background='var(--ok)';ck.style.borderColor='var(--ok)';ck.innerHTML='<span style="color:#fff;font-size:13px;font-weight:800">&#10003;</span>';}
+  }
+  setTimeout(function(){if(typeof tfToggle==='function')tfToggle(id);},240);
+}
+function briefEventRow(){
+  if(typeof calSummary==='undefined'||!calSummary||calSummary.empty)return null;
+  var title=tfEsc(calSummary.title||'Event'),time=calSummary.timeStr||'';
+  return '<div onclick="nav(\'cal\')" style="cursor:pointer;padding:12px 0">'
+    +'<div style="font-size:16px;font-weight:700;color:var(--accent);line-height:1.3">'+title+'</div>'
+    +(time?'<div style="font-size:14px;color:var(--t2);margin-top:3px;line-height:1.4">'+time+'</div>':'')
+    +'</div>';
+}
+function briefEmailPriorityCount(){
+  var data=(typeof lastEmailData!=='undefined')?lastEmailData:null;
+  if(!data||!(data.count>0)||!data.messages||!data.messages.length)return 0;
+  var seen={},matched=[];
+  data.messages.forEach(function(m){
+    var hh=(m.payload&&m.payload.headers)||[];var from='',sub='';
+    hh.forEach(function(h){if(h.name==='From')from=h.value;if(h.name==='Subject')sub=h.value;});
+    var key=from.toLowerCase().trim()+'|'+sub.toLowerCase().trim();
+    if(seen[key])return;seen[key]=true;
+    if(PRIORITY_FROM.some(function(s){return from.toLowerCase().indexOf(s)>-1;})||PRIORITY_SUBJECT.some(function(s){return sub.toLowerCase().indexOf(s)>-1;}))matched.push(1);
+  });
+  return matched.slice(0,5).length;
+}
+function briefEmailRow(){
+  var n=briefEmailPriorityCount();
+  if(n<1)return null;
+  var word=n===1?'email needs':'emails need';
+  return '<div onclick="nav(\'mail\')" style="cursor:pointer;padding:12px 0">'
+    +'<div style="font-size:16px;font-weight:700;color:var(--accent);line-height:1.3">'+n+' priority '+word+' your attention.</div>'
+    +'</div>';
+}
+function briefMedRows(){
+  if(typeof getActiveMeds!=='function')return [];
+  var active=getActiveMeds();
+  var isSunday=new Date().getDay()===0;
+  var dailyState=getMedState();
+  var sunState=isSunday?getSunState():null;
+  var fjTaken=getFJTakenNames();
+  var rows=[];
+  active.forEach(function(m,i){
+    var isSunItem=i>=MEDS.length;
+    var checkedLocal=isSunItem?(sunState.checked.indexOf(i-MEDS.length)>-1):(dailyState.checked.indexOf(i)>-1);
+    var mKey=m.toLowerCase().trim();
+    var medBase=m.replace(/\s*[\d.]+\s*(mg|g|mcg|ml|iu)/gi,'').toLowerCase().trim();
+    var checkedFJ=fjTaken[mKey]===true||fjTaken[medBase]===true;
+    if(checkedLocal||checkedFJ)return; // only incomplete meds
+    rows.push('<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0">'
+      +'<div onclick="toggleMedItem('+i+')" style="width:24px;height:24px;min-width:24px;border:2px solid var(--border);border-radius:7px;cursor:pointer;margin-top:1px"></div>'
+      +'<div style="flex:1"><div style="font-size:16px;font-weight:700;color:var(--text);line-height:1.3">'+tfEsc(m)+'</div></div>'
+      +'</div>');
+  });
+  return rows;
+}
+function briefWeatherRow(){
+  var d=(typeof weatherData!=='undefined')?weatherData:null;
+  if(!d)return null;
+  var hi=parseFloat(d.high),lo=parseFloat(d.low);
+  var rain=(d.precipMax&&d.precipMax[0]!=null)?parseFloat(d.precipMax[0]):null;
+  var cond=d.cond||'',lc=cond.toLowerCase(),title=null,detail='';
+  if(/storm|severe|tornado|warning|blizzard|hail|thunder/.test(lc)){title=cond;detail='Check conditions before heading out.';}
+  else if(rain!=null&&rain>=50){title='Rain likely today';detail=rain+'% chance'+(!isNaN(hi)?', high '+d.high+'\u00b0':'')+'.';}
+  else if(!isNaN(lo)&&lo<=32){title='Freezing temperatures';detail='Low around '+d.low+'\u00b0.';}
+  else if(!isNaN(hi)&&hi>=95){title='Extreme heat';detail='High around '+d.high+'\u00b0.';}
+  if(!title)return null;
+  return '<div onclick="briefOpenWeather()" style="cursor:pointer;padding:12px 0">'
+    +'<div style="font-size:16px;font-weight:700;color:var(--accent);line-height:1.3">'+tfEsc(title)+'</div>'
+    +(detail?'<div style="font-size:14px;color:var(--t2);margin-top:3px;line-height:1.4">'+detail+'</div>':'')
+    +'</div>';
+}
+function briefOpenWeather(){
+  if(typeof weatherOpen!=='undefined'&&!weatherOpen&&typeof toggleWeather==='function')toggleWeather();
+  var el=document.getElementById('weather-card');
+  if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function renderDailyBrief(){
   var el=document.getElementById('brief-body');if(!el)return;
-  var items=getDailyBrief();
-  if(!items||!items.length){el.innerHTML='<div class="hcard-empty">Nothing to brief right now.</div>';return;}
-  el.innerHTML=items.map(function(it,i){
-    var sep=i>0?'border-top:1px solid var(--border);':'';
-    return '<div style="padding:12px 0;'+sep+'">'
-      +'<div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.3">'+it.title+'</div>'
-      +'<div style="font-size:14px;color:var(--t2);margin-top:3px;line-height:1.4">'+it.detail+'</div>'
-      +'</div>';
+  var rows=[];
+  rows=rows.concat(briefTaskRows());
+  var ev=briefEventRow();if(ev)rows.push(ev);
+  var em=briefEmailRow();if(em)rows.push(em);
+  rows=rows.concat(briefMedRows());
+  var wx=briefWeatherRow();if(wx)rows.push(wx);
+  if(!rows.length){
+    el.innerHTML='<div style="font-size:15px;color:var(--t2);padding:8px 0;line-height:1.4">Nothing urgent needs your attention right now.</div>';
+    return;
+  }
+  el.innerHTML=rows.map(function(r,i){
+    return i>0?'<div style="border-top:1px solid var(--border)">'+r+'</div>':r;
   }).join('');
 }
 
@@ -1466,6 +1550,7 @@ function renderHomeEmailCard(){
       +'</span>'
       +'</div>';
   }
+  if(typeof renderDailyBrief==='function')renderDailyBrief();
 }
 function toggleEmail(){
   emailOpen=!emailOpen;
@@ -1530,7 +1615,7 @@ function refreshAll(){
   var ico=document.getElementById('refresh-ico');
   if(ico)ico.classList.add('refresh-spinning');
   var done=0,total=4;
-  function check(){done++;if(done>=total){if(ico)ico.classList.remove('refresh-spinning');updateTimestamp();}}
+  function check(){done++;if(done>=total){if(ico)ico.classList.remove('refresh-spinning');updateTimestamp();if(typeof renderDailyBrief==='function')renderDailyBrief();}}
 
   // Weather
   fetchWeather().then(check).catch(check);
@@ -1633,6 +1718,7 @@ function renderMedCard(){
   }else{
     mc.innerHTML='<div onclick="toggleMed()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Did You Take Today? ▼</span><span style="font-size:15px;font-weight:700;color:'+(taken===total?'var(--ok)':'var(--accent)')+'">'+taken+'/'+total+' taken</span></div>';
   }
+  if(typeof renderDailyBrief==='function')renderDailyBrief();
 }
 function toggleMed(){
   medOpen=!medOpen;
@@ -1837,6 +1923,7 @@ function renderWeatherCard(){
       +'<span style="font-size:15px;font-weight:600;color:var(--text)">'+d.temp+'° '+(d.icon?d.icon+' ':'')+d.cond+'</span>'
       +'</div>';
   }
+  if(typeof renderDailyBrief==='function')renderDailyBrief();
 }
 function toggleWeather(){
   weatherOpen=!weatherOpen;
@@ -1929,6 +2016,7 @@ function renderCalCard(){
     var upCount=(calSummary.allEvents&&calSummary.allEvents.length)?calSummary.allEvents.length:(calSummary.events?calSummary.events.length:1);
     ec.innerHTML='<div onclick="toggleCal()" style="cursor:pointer;user-select:none;padding:4px 0"><span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Upcoming Events ▼</span><span style="font-size:15px;font-weight:700;color:var(--accent)">'+upCount+' upcoming</span></div>';
   }
+  if(typeof renderDailyBrief==='function')renderDailyBrief();
 }
 function toggleCal(){
   calOpen=!calOpen;
@@ -2965,7 +3053,7 @@ function tfItemHTML(t){
 }
 
 /* ---------- render ---------- */
-function tfRender(){tfRenderFull();tfRenderHome();}
+function tfRender(){tfRenderFull();tfRenderHome();if(typeof renderDailyBrief==='function')renderDailyBrief();}
 function tfRenderFull(){
   var main=tfActiveMain(),farm=tfActiveFarm(),done=tfDone();
   var st=tfTodayStats();
