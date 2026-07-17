@@ -457,6 +457,11 @@ input,textarea{font-family:var(--font);}
         <div class="greeting-date" id="h-date">Loading...</div>
         <div id="h-updated" style="font-size:12px;color:var(--t3);margin-bottom:16px;margin-top:-18px;"></div>
 
+        <div class="hcard" id="brief-card">
+          <div class="hcard-label">Today's Brief</div>
+          <div id="brief-body"></div>
+        </div>
+
         <div class="hcard" id="ask-ditty-card">
           <div class="ad-header" onclick="toggleAskDitty()">
             <div class="ad-header-left">
@@ -917,8 +922,31 @@ function dismissBuildBanner(){
   localStorage.setItem('dpa_build_ack_final',BUILD_ID);
 }
 
+function getDailyBrief(){
+  // Framework only. Each entry can later be replaced by live data from
+  // Weather, Calendar, Email, Fat Journey, Medications, or Ask Ditty.
+  return [
+    {title:"Transformer outage",detail:"Leave in 35 minutes."},
+    {title:"Rain after 3 PM",detail:"Tomorrow is the better mowing day."},
+    {title:"2 Duke emails",detail:"Review before 9 AM."},
+    {title:"Retatrutide due tonight",detail:"Stay on schedule."}
+  ];
+}
+function renderDailyBrief(){
+  var el=document.getElementById('brief-body');if(!el)return;
+  var items=getDailyBrief();
+  if(!items||!items.length){el.innerHTML='<div class="hcard-empty">Nothing to brief right now.</div>';return;}
+  el.innerHTML=items.map(function(it,i){
+    var sep=i>0?'border-top:1px solid var(--border);':'';
+    return '<div style="padding:12px 0;'+sep+'">'
+      +'<div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.3">'+it.title+'</div>'
+      +'<div style="font-size:14px;color:var(--t2);margin-top:3px;line-height:1.4">'+it.detail+'</div>'
+      +'</div>';
+  }).join('');
+}
+
 function bootApp(){
-  updateG();setGreeting();renderMedCard();initAskDitty();focusInit();
+  updateG();setGreeting();renderDailyBrief();renderMedCard();initAskDitty();focusInit();
   loadHome();loadCal();loadMail();loadFatJourney();
   startMidnightWatch();
   checkBuildBanner();
