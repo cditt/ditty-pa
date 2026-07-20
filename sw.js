@@ -18,7 +18,8 @@ var NO_CACHE = [
   'googleapis.com',
   'anthropic.com',
   'accounts.google.com',
-  'api.jsonbin.io'
+  'api.jsonbin.io',
+  'open-meteo.com'
 ];
 
 // The app shell HTML is always fetched fresh over the network when online,
