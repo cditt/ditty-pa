@@ -1166,7 +1166,7 @@ function abBuildPrompt(){
     +'about the weather, and the priority email count only if it is above zero. '
     +'Skip any category that is empty rather than announcing that it is empty. '
     +'Finish with one short encouraging sentence.\n\n'
-    +'Rules: Do NOT use the web search tool. Everything you need is in DATA above. '
+    +'Rules: Do not use any tools or search. Everything you need is in DATA above. '
     +'No headings, no bullets, no markdown, no bold. Plain sentences only. '
     +'Invent nothing that is not in DATA. Keep the whole brief under 160 words. '
     +'Return only the brief itself, with no preamble.';
@@ -1203,6 +1203,20 @@ function abFallback(){
   abShowText(bits.join(' · ')+'.');
 }
 
+// Provider swap for the brief is this one line. callClaude (Anthropic) is kept
+// working; point this at it again once that billing is restored.
+function abCallLLM(prompt,cb){return callOpenAI(prompt,cb);}
+
+// Any provider may report failure as an empty string, an 'Error: ...' string,
+// or the '__API_ERROR__:' prefix. All three mean "do not render this as prose".
+function abBadResponse(txt){
+  if(!txt||!txt.trim())return 'empty response';
+  var s=txt.trim();
+  if(s.indexOf('__API_ERROR__:')===0)return s.slice(14);
+  if(/^error:/i.test(s))return s;
+  return null;
+}
+
 function abFetch(force){
   if(AB_BUSY)return;
   var cached=abCacheGet();
@@ -1210,12 +1224,16 @@ function abFetch(force){
   AB_BUSY=true;
   var g=document.getElementById('ab-refresh');if(g)g.classList.add('spin');
   abShowLoading();
-  callClaude(abBuildPrompt(),function(txt){
+  abCallLLM(abBuildPrompt(),function(txt){
     AB_BUSY=false;
     var g2=document.getElementById('ab-refresh');if(g2)g2.classList.remove('spin');
-    // callClaude resolves with an 'Error: ...' string on network failure
-    // rather than rejecting, so check the payload, not just emptiness.
-    if(!txt||!txt.trim()||/^error:/i.test(txt.trim())){abFallback();return;}
+    var bad=abBadResponse(txt);
+    if(bad){
+      // The UI never shows an error, but the reason should not be invisible.
+      if(window.console&&console.warn)console.warn('Daily brief unavailable: '+bad);
+      abFallback();
+      return;
+    }
     var clean=txt.trim().replace(/^```[a-z]*\s*/i,'').replace(/```$/,'').trim();
     abCacheSet(clean);
     abShowText(clean);
@@ -1619,8 +1637,44 @@ function toast(msg){
 function callClaude(prompt,cb){
   fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:3}],messages:[{role:'user',content:prompt}]})})
     .then(function(r){return r.json();})
-    .then(function(d){var t='';if(d.content)d.content.forEach(function(c){if(c.type==='text')t+=c.text;});cb(t);})
-    .catch(function(e){cb('Error: '+e.message);});
+    .then(function(d){
+      // An API error (e.g. billing) comes back as {type:'error',error:{...}} with
+      // no content, and HTTP 400 does not reject the fetch -- so without these
+      // checks the failure collapses into an empty string indistinguishable
+      // from "the model said nothing".
+      if(d.type==='error'||(!d.content&&d.error)){cb('__API_ERROR__:'+(d.error&&d.error.message||'API error'));return;}
+      var t='';if(d.content)d.content.forEach(function(c){if(c.type==='text')t+=c.text;});
+      if(!t){cb('__API_ERROR__:Empty response');return;}
+      cb(t);
+    })
+    .catch(function(e){cb('__API_ERROR__:'+(e&&e.message||'Network error'));});
+}
+
+// OpenAI via the Worker's POST /openai route (key is a Worker secret, never here).
+// Same callback contract as callClaude/callClaudeJSON: text on success, or a
+// string prefixed '__API_ERROR__:' on any failure.
+function callOpenAI(prompt,cb){
+  fetch(PROXY+'/openai',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'gpt-4o-mini',
+      max_tokens:400,
+      temperature:0.7,
+      messages:[{role:'user',content:prompt}]
+    })
+  })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||d.error){cb('__API_ERROR__:'+((d&&d.error&&d.error.message)||'API error'));return;}
+      var ch=d.choices&&d.choices[0];
+      var t=(ch&&ch.message&&typeof ch.message.content==='string')?ch.message.content:'';
+      if(!t||!t.trim()){cb('__API_ERROR__:Empty response');return;}
+      cb(t);
+    })
+    // Also catches a missing/misrouted endpoint: a 404 body of "Not found" is
+    // not JSON, so .json() throws and surfaces here instead of silently emptying.
+    .catch(function(e){cb('__API_ERROR__:'+(e&&e.message||'Network error'));});
 }
 // callClaudeJSON: no web search tools -- guarantees a plain text/JSON response.
 // Use for structured JSON generation where tool calls would break parsing.
