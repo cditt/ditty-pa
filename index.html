@@ -785,6 +785,10 @@ var PROXY='https://ditty-pa-proxy.hddittemore.workers.dev';
 var JSONBIN_ID='69fbc6d7adc21f119a63898a';
 var latestFatJourneyData=null;
 var S={},T={},GT=null,CUR='home';
+// Google auth health, set from HTTP status on Calendar/Gmail responses.
+// null = not yet exercised, 'ok' = a call succeeded, 'expired' = 401/403 seen.
+// A stored token can be non-empty and still be dead, so GT alone is not proof.
+var GAUTH=null;
 var portfolioOpen=localStorage.getItem('dpa_portOpen')==='true';
 var portfolioRows='';
 var portfolioSummary=null;
@@ -1122,16 +1126,43 @@ function abCalReady(){return typeof calSummary!=='undefined'&&calSummary!==null;
 // Three distinct states -- "still loading" must never be confused with
 // "loaded and empty", which is what made the brief claim an empty day.
 //   <string> : calendar known ('none' when today is genuinely clear)
-//   'nocal'  : definitively unavailable (not signed in)
+//   'nocal'  : definitively unavailable (signed out, or the token is dead)
 //   null     : not loaded yet
 function abCalSig(){
+  // An expired token yields an empty item list that is indistinguishable from
+  // a clear day. Treat it as "no calendar" so the brief never claims an
+  // all-clear it cannot actually see.
+  if(typeof GT==='undefined'||!GT||GAUTH==='expired')return 'nocal';
   if(abCalReady()){
     var evs=abTodayEvents();
     if(!evs.length)return 'none';
     return evs.length+'|'+evs.map(function(e){return e.time+'~'+e.title;}).join(';');
   }
-  if(typeof GT==='undefined'||!GT)return 'nocal';
   return null;
+}
+
+// Same tri-state for weather. Open-Meteo needs no auth, so "definitively
+// unavailable" just means the fetch failed (recorded in offlineFlags).
+//   <string> : conditions known
+//   'nowx'   : fetch failed
+//   null     : not loaded yet
+function abWxSig(){
+  var d=(typeof weatherData!=='undefined')?weatherData:null;
+  if(d){
+    var rain=(d.precipMax&&d.precipMax[0]!=null)?d.precipMax[0]:'';
+    return 'wx'+(d.temp||'')+'/'+(d.high||'')+'/'+rain;
+  }
+  if(typeof offlineFlags!=='undefined'&&offlineFlags&&offlineFlags.weather)return 'nowx';
+  return null;
+}
+
+// The brief is only final once EVERY source has resolved one way or the other.
+// If any is still unknown the signature is null, which callers treat as
+// provisional: render it, but never cache it.
+function abDataSig(){
+  var c=abCalSig(),w=abWxSig();
+  if(c===null||w===null)return null;
+  return c+'||'+w;
 }
 
 function abRenderWeatherLine(){
@@ -1226,7 +1257,11 @@ function abBuildPrompt(){
         return f.day+' '+f.high+'/'+f.low+(f.rain!=null?' '+f.rain+'% rain':'');
       }).join('; '));
     }
-  }else L.push('WEATHER: unavailable');
+  }else if(abWxSig()===null){
+    L.push('WEATHER: still loading, conditions unknown.');
+  }else{
+    L.push('WEATHER: unavailable.');
+  }
   L.push('');
   L.push('PRIORITY EMAIL: '+d.priorityEmail);
 
@@ -1239,6 +1274,8 @@ function abBuildPrompt(){
     +'Skip any category that is empty rather than announcing that it is empty. '
     +'If CALENDAR says still loading or not connected, do not mention his schedule '
     +'at all -- do not say he has nothing on, because that is not known. '
+    +'Likewise if WEATHER says still loading or unavailable, do not mention the '
+    +'weather at all rather than saying it is unavailable. '
     +'Finish with one short encouraging sentence.\n\n'
     +'Rules: Do not use any tools or search. Everything you need is in DATA above. '
     +'No headings, no bullets, no markdown, no bold. Plain sentences only. '
@@ -1298,9 +1335,9 @@ function abBadResponse(txt){
 
 function abFetch(force){
   if(AB_BUSY)return;
-  var sig=abCalSig();
+  var sig=abDataSig();
   var cached=abCacheGet();
-  // Reuse only when the cache was built from this same calendar state.
+  // Reuse only when the cache was built from this same calendar+weather state.
   if(!force&&sig!==null&&abCacheFresh(cached)&&cached.sig===sig){
     abShowText(cached.text);AB_RENDERED_SIG=sig;return;
   }
@@ -1317,20 +1354,20 @@ function abFetch(force){
       abFallback();
     }else{
       var clean=txt.trim().replace(/^```[a-z]*\s*/i,'').replace(/```$/,'').trim();
-      // Never persist a brief written while the calendar was still unknown.
+      // Never persist a brief written while ANY source was still unknown.
       if(sig!==null)abCacheSet(clean,sig);
       abShowText(clean);
     }
     AB_RENDERED_SIG=sig;
-    // If the calendar landed mid-flight, AB_BUSY blocked the retry; re-check now.
+    // If a source landed mid-flight, AB_BUSY blocked the retry; re-check now.
     // Terminates: once rendered for the current sig, abMaybeAuto is a no-op.
     setTimeout(abMaybeAuto,0);
   });
 }
 
 function abMaybeAuto(){
-  var sig=abCalSig();
-  if(sig===null)return;             // calendar still loading -- backstop covers it
+  var sig=abDataSig();
+  if(sig===null)return;             // a source is still loading -- backstop covers it
   if(AB_RENDERED_SIG===sig)return;  // on-screen brief already reflects this state
   abFetch(false);
 }
@@ -1340,9 +1377,9 @@ function abInit(){
   if(abCacheFresh(c)){abShowText(c.text);AB_RENDERED_SIG=(typeof c.sig==='string')?c.sig:null;}
   else abShowLoading();
   abRenderWeatherLine();
-  // Only covers "signed in but calendar still in flight" -- the signed-out case
-  // resolves immediately via the 'nocal' signature, and a failed calendar fetch
-  // still sets calSummary through applyCalData(null).
+  // Covers the case where a source is still in flight. Signed-out resolves at
+  // once via 'nocal'; a failed calendar still sets calSummary via
+  // applyCalData(null); a failed weather sets offlineFlags.weather.
   setTimeout(function(){
     if(AB_RENDERED_SIG===null&&!AB_BUSY)abFetch(false);
   },AB_BACKSTOP);
@@ -1400,8 +1437,17 @@ function startMidnightWatch(){
 
 function updateG(){
   var p=document.getElementById('gpill'),s=document.getElementById('s-gstat');
-  if(GT){if(p){p.textContent='● Google';p.className='gpill gpill-on';}if(s)s.textContent='Connected';}
-  else{if(p){p.textContent='● Connect';p.className='gpill gpill-off';}if(s)s.textContent='Not connected';}
+  if(!GT){
+    if(p){p.textContent='● Connect';p.className='gpill gpill-off';}
+    if(s)s.textContent='Not connected';
+  }else if(GAUTH==='expired'){
+    // Having a token is not the same as having a working one.
+    if(p){p.textContent='● Reconnect';p.className='gpill gpill-off';}
+    if(s)s.textContent='Session expired — tap Reconnect Google';
+  }else{
+    if(p){p.textContent='● Google';p.className='gpill gpill-on';}
+    if(s)s.textContent='Connected';
+  }
 }
 
 var AB_SUN_SVG='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
@@ -1779,10 +1825,18 @@ function callClaudeJSON(prompt,cb){
     .catch(function(e){cb('__API_ERROR__:'+e.message);});
 }
 
+// A stored token can be non-empty and still rejected. Record what the server
+// actually says so an expired session stops looking like "no data".
+function noteGAuth(r){
+  if(!r)return;
+  if(r.status===401||r.status===403)GAUTH='expired';
+  else if(r.ok)GAUTH='ok';
+}
+
 function fetchCalendarList(){
   if(!GT)return Promise.resolve(null);
   return fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList',{headers:{Authorization:'Bearer '+GT}})
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){noteGAuth(r);return r.ok?r.json():null;})
     .then(function(d){return(d&&d.items)?d.items.filter(function(c){return c.selected!==false&&c.hidden!==true&&c.accessRole!=='freeBusyReader';}):null;})
     .catch(function(){return null;});
 }
@@ -1792,7 +1846,7 @@ function fetchCal(){
   var now=new Date(),fut=new Date(now.getTime()+604800000);
   function fetchEventsFor(calId,calName){
     return fetch('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(calId)+'/events?timeMin='+encodeURIComponent(now.toISOString())+'&timeMax='+encodeURIComponent(fut.toISOString())+'&singleEvents=true&orderBy=startTime&maxResults=20',{headers:{Authorization:'Bearer '+GT}})
-      .then(function(r){return r.ok?r.json():null;})
+      .then(function(r){noteGAuth(r);return r.ok?r.json():null;})
       .then(function(d){
         if(!d||!d.items)return[];
         return d.items
@@ -1826,8 +1880,8 @@ function fetchEmail(){
   var subjQ='subject:(payment OR invoice OR statement OR "bill due" OR "amount due" OR "past due" OR claim OR appointment OR "your bill" OR "account summary")';
   var priQ='is:unread ('+fromQ+' OR '+subjQ+')';
   return Promise.all([
-    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q='+encodeURIComponent(priQ),{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};}),
-    fetch('https://www.googleapis.com/gmail/v1/users/me/labels/INBOX',{headers:{Authorization:'Bearer '+GT}}).then(function(r){return r.json();}).catch(function(){return {};})
+    fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q='+encodeURIComponent(priQ),{headers:{Authorization:'Bearer '+GT}}).then(function(r){noteGAuth(r);return r.json();}).catch(function(){return {};}),
+    fetch('https://www.googleapis.com/gmail/v1/users/me/labels/INBOX',{headers:{Authorization:'Bearer '+GT}}).then(function(r){noteGAuth(r);return r.json();}).catch(function(){return {};})
   ]).then(function(res){
     var priData=res[0],labelData=res[1];
     var count=labelData.messagesUnread||0;
@@ -1859,6 +1913,7 @@ function loadHome(){
     updateHomeEmailCard(emailData);
     if(emailData)clearOffline('email');else setOffline('email');
     if(calData)clearOffline('calendar');else setOffline('calendar');
+    updateG(); // the pill now reflects what the server said, not just that a token exists
 
     // Portfolio -- driven by ledger; rebuildPortfolio() is the single entry point
     if(!ACTIVE_SYMBOLS){
@@ -1914,7 +1969,14 @@ function applyCalData(data){
   if(typeof abMaybeAuto==='function')abMaybeAuto();
   // Update Calendar screen
   var el=document.getElementById('cal-content');if(!el)return;
-  if(!data||!data.items||!data.items.length){el.innerHTML='<div class="cal-empty">No events in the next 7 days</div>';return;}
+  if(!data||!data.items||!data.items.length){
+    // An expired token returns an empty list, which is not the same as an empty
+    // week. Say which one it is instead of silently implying a clear calendar.
+    el.innerHTML=(GT&&GAUTH==='expired')
+      ? '<div class="cal-empty">Google session expired — tap Reconnect at the top to sign in again.</div>'
+      : '<div class="cal-empty">No events in the next 7 days</div>';
+    return;
+  }
   var deduped2=dedupCalItems(data.items);
   var now=new Date();
   var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -2997,6 +3059,9 @@ function fetchWeather(){
       var wc=document.getElementById('weather-card');
       if(wc)wc.innerHTML='<div class="wh-loading">Weather unavailable</div>';
       setOffline('weather');
+      // The success path notifies the brief via renderWeatherCard -> renderDailyBrief.
+      // The failure path must do it too, or the brief waits on the backstop.
+      if(typeof abMaybeAuto==='function')abMaybeAuto();
     });
 }
 // ── ASK DITTY HISTORY ─────────────────────────────────────────────────
