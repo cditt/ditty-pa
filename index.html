@@ -105,6 +105,8 @@ input,textarea{font-family:var(--font);}
 .ad-body-inner{margin-top:14px;}
 .ad-suggest-wrap{position:relative;}
 .ad-suggest{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--s2);border:1.5px solid var(--border);border-radius:10px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;}
+/* In the bottom sheet the dropdown must open upward, not over the buttons. */
+.msheet .ad-suggest{top:auto;bottom:100%;margin-top:0;margin-bottom:4px;}
 .ad-suggest-item{padding:10px 14px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);}
 .ad-suggest-item:last-child{border-bottom:none;}
 .ad-suggest-item.active{background:var(--s3);color:var(--accent);}
@@ -492,28 +494,6 @@ input,textarea{font-family:var(--font);}
           <div id="brief-body"></div>
         </div>
 
-        <div class="hcard" id="ask-ditty-card">
-          <div class="ad-header" onclick="toggleAskDitty()">
-            <div class="ad-header-left">
-              <span class="ad-title">Ask Ditty</span>
-              <span class="ad-subtext">Type a reminder, task, or question</span>
-            </div>
-            <span id="ad-chevron" class="ad-chev">&#9660;</span>
-          </div>
-          <div id="ad-body" style="display:none">
-            <div class="ad-body-inner">
-              <div class="ad-suggest-wrap">
-                <textarea id="ad-txt" class="ad-input" rows="2" placeholder="Remind me in 3 months to check the furnace filter..." autocomplete="off"></textarea>
-                <div id="ad-suggest" class="ad-suggest"></div>
-              </div>
-              <div id="ad-clarify-area"></div>
-              <div id="ad-confirm-area"></div>
-              <button class="ad-btn" id="ad-submit-btn" onclick="adSubmit()">Do It</button>
-              <div id="ad-status" class="ad-status"></div>
-            </div>
-          </div>
-        </div>
-
         <div class="htiles">
           <div class="htile htile-wide" id="fj-card" onclick="openFatJourney()">
             <div class="htile-lbl">Fat Journey</div>
@@ -660,15 +640,21 @@ input,textarea{font-family:var(--font);}
   <div class="pdet-scroll" id="pdet-scroll"></div>
 </div>
 
-<!-- REMIND MODAL -->
+<!-- ASK DITTY MODAL (merged: reminders + Ask Ditty share this one input) -->
 <div class="modal-bg" id="rmodal">
   <div class="msheet">
     <div class="mhandle"></div>
-    <div class="mtitle">Set Reminder</div>
-    <textarea class="mta" id="rtxt" placeholder="Pick up chicken feed at 4:30 today..."></textarea>
+    <div class="mtitle">Ask Ditty</div>
+    <div class="ad-suggest-wrap">
+      <textarea class="mta" id="ad-txt" placeholder="Pick up chicken feed at 4:30 today..." autocomplete="off"></textarea>
+      <div id="ad-suggest" class="ad-suggest"></div>
+    </div>
+    <div id="ad-clarify-area"></div>
+    <div id="ad-confirm-area"></div>
+    <div id="ad-status" class="ad-status"></div>
     <div class="macts">
-      <button class="mbtn-cancel" onclick="closeRemind()">Cancel</button>
-      <button class="mbtn-go" onclick="submitRemind()">Set It</button>
+      <button class="mbtn-cancel" onclick="closeRemind()">Close</button>
+      <button class="mbtn-go" id="ad-submit-btn" onclick="submitRemind()">Do It</button>
     </div>
   </div>
 </div>
@@ -1261,8 +1247,26 @@ function saveSettings(){
 }
 function doSignOut(){if(!confirm('Reset everything?'))return;localStorage.clear();location.reload();}
 
-function openRemind(){document.getElementById('rmodal').classList.add('open');setTimeout(function(){document.getElementById('rtxt').focus();},100);}
-function closeRemind(){document.getElementById('rmodal').classList.remove('open');document.getElementById('rtxt').value='';}
+function openRemind(){
+  document.getElementById('rmodal').classList.add('open');
+  adResetPanels();
+  setTimeout(function(){var t=document.getElementById('ad-txt');if(t)t.focus();},100);
+}
+function closeRemind(){
+  document.getElementById('rmodal').classList.remove('open');
+  var t=document.getElementById('ad-txt');if(t)t.value='';
+  adResetPanels();
+  if(typeof adSuggestHide==='function')adSuggestHide();
+}
+// Clear clarify/confirm/status so a stale card can't reappear on reopen.
+function adResetPanels(){
+  ['ad-clarify-area','ad-confirm-area'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.innerHTML='';
+  });
+  var s=document.getElementById('ad-status');
+  if(s){s.textContent='';s.style.color='var(--t2)';}
+  AD_RAW_TEXT='';
+}
 function parseReminderLocal(txt){
   var s=txt.toLowerCase().trim();
   var now=new Date();
@@ -1385,36 +1389,10 @@ function deleteCreatedReminder(googleId){
     })
     .catch(function(e){toast('Delete error: '+e.message);});
 }
-function submitRemind(){
-  var txt=document.getElementById('rtxt').value.trim();if(!txt)return;closeRemind();
-  if(!GT){
-    if(window.tfAddTask)tfAddTask(txt);toast('Added to Focus');return;
-  }
-  var parsed=parseReminderLocal(txt);
-  if(!parsed){
-    if(window.tfAddTask)tfAddTask(txt);toast('Added to Focus');return;
-  }
-  // Duplicate check
-  var existing=getCreatedReminders();
-  var isDup=existing.items.some(function(r){return r.title===parsed.title&&r.dateTime===parsed.dateTime;});
-  if(isDup){toast('Reminder already exists');return;}
-  var ev={summary:parsed.title,start:{dateTime:parsed.dateTime,timeZone:'America/Indiana/Indianapolis'},end:{dateTime:new Date(new Date(parsed.dateTime).getTime()+1800000).toISOString(),timeZone:'America/Indiana/Indianapolis'},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
-  fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},body:JSON.stringify(ev)})
-    .then(function(res){
-      if(res.ok){
-        return res.json().then(function(created){
-          var obj=getCreatedReminders();
-          obj.items.push({id:created.id,title:parsed.title,dateTime:parsed.dateTime,createdAt:Date.now()});
-          saveCreatedReminders(obj);
-          refreshCalendar();
-          toast('Reminder added: '+parsed.title);
-        });
-      }else{
-        toast('Calendar failed: '+res.status);
-      }
-    })
-    .catch(function(e){toast('Calendar error: '+e.message);});
-}
+/* Merged entry point. The modal and Ask Ditty are one input now, so this
+   delegates to the single router-backed handler instead of parsing locally.
+   parseReminderLocal is retained above but no longer on any live path. */
+function submitRemind(){adSubmit();}
 
 function toast(msg){
   var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
@@ -2670,12 +2648,26 @@ function adHistoryLog(request,intent,result){
 var DITTY_HANDLERS={
 
   calendar:function(payload,originalText,done){
-    if(!payload.dateTime){done({ok:false,msg:'Could not determine a date. Try: "remind me next Tuesday at 9am to..."'});return;}
-    if(!GT){done({ok:false,msg:'Connect Google to create calendar events.'});return;}
+    var title=(payload&&payload.title)||(originalText||'').trim()||'Reminder';
+    // No usable date, or no Google connection -> fall back to a Focus task
+    // rather than erroring (behavior carried over from the old submitRemind).
+    if(!payload.dateTime||!GT){
+      if(window.tfAddTask){
+        tfAddTask(title,{source:'ask'});
+        done({ok:true,msg:'',confirm:{title:title,when:"Today's Focus",repeats:'None',calendar:"Today's Focus"}});
+      }else{
+        done({ok:false,msg:'Task engine not ready.'});
+      }
+      return;
+    }
     var start=payload.dateTime;
+    // Dedupe on title + dateTime against our own record of created events.
+    var existing=getCreatedReminders();
+    var isDup=existing.items.some(function(r){return r.title===title&&r.dateTime===start;});
+    if(isDup){done({ok:false,msg:'Reminder already exists',stub:true});return;}
     var end=payload.endDateTime||new Date(new Date(start).getTime()+1800000).toISOString();
     var ev={
-      summary:payload.title||'Reminder',
+      summary:title,
       description:'Ditty PA: '+originalText+(payload.notes?'\n\n'+payload.notes:''),
       start:{dateTime:start,timeZone:'America/Indiana/Indianapolis'},
       end:{dateTime:end,timeZone:'America/Indiana/Indianapolis'},
@@ -2687,15 +2679,20 @@ var DITTY_HANDLERS={
       headers:{Authorization:'Bearer '+GT,'Content-Type':'application/json'},
       body:JSON.stringify(ev)
     }).then(function(res){
-      if(res.ok){
+      if(!res.ok){done({ok:false,msg:'Calendar error '+res.status});return;}
+      // Read the body so the created id is recorded and deleteCreatedReminder keeps working.
+      return res.json().then(function(created){
+        var obj=getCreatedReminders();
+        obj.items.push({id:created.id,title:title,dateTime:start,createdAt:Date.now()});
+        saveCreatedReminders(obj);
         refreshCalendar();
         done({ok:true,msg:'',confirm:{
-          title:ev.summary,
+          title:title,
           when:new Date(start).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
           repeats:payload.recurrence||'None',
           calendar:'Primary'
         }});
-      }else{done({ok:false,msg:'Calendar error '+res.status});}
+      });
     }).catch(function(e){done({ok:false,msg:'Network error: '+e.message});});
   },
 
@@ -2707,40 +2704,130 @@ var DITTY_HANDLERS={
   note:         function(p,o,done){done({ok:false,msg:'Notes coming soon.',stub:true});}
 };
 
-// Local reminder parser: handles "in X minutes/hours/days/weeks/months/years"
+// Local reminder parser. Handles "in N units" plus the clock/weekday grammars
+// carried over from parseReminderLocal: "today at TIME", "tomorrow [part of day
+// | at TIME]", "WEEKDAY at TIME", and a bare "at TIME" that rolls to tomorrow.
 // Returns a dittyRoute-compatible parsed object, or null if not matched.
 // Falls through to Claude for anything more complex.
-function dittyLocalParse(text){
-  var m=text.toLowerCase().match(/\bin\s+(\d+\.?\d*)\s*(minute|hour|day|week|month|year)s?\b/);
-  if(!m)return null;
-  var amt=parseFloat(m[1]),unit=m[2];
-  var d=new Date();d.setHours(9,0,0,0);
-  if(unit==='minute')d.setMinutes(d.getMinutes()+amt);
-  else if(unit==='hour')d.setHours(d.getHours()+amt);
-  else if(unit==='day')d.setDate(d.getDate()+Math.round(amt));
-  else if(unit==='week')d.setDate(d.getDate()+Math.round(amt*7));
-  else if(unit==='month')d.setMonth(d.getMonth()+Math.round(amt));
-  else if(unit==='year')d.setFullYear(d.getFullYear()+Math.round(amt));
-  var title=text
-    .replace(/\.\s*remind me in\s+[\d.]+\s*\w+s?\.?/i,'')
-    .replace(/remind me in\s+[\d.]+\s*\w+s?\.?/i,'')
-    .replace(/\bin\s+[\d.]+\s*\w+s?/i,'')
-    .replace(/\s*(today|tomorrow)\.?\s*/gi,' ')
-    .replace(/^(i\s+)?(changed|replaced|fixed|checked|updated|did|completed|finished|got)\s+/i,'')
-    .replace(/^(the|a|an)\s+/i,'')
-    .replace(/\s{2,}/g,' ').trim()
-    .replace(/^to\s+/i,'')
-    .replace(/[.,!?]+$/,'');
+//
+// All branches emit a full toISOString(): an absolute UTC instant. The previous
+// slice(0,16) form took UTC digits and labeled them as Indiana local time,
+// which shifted every reminder by the UTC offset.
+function ditty_dtPayload(text,title,d,recurrence){
   if(!title)title='Reminder';
   title=title.charAt(0).toUpperCase()+title.slice(1);
-  var end=new Date(d.getTime()+1800000);
   return{intent:'calendar',confidence:99,clarifyQuestion:null,payload:{
     title:title,
-    dateTime:d.toISOString().slice(0,16)+':00',
-    endDateTime:end.toISOString().slice(0,16)+':00',
-    recurrence:null,
+    dateTime:d.toISOString(),
+    endDateTime:new Date(d.getTime()+1800000).toISOString(),
+    recurrence:recurrence||null,
     notes:'Original: '+text
   }};
+}
+function ditty_cleanTitle(raw,removes){
+  var t=raw;
+  removes.forEach(function(r){t=t.replace(r,'');});
+  return t.replace(/\s{2,}/g,' ').trim()
+    .replace(/^remind\s+me\s+/i,'')
+    .replace(/^(to|and)\s+/i,'')
+    .replace(/[.,!?]+$/,'').trim();
+}
+function ditty_parseTime(timeStr,base){
+  var m=timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if(!m)return null;
+  var h=parseInt(m[1],10),min=parseInt(m[2]||'0',10),mer=(m[3]||'').toLowerCase();
+  if(mer==='pm'&&h<12)h+=12;
+  if(mer==='am'&&h===12)h=0;
+  if(!mer&&h<7)h+=12; // assume PM for ambiguous small hours (1-6)
+  var d=new Date(base);d.setHours(h,min,0,0);
+  return d;
+}
+function ditty_timeOfDay(word,base){
+  var d=new Date(base);
+  if(/morning/i.test(word))  {d.setHours(8,0,0,0);return d;}
+  if(/afternoon/i.test(word)){d.setHours(13,0,0,0);return d;}
+  if(/evening/i.test(word))  {d.setHours(18,0,0,0);return d;}
+  if(/night/i.test(word))    {d.setHours(20,0,0,0);return d;}
+  return null;
+}
+var DITTY_DOW=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+function ditty_nextDow(name,now){
+  var target=DITTY_DOW.indexOf(name.toLowerCase());
+  if(target<0)return null;
+  var d=new Date(now);var diff=(target-d.getDay()+7)%7||7;
+  d.setDate(d.getDate()+diff);d.setHours(9,0,0,0);return d;
+}
+
+function dittyLocalParse(text){
+  var s=text.toLowerCase().trim();
+  var now=new Date();
+
+  // "in N minutes/hours/days/weeks/months/years"
+  var m=s.match(/\bin\s+(\d+\.?\d*)\s*(minute|hour|day|week|month|year)s?\b/);
+  if(m){
+    var amt=parseFloat(m[1]),unit=m[2];
+    var d=new Date();d.setHours(9,0,0,0);
+    if(unit==='minute'){d=new Date();d.setSeconds(0,0);d.setMinutes(d.getMinutes()+amt);}
+    else if(unit==='hour'){d=new Date();d.setSeconds(0,0);d.setHours(d.getHours()+amt);}
+    else if(unit==='day')d.setDate(d.getDate()+Math.round(amt));
+    else if(unit==='week')d.setDate(d.getDate()+Math.round(amt*7));
+    else if(unit==='month')d.setMonth(d.getMonth()+Math.round(amt));
+    else if(unit==='year')d.setFullYear(d.getFullYear()+Math.round(amt));
+    var title=text
+      .replace(/\.\s*remind me in\s+[\d.]+\s*\w+s?\.?/i,'')
+      .replace(/remind me in\s+[\d.]+\s*\w+s?\.?/i,'')
+      .replace(/\bin\s+[\d.]+\s*\w+s?/i,'')
+      .replace(/\s*(today|tomorrow)\.?\s*/gi,' ')
+      .replace(/^(i\s+)?(changed|replaced|fixed|checked|updated|did|completed|finished|got)\s+/i,'')
+      .replace(/^(the|a|an)\s+/i,'')
+      .replace(/\s{2,}/g,' ').trim()
+      .replace(/^to\s+/i,'')
+      .replace(/[.,!?]+$/,'');
+    return ditty_dtPayload(text,title,d,null);
+  }
+
+  var timeMatch=s.match(/\bat\s+([\d]{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+  var todayRef=/\btoday\b/i.test(s);
+  var tomorrowRef=/\btomorrow\b/i.test(s);
+  var dowMatch=s.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i);
+  var STRIP_TIME=/\bat\s+[\d:]+\s*(?:am|pm)?\b/i;
+
+  // "today at TIME"
+  if(todayRef&&timeMatch){
+    var td=ditty_parseTime(timeMatch[1],now);
+    if(td)return ditty_dtPayload(text,ditty_cleanTitle(text,[STRIP_TIME,/\btoday\b/i]),td,null);
+  }
+
+  // "tomorrow [morning|afternoon|evening|night | at TIME]"
+  if(tomorrowRef){
+    var tmrw=new Date(now);tmrw.setDate(tmrw.getDate()+1);
+    var tod=s.match(/\b(morning|afternoon|evening|night)\b/i);
+    var when;
+    if(tod)when=ditty_timeOfDay(tod[1],tmrw);
+    else if(timeMatch)when=ditty_parseTime(timeMatch[1],tmrw);
+    if(!when){when=new Date(tmrw);when.setHours(9,0,0,0);}
+    return ditty_dtPayload(text,ditty_cleanTitle(text,[/\btomorrow\b/i,/\b(morning|afternoon|evening|night)\b/i,STRIP_TIME]),when,null);
+  }
+
+  // "WEEKDAY at TIME"
+  if(dowMatch){
+    var base=ditty_nextDow(dowMatch[1],now);
+    if(base){
+      if(timeMatch){var tp=ditty_parseTime(timeMatch[1],base);if(tp)base=tp;}
+      return ditty_dtPayload(text,ditty_cleanTitle(text,[/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i,STRIP_TIME]),base,null);
+    }
+  }
+
+  // Bare "at TIME" — today, or tomorrow if that time already passed
+  if(timeMatch&&!todayRef&&!tomorrowRef&&!dowMatch){
+    var p=ditty_parseTime(timeMatch[1],now);
+    if(p){
+      if(p<=now)p.setDate(p.getDate()+1);
+      return ditty_dtPayload(text,ditty_cleanTitle(text,[STRIP_TIME]),p,null);
+    }
+  }
+
+  return null;
 }
 
 function dittyRoute(text,clarifyAnswer,onStatus){
@@ -2928,18 +3015,22 @@ function adSubmit(){
   var confirmArea=document.getElementById('ad-confirm-area');
   var clarifyArea=document.getElementById('ad-clarify-area');
   var statusEl=document.getElementById('ad-status');
+  // Read the clarify answer BEFORE wiping the area — clearing it first removes
+  // #ad-clarify-inp from the DOM, so the answer was never picked up.
+  var clarifyInp=document.getElementById('ad-clarify-inp');
+  var clarifyAnswer=(clarifyInp&&clarifyInp.value.trim())?clarifyInp.value.trim():null;
   if(confirmArea)confirmArea.innerHTML='';
   if(clarifyArea)clarifyArea.innerHTML='';
   if(statusEl){statusEl.textContent='';statusEl.style.color='var(--t2)';}
   var txtel=document.getElementById('ad-txt');
   if(!txtel)return;
   var raw=txtel.value.trim();
-  if(!raw){
+  // On a clarify round-trip the original request lives in AD_RAW_TEXT, so an
+  // empty box is only an error on a fresh submission.
+  if(!raw&&!clarifyAnswer){
     if(statusEl)statusEl.textContent='Type something for Ditty first.';
     return;
   }
-  var clarifyInp=document.getElementById('ad-clarify-inp');
-  var clarifyAnswer=(clarifyInp&&clarifyInp.value.trim())?clarifyInp.value.trim():null;
   if(!clarifyAnswer)AD_RAW_TEXT=raw;
   if(statusEl){statusEl.textContent='Thinking...';}
   document.getElementById('ad-submit-btn').disabled=true;
