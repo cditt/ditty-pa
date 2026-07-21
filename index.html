@@ -38,17 +38,18 @@ input,textarea{font-family:var(--font);}
 .gpill-off{background:#2a1010;color:var(--danger);}
 .top-icon{width:38px;height:38px;border-radius:19px;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
 
-/* SCREENS */
+/* SCREENS — swipeable carousel */
 .screens{flex:1;overflow:hidden;position:relative;}
-.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 0 90px;display:none;}
-.screen.active{display:block;}
+.screen-track{display:flex;height:100%;width:100%;will-change:transform;touch-action:pan-y;transition:transform .28s cubic-bezier(.22,.61,.36,1);}
+.screen-track.notrans{transition:none;}
+.screen{flex:0 0 100%;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 0 90px;}
 
 /* BOTTOM NAV */
 .bnav{flex-shrink:0;display:flex;background:var(--s1);border-top:2px solid #333;padding-bottom:var(--sab);min-height:76px;}
-.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 0 6px;background:none;border:none;}
+.bnav-btn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 0 6px;background:none;border:none;}
 .bnav-btn:active{opacity:.6;}
-.bnav-ico{width:28px;height:28px;}
-.bnav-lbl{font-size:12px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
+.bnav-ico{width:24px;height:24px;}
+.bnav-lbl{font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.2px;white-space:nowrap;}
 .bnav-btn.on .bnav-lbl{color:var(--accent);}
 .bnav-btn.on .ni{stroke:var(--accent);}
 
@@ -127,6 +128,20 @@ input,textarea{font-family:var(--font);}
 .hcard{background:var(--s1);border:1px solid #2a2a2a;border-radius:var(--rl);padding:20px 20px;margin-bottom:14px;}
 .hcard-label{font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;}
 .hcard-empty{font-size:16px;color:var(--t2);}
+
+/* HOME COMPACT TILES + STATUS ROW */
+.hstatus{background:var(--s1);border:1px solid #2a2a2a;border-radius:var(--r);padding:13px 16px;margin-bottom:14px;cursor:pointer;user-select:none;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.hstatus:active{opacity:.7;}
+.hstatus-lbl{font-size:11px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.2px;}
+.hstatus-val{font-size:15px;font-weight:700;color:var(--text);}
+.htiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.htile{background:var(--s1);border:1px solid #2a2a2a;border-radius:var(--rl);padding:16px 16px;cursor:pointer;user-select:none;min-width:0;overflow:hidden;}
+.htile:active{opacity:.7;}
+.htile-lbl{font-size:11px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.htile-val{font-size:24px;font-weight:900;color:var(--text);line-height:1.05;letter-spacing:-.5px;}
+.htile-unit{font-size:13px;font-weight:600;color:var(--t2);}
+.htile-sub{font-size:12px;color:var(--t2);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#port-expand:not(:empty){background:var(--s1);border:1px solid #2a2a2a;border-radius:var(--rl);padding:6px 16px;margin-bottom:14px;}
 
 /* NEXT EVENT */
 .event-time{font-size:13px;font-weight:800;color:var(--accent);margin-bottom:6px;letter-spacing:.5px;}
@@ -449,6 +464,7 @@ input,textarea{font-family:var(--font);}
   </div>
 
   <div class="screens">
+   <div class="screen-track" id="screen-track">
     <!-- HOME -->
     <div class="screen active" id="scr-home">
       <div class="home-scroll">
@@ -485,43 +501,33 @@ input,textarea{font-family:var(--font);}
           </div>
         </div>
 
+        <div class="hstatus" id="email-card" onclick="nav('mail')">
+          <span class="hstatus-lbl">Email</span><span class="hstatus-val">Loading...</span>
+        </div>
+
+        <div class="htiles">
+          <div class="htile" id="portfolio-card" onclick="togglePortfolio()">
+            <div class="htile-lbl">Portfolio</div>
+            <div class="htile-sub">Loading stocks...</div>
+          </div>
+          <div class="htile" id="fj-card" onclick="openFatJourney()">
+            <div class="htile-lbl">Fat Journey</div>
+            <div class="htile-sub">Loading...</div>
+          </div>
+        </div>
+        <div id="port-expand"></div>
+      </div>
+    </div>
+
+    <!-- WEATHER -->
+    <div class="screen" id="scr-weather">
+      <div class="screen-header">
+        <div class="sh-title">Weather</div>
+        <div class="sh-sub" id="wx-sub">Current conditions + 7 day</div>
+      </div>
+      <div style="padding:16px 16px 0">
         <div class="weather-hero" id="weather-card">
           <div class="wh-loading">Loading weather...</div>
-        </div>
-
-        <div class="hcard" id="tf-home">
-          <div class="hcard-label">Today's Tasks</div>
-          <div class="hcard-empty">Loading...</div>
-        </div>
-
-        <div class="hcard" id="priorities-card">
-          <div class="hcard-label">Today's Priorities</div>
-          <div class="hcard-empty">Loading...</div>
-        </div>
-
-        <div class="hcard" id="next-event-card">
-          <div class="hcard-label">Next Event</div>
-          <div class="hcard-empty">Loading calendar...</div>
-        </div>
-
-        <div class="hcard" id="email-card">
-          <div class="hcard-label">Email</div>
-          <div class="hcard-empty">Loading...</div>
-        </div>
-
-        <div class="hcard" id="med-card">
-          <div class="hcard-label">Did You Take Today?</div>
-          <div class="hcard-empty">Loading...</div>
-        </div>
-
-        <div class="hcard" id="fj-card">
-          <div class="hcard-label">Fat Journey</div>
-          <div class="hcard-empty">Loading...</div>
-        </div>
-
-        <div class="hcard" id="portfolio-card">
-          <div class="hcard-label">Portfolio</div>
-          <div class="hcard-empty">Loading stocks...</div>
         </div>
       </div>
     </div>
@@ -529,7 +535,7 @@ input,textarea{font-family:var(--font);}
     <!-- TASKS -->
     <div class="screen" id="scr-tasks">
       <div class="screen-header">
-        <div class="sh-title">Today's Focus</div>
+        <div class="sh-title">Tasks</div>
         <div class="sh-sub">Farm checks + tasks, one list</div>
       </div>
       <div class="tf-err" id="tf-err" style="display:none"><span id="tf-err-msg"></span><span class="tf-ex" onclick="tfDismissErr()">×</span></div>
@@ -539,6 +545,12 @@ input,textarea{font-family:var(--font);}
         <div id="tf-main"></div>
         <button class="tf-add" onclick="tfOpenEdit()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Task</button>
         <div id="tf-completed"></div>
+      </div>
+      <div style="padding:4px 16px 0">
+        <div class="hcard" id="med-card">
+          <div class="hcard-label">Did You Take Today?</div>
+          <div class="hcard-empty">Loading...</div>
+        </div>
       </div>
     </div>
 
@@ -581,6 +593,7 @@ input,textarea{font-family:var(--font);}
       <button class="sbtn sbtn-danger" onclick="doSignOut()" style="margin-top:4px">Sign Out & Reset</button>
       <div style="text-align:center;color:var(--t3);font-size:12px;letter-spacing:1px;margin:24px 0">DITTY PA · V4.4</div>
     </div>
+   </div>
   </div>
 
   <div class="bnav">
@@ -588,9 +601,13 @@ input,textarea{font-family:var(--font);}
       <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="#cc1e1e" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       <span class="bnav-lbl" style="color:var(--accent)">Home</span>
     </button>
+    <button class="bnav-btn" id="nb-weather" onclick="nav('weather')">
+      <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6 1.6A3.7 3.7 0 0 0 6.5 19z"/></svg>
+      <span class="bnav-lbl">Weather</span>
+    </button>
     <button class="bnav-btn" id="nb-tasks" onclick="nav('tasks')">
       <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      <span class="bnav-lbl">Focus</span>
+      <span class="bnav-lbl">Tasks</span>
     </button>
     <button class="bnav-btn" id="nb-cal" onclick="nav('cal')">
       <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -843,7 +860,7 @@ function round2(n){return Math.round(n*100)/100;}
 function round4(n){return Math.round(n*10000)/10000;}
 
 prepareLedger();
-var weatherOpen=localStorage.getItem('dpa_wxOpen')==='true';
+var weatherOpen=true; // weather owns a full screen now — never collapsed
 var weatherData=null;
 var _wxc=localStorage.getItem('dpa_wxCity');var weatherCity=_wxc?JSON.parse(_wxc):null; // null = default Martinsville
 var wxForecastDays=[]; // stores daily forecast objects for tap-expand
@@ -1009,9 +1026,7 @@ function briefWeatherRow(){
     +'</div>';
 }
 function briefOpenWeather(){
-  if(typeof weatherOpen!=='undefined'&&!weatherOpen&&typeof toggleWeather==='function')toggleWeather();
-  var el=document.getElementById('weather-card');
-  if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'});
+  nav('weather');
 }
 function renderDailyBrief(){
   var el=document.getElementById('brief-body');if(!el)return;
@@ -1031,6 +1046,7 @@ function renderDailyBrief(){
 }
 
 function bootApp(){
+  initCarousel();
   updateG();setGreeting();renderDailyBrief();renderMedCard();initAskDitty();focusInit();
   loadHome();loadCal();loadMail();loadFatJourney();
   startMidnightWatch();
@@ -1075,21 +1091,124 @@ function setGreeting(){
   if(cs)cs.textContent=days[n.getDay()]+' + next 7 days';
 }
 
-function nav(scr){
-  CUR=scr;
+/* ===== SWIPEABLE SCREEN CAROUSEL =====
+   Screens live side by side in #screen-track. Flex `order` is rotated so the
+   current screen always sits in visual slot 0, which is what makes the wrap
+   from Settings back to Home (and Home back to Settings) seamless. */
+var SCREENS=['home','weather','tasks','cal','mail','settings'];
+var NAVIDX=0;
+var _trk=null,_tw=0,_base=0,_sx=0,_sy=0,_st=0,_lock=null,_drag=false,_prevEl=null;
+
+function trackEl(){if(!_trk)_trk=document.getElementById('screen-track');return _trk;}
+function screenIndex(scr){var i=SCREENS.indexOf(scr);return i<0?0:i;}
+function wrapIdx(i){var n=SCREENS.length;return((i%n)+n)%n;}
+
+// Rotate flex order so current screen is slot 0, then reset transform with no animation.
+function layoutTrack(){
+  var tr=trackEl();if(!tr)return;
+  var els=tr.querySelectorAll('.screen');
+  for(var i=0;i<els.length;i++){els[i].style.order=wrapIdx(i-NAVIDX);}
+  tr.classList.add('notrans');
+  tr.style.transform='translateX(0px)';
+  void tr.offsetHeight; // force reflow so the next transition animates
+  tr.classList.remove('notrans');
+  _base=0;_prevEl=null;
+}
+
+function paintNav(){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  var s=document.getElementById('scr-'+CUR);if(s)s.classList.add('active');
   document.querySelectorAll('.bnav-btn').forEach(function(b){
     b.classList.remove('on');
     b.querySelector('.bnav-lbl').style.color='';
     b.querySelector('.ni').setAttribute('stroke','#444');
   });
-  var s=document.getElementById('scr-'+scr);if(s)s.classList.add('active');
-  var b=document.getElementById('nb-'+scr);
+  var b=document.getElementById('nb-'+CUR);
   if(b){b.classList.add('on');b.querySelector('.bnav-lbl').style.color='var(--accent)';b.querySelector('.ni').setAttribute('stroke','#cc1e1e');}
-  if(scr==='tasks'&&window.renderFocus){renderFocus();}
-  if(scr==='settings'){
-    updateG();
+}
+
+function afterNav(){
+  if(CUR==='tasks'&&window.renderFocus){renderFocus();}
+  if(CUR==='settings'){updateG();}
+}
+
+// Direct jump — used by the bottom bar and every existing nav('x') caller.
+function nav(scr){
+  NAVIDX=screenIndex(scr);
+  CUR=SCREENS[NAVIDX];
+  if(_prevEl){_prevEl.style.order='';_prevEl=null;}
+  layoutTrack();
+  paintNav();
+  afterNav();
+}
+
+function _onTouchStart(e){
+  if(e.touches.length!==1)return;
+  var tr=trackEl();if(!tr)return;
+  _sx=e.touches[0].clientX;_sy=e.touches[0].clientY;_st=Date.now();
+  _lock=null;_drag=true;_tw=tr.offsetWidth;
+  if(_prevEl){_prevEl.style.order='';_prevEl=null;}
+  _base=0;
+}
+
+function _onTouchMove(e){
+  if(!_drag)return;
+  var tr=trackEl();if(!tr)return;
+  var dx=e.touches[0].clientX-_sx,dy=e.touches[0].clientY-_sy;
+  if(_lock===null){
+    if(Math.abs(dx)<8&&Math.abs(dy)<8)return;   // below threshold: still a tap
+    _lock=Math.abs(dx)>Math.abs(dy)?'h':'v';    // lock axis once, never re-evaluate
+    if(_lock==='h')tr.classList.add('notrans');
   }
+  if(_lock!=='h')return;                        // vertical: let the screen scroll
+  e.preventDefault();
+  if(dx>0&&_base===0){
+    // Dragging toward the previous screen: pull it into slot -1.
+    var els=tr.querySelectorAll('.screen');
+    _prevEl=els[wrapIdx(NAVIDX-1)];
+    _prevEl.style.order=-1;
+    _base=-_tw;
+  }else if(dx<0&&_base!==0&&_prevEl){
+    _prevEl.style.order='';_prevEl=null;_base=0;
+  }
+  tr.style.transform='translateX('+(_base+dx)+'px)';
+}
+
+function _onTouchEnd(e){
+  if(!_drag)return;
+  _drag=false;
+  var tr=trackEl();if(!tr)return;
+  if(_lock!=='h'){_lock=null;return;}
+  _lock=null;
+  var dx=e.changedTouches&&e.changedTouches.length?e.changedTouches[0].clientX-_sx:0;
+  var flick=Math.abs(dx)>40&&(Date.now()-_st)<300;
+  var commit=Math.abs(dx)>_tw*0.25||flick;
+  tr.classList.remove('notrans');
+  var target=_base;
+  if(commit){
+    if(dx<0){NAVIDX=wrapIdx(NAVIDX+1);target=-_tw;}
+    else{NAVIDX=wrapIdx(NAVIDX-1);target=0;}
+    CUR=SCREENS[NAVIDX];
+    paintNav();
+  }
+  tr.style.transform='translateX('+target+'px)';
+  setTimeout(function(){layoutTrack();if(commit)afterNav();},300);
+}
+
+function initCarousel(){
+  var tr=trackEl();if(!tr)return;
+  NAVIDX=0;CUR='home';
+  layoutTrack();paintNav();
+  tr.addEventListener('touchstart',_onTouchStart,{passive:true});
+  tr.addEventListener('touchmove',_onTouchMove,{passive:false});
+  tr.addEventListener('touchend',_onTouchEnd,{passive:true});
+  tr.addEventListener('touchcancel',function(){
+    if(!_drag)return;
+    _drag=false;_lock=null;
+    tr.classList.remove('notrans');
+    tr.style.transform='translateX('+_base+'px)';
+    setTimeout(layoutTrack,300);
+  },{passive:true});
 }
 
 function doSetup(){
@@ -1492,11 +1611,14 @@ function emailSeverity(from,sub){
   if(yellow.some(function(k){return fl.indexOf(k)>-1||sl.indexOf(k)>-1;}))return{dot:'var(--accent)',sub:'var(--text)',from:'var(--accent)'};
   return{dot:'var(--ok)',sub:'var(--t2)',from:'var(--t2)'};
 }
+/* Home shows a one-line status only; the Mail screen holds the full list. */
 function renderHomeEmailCard(){
   var emlc=document.getElementById('email-card');if(!emlc)return;
   var data=lastEmailData;
   if(!data||!(data.count>0)){
-    emlc.innerHTML='<div class="hcard-label">Email</div><div class="hcard-empty">'+(GT?'Inbox clear':'Connect Google to see email')+'</div>';
+    emlc.innerHTML='<span class="hstatus-lbl">Email</span>'
+      +'<span class="hstatus-val" style="color:var(--t2)">'+(GT?'Inbox clear':'Connect Google')+'</span>';
+    if(typeof renderDailyBrief==='function')renderDailyBrief();
     return;
   }
   // Build priority list (used in both collapsed and expanded)
@@ -1514,43 +1636,9 @@ function renderHomeEmailCard(){
     }).slice(0,5);
   }
   var priCount=pri.length;
-  if(emailOpen){
-    var priRows=priCount===0
-      ?'<div style="font-size:14px;color:var(--t2);padding:8px 0">No priority emails.</div>'
-      :pri.map(function(m){
-          var hh=(m.payload&&m.payload.headers)||[];var from='',sub='',date='';
-          hh.forEach(function(h){
-            if(h.name==='From')from=h.value;
-            if(h.name==='Subject')sub=h.value;
-            if(h.name==='Date')date=h.value;
-          });
-          var fromClean=from.replace(/<[^>]*>/g,'').trim();
-          var age=emailAge(date);
-          var sev=emailSeverity(from,sub);
-          return'<div class="ep-item">'
-            +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">'
-            +'<div style="font-size:15px;font-weight:600;color:'+sev.sub+';line-height:1.3">'+sub+'</div>'
-            +(age?'<div style="font-size:11px;color:var(--t3);white-space:nowrap;flex-shrink:0">'+age+'</div>':'')
-            +'</div>'
-            +'<div style="font-size:12px;color:'+sev.from+';margin-top:3px;font-weight:600">'+fromClean+'</div>'
-            +'</div>';
-        }).join('');
-    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none"><span class="hcard-label">Email ▲</span></div>'
-      +'<div style="margin-top:4px"><span style="font-size:26px;font-weight:900;color:var(--accent)">'+data.count+'</span><span style="font-size:14px;color:var(--t2);margin-left:8px">unread</span></div>'
-      +'<div class="email-priority" style="margin-top:10px">'+priRows+'</div>'
-      +'<div style="margin-top:12px;display:flex;gap:12px;align-items:center">'
-      +'<div onclick="nav(\'mail\')" style="font-size:15px;font-weight:700;color:var(--accent);cursor:pointer">Open Mail tab →</div>'
-      +'<a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener" style="font-size:15px;font-weight:700;color:var(--t2);text-decoration:none">Open Gmail ↗</a>'
-      +'</div>';
-  }else{
-    var priTxt=priCount>0?' · '+priCount+' priority':'';
-    emlc.innerHTML='<div onclick="toggleEmail()" style="cursor:pointer;user-select:none;padding:4px 0">'
-      +'<span style="font-size:12px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;margin-right:8px">Email ▼</span>'
-      +'<span style="font-size:15px;font-weight:700;color:var(--accent)">'+data.count+' unread'
-      +(priTxt?'<span style="color:var(--danger)">'+priTxt+'</span>':'')
-      +'</span>'
-      +'</div>';
-  }
+  var priTxt=priCount>0?'<span style="color:var(--danger)"> · '+priCount+' priority</span>':'';
+  emlc.innerHTML='<span class="hstatus-lbl">Email</span>'
+    +'<span class="hstatus-val" style="color:var(--accent)">'+data.count+' unread'+priTxt+'</span>';
   if(typeof renderDailyBrief==='function')renderDailyBrief();
 }
 function toggleEmail(){
@@ -1907,7 +1995,7 @@ function renderWeatherCard(){
     }
     wc.innerHTML=
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-        +'<div class="wh-loc" onclick="toggleWeather()" style="cursor:pointer;user-select:none;margin-bottom:0">'+cityName+' ▲</div>'
+        +'<div class="wh-loc" style="margin-bottom:0">'+cityName+'</div>'
         +'<div>'+changeBtn+resetBtn+'</div>'
       +'</div>'
       +'<div class="wh-temp">'+d.temp+'°</div>'
@@ -2065,24 +2153,27 @@ function buildPortfolioRows(stocks){
   portfolioSummary={count:POSITIONS.length,change:totalDayChange};
 }
 
+/* Compact Home tile; the full row list expands into #port-expand below it. */
 function renderPortfolioCard(){
   var port=document.getElementById('portfolio-card');if(!port)return;
+  var exp=document.getElementById('port-expand');
   if(!POSITIONS.length){
-    port.innerHTML='<div class="hcard-label" style="margin-bottom:0">Portfolio</div>'
-      +'<div class="hcard-empty" style="margin-top:10px">No holdings yet.</div>';
+    port.innerHTML='<div class="htile-lbl">Portfolio</div><div class="htile-sub">No holdings yet.</div>';
+    if(exp)exp.innerHTML='';
     return;
   }
   var arrow=portfolioOpen?'▲':'▼';
-  var summaryTxt='';
-  var summaryColor='var(--t2)';
+  var valTxt='--',subTxt='',valColor='var(--text)';
   if(portfolioSummary){
     var chg=portfolioSummary.change;
-    var chgStr=(chg>=0?'+':'')+chg.toFixed(2);
-    summaryTxt=' '+portfolioSummary.count+' Positions • $'+chgStr+' Today';
-    summaryColor=chg>0?'var(--ok)':chg<0?'var(--danger)':'var(--t2)';
+    valTxt=(chg>=0?'+$':'-$')+Math.abs(chg).toFixed(2);
+    valColor=chg>0?'var(--ok)':chg<0?'var(--danger)':'var(--text)';
+    subTxt=portfolioSummary.count+' positions '+arrow;
   }
-  var body=portfolioOpen&&portfolioRows?'<div id="port-body">'+portfolioRows+'</div>':'';
-  port.innerHTML='<div onclick="togglePortfolio()" style="cursor:pointer;user-select:none;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap"><span class="hcard-label" style="margin-bottom:0">Portfolio</span><span style="color:'+summaryColor+';font-size:13px;font-weight:700">'+arrow+summaryTxt+'</span></div>'+body;
+  port.innerHTML='<div class="htile-lbl">Portfolio</div>'
+    +'<div class="htile-val" style="color:'+valColor+'">'+valTxt+'</div>'
+    +'<div class="htile-sub">'+(subTxt||'Today '+arrow)+'</div>';
+  if(exp)exp.innerHTML=portfolioOpen&&portfolioRows?'<div id="port-body">'+portfolioRows+'</div>':'';
 }
 
 function togglePortfolio(){
@@ -2310,12 +2401,11 @@ function fetchFatJourney(){
     .catch(function(){return null;});
 }
 
+/* Compact Home tile; tapping opens the Fat Journey app in a new tab. */
 function updateFatJourneyCard(data){
   var card=document.getElementById('fj-card');if(!card)return;
-  var open=localStorage.getItem('dpa_fjOpen')==='true';
-  var chev=open?'▲':'▼';
   if(data&&data._noKey){
-    card.innerHTML='<div class="hcard-label">Fat Journey</div><div class="hcard-empty">Open Fat Journey on this device first, then return here.</div>';return;
+    card.innerHTML='<div class="htile-lbl">Fat Journey</div><div class="htile-sub">Tap to open ↗</div>';return;
   }
   // Use today's weight if present; fall back to most recent weightHistory entry
   var w='--';
@@ -2324,28 +2414,14 @@ function updateFatJourneyCard(data){
     else if(data.weightHistory&&data.weightHistory.length){w=data.weightHistory[0].weight!=null?data.weightHistory[0].weight:'--';}
   }
   var g=(data&&data.goalWeight)||'--';
-  var cal=(data&&data.calories)||'--';
-  var pro=(data&&data.protein)||'--';
-  var wat=(data&&data.water)||'--';
-  var syn=(data&&data.lastSync)||'';
-  if(!open){
-    card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span> <span style="font-size:16px;color:var(--text);font-weight:700">'+w+' lb</span></div>';
-  }else{
-    card.innerHTML='<div onclick="toggleFJ()" style="cursor:pointer;user-select:none"><span class="hcard-label">Fat Journey '+chev+'</span></div>'
-      +'<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Weight</div><div style="font-size:22px;font-weight:900;color:var(--text)">'+w+'<span style="font-size:13px;font-weight:500;color:var(--t2)"> lb</span></div></div>'
-      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Goal</div><div style="font-size:22px;font-weight:900;color:var(--accent)">'+g+'<span style="font-size:13px;font-weight:500;color:var(--t2)"> lb</span></div></div>'
-      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Calories</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+cal+'<span style="font-size:11px;color:var(--t2)"> / 1800</span></div></div>'
-      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Protein</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+pro+'<span style="font-size:11px;color:var(--t2)"> g</span></div></div>'
-      +'<div><div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:1px">Water</div><div style="font-size:20px;font-weight:800;color:var(--text)">'+wat+'<span style="font-size:11px;color:var(--t2)"> / 128 oz</span></div></div>'
-      +'</div>'+(syn?'<div style="margin-top:10px;font-size:11px;color:var(--t3)">Last sync: '+syn+'</div>':'');
-  }
+  card.innerHTML='<div class="htile-lbl">Fat Journey</div>'
+    +'<div class="htile-val">'+w+'<span class="htile-unit"> lb</span></div>'
+    +'<div class="htile-sub">Goal '+g+' lb ↗</div>';
 }
 
-function toggleFJ(){
-  var open=localStorage.getItem('dpa_fjOpen')==='true';
-  localStorage.setItem('dpa_fjOpen',open?'false':'true');
-  fetchFatJourney().then(function(d){latestFatJourneyData=d;updateFatJourneyCard(d);renderMedCard();});
+// Requirement: the Fat Journey tile opens the external app in a new tab.
+function openFatJourney(){
+  window.open('https://gorgeous-otter-b02dce.netlify.app/','_blank','noopener');
 }
 
 function loadFatJourney(){
