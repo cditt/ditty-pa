@@ -25,8 +25,30 @@
   --c-text-2:#6B7280;      /* secondary text, section labels */
   --c-text-3:#8A9098;      /* tertiary text, header icons */
   --c-text-dim:#A2A8B0;    /* inactive bottom nav icon + label */
-  --c-accent:#D93025;      /* active nav, primary buttons, greeting sun ONLY */
+  --c-accent:#FF3B30;      /* logo, primary buttons, Home nav icon */
   --c-accent-ink:#FFFFFF;  /* text/icons sitting on an accent fill */
+
+  /* --- Accent / semantic hues -------------------------------------------
+     Two variants per hue. The BRIGHT one is for icons and large fills; the
+     *-text one is darkened to the same hue so 10px label text clears WCAG AA
+     (4.5:1 on --c-surface). Never use a bright value for small text. */
+  --c-warm:#FF9500;        /* morning icon */
+  --c-warm-text:#D96B00;   /* morning greeting text (large-text AA) */
+  --c-sky:#0A84FF;         /* afternoon icon + text, Weather nav icon */
+  --c-sky-text:#0F6FDB;    /* Weather nav label */
+  --c-rain:#1B9AF0;        /* temperature: wet */
+  --c-hot:#FF6B00;         /* temperature: 85F+ */
+  --c-mild:#00A96E;        /* temperature: everything else */
+  --c-dusk:#7B5CFF;        /* evening icon */
+  --c-dusk-text:#6C4AF5;   /* evening greeting text */
+  --c-green:#00C16A;       /* Tasks nav icon */
+  --c-green-text:#00854A;  /* Tasks nav label */
+  --c-amber-text:#AA6300;  /* Calendar nav label */
+  --c-purple:#AF52DE;      /* Mail nav icon */
+  --c-purple-text:#9A3FC8; /* Mail nav label */
+  --c-teal:#00B8D4;        /* Portfolio nav icon */
+  --c-teal-text:#008194;   /* Portfolio nav label */
+  --c-accent-text:#D62F24; /* Home nav label (darkened accent) */
   --c-warn:#C2410C;        /* overdue and warnings */
   --c-gain:#16A34A;        /* portfolio gains, success, completed */
   --c-loss:#DC2626;        /* portfolio losses, errors, destructive */
@@ -99,9 +121,24 @@ input,textarea{font-family:var(--font);}
    attributes and paintNav()'s setAttribute, so no JS change is needed. */
 .bnav-ico{width:24px;height:24px;stroke:var(--c-text-dim);}
 .bnav-lbl{font-size:10px;font-weight:800;color:var(--c-text-dim);text-transform:uppercase;letter-spacing:.2px;white-space:nowrap;}
-.bnav-btn.on .bnav-lbl{color:var(--c-accent);}
+.bnav-btn.on .bnav-lbl{color:var(--c-accent-text);}
 .bnav-btn.on .bnav-ico{stroke:var(--c-accent);}
 .bnav-btn.on .ni{stroke:var(--c-accent);}
+/* Per-screen active colours. Icons take the bright hue, labels the darkened
+   *-text variant so 10px type still clears AA. Requires that nothing writes
+   an inline colour onto .bnav-lbl -- inline styles would outrank these. */
+#nb-home.on      .bnav-ico,#nb-home.on      .ni{stroke:var(--c-accent);}
+#nb-home.on      .bnav-lbl{color:var(--c-accent-text);}
+#nb-weather.on   .bnav-ico,#nb-weather.on   .ni{stroke:var(--c-sky);}
+#nb-weather.on   .bnav-lbl{color:var(--c-sky-text);}
+#nb-tasks.on     .bnav-ico,#nb-tasks.on     .ni{stroke:var(--c-green);}
+#nb-tasks.on     .bnav-lbl{color:var(--c-green-text);}
+#nb-cal.on       .bnav-ico,#nb-cal.on       .ni{stroke:var(--c-warm);}
+#nb-cal.on       .bnav-lbl{color:var(--c-amber-text);}
+#nb-mail.on      .bnav-ico,#nb-mail.on      .ni{stroke:var(--c-purple);}
+#nb-mail.on      .bnav-lbl{color:var(--c-purple-text);}
+#nb-portfolio.on .bnav-ico,#nb-portfolio.on .ni{stroke:var(--c-teal);}
+#nb-portfolio.on .bnav-lbl{color:var(--c-teal-text);}
 
 /* SETUP */
 #setup{position:fixed;inset:0;background:var(--c-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;z-index:999;overflow-y:auto;}
@@ -126,8 +163,15 @@ input,textarea{font-family:var(--font);}
 /* HOME: assistant greeting + prose daily brief */
 .hgreet{display:flex;align-items:center;gap:10px;margin-bottom:5px;}
 .hgreet-ico{flex-shrink:0;display:flex;align-items:center;}
-/* The sun/moon glyph is one of the three sanctioned accent uses. */
+/* Greeting takes its colour from the time band setGreeting() applies.
+   Default (no band class yet) falls back to accent. */
 .hgreet-ico svg{stroke:var(--c-accent);}
+.hgreet.tod-morning   .hgreet-ico svg{stroke:var(--c-warm);}
+.hgreet.tod-morning   .hgreet-txt{color:var(--c-warm-text);}
+.hgreet.tod-afternoon .hgreet-ico svg{stroke:var(--c-sky);}
+.hgreet.tod-afternoon .hgreet-txt{color:var(--c-sky);}
+.hgreet.tod-evening   .hgreet-ico svg{stroke:var(--c-dusk);}
+.hgreet.tod-evening   .hgreet-txt{color:var(--c-dusk-text);}
 .hgreet-txt{font-size:25px;font-weight:900;letter-spacing:-.5px;line-height:1.15;color:var(--c-text);}
 .hdate{font-size:15px;color:var(--c-text-2);font-weight:500;margin-bottom:9px;}
 .hwx{font-size:14px;color:var(--c-text-2);font-weight:600;margin-bottom:22px;}
@@ -144,6 +188,10 @@ input,textarea{font-family:var(--font);}
 .weather-hero{background:var(--c-surface);border:none;border-radius:var(--rl);box-shadow:var(--c-card-shadow);padding:24px 20px 20px;margin-bottom:16px;position:relative;overflow:hidden;}
 .wh-loc{font-size:11px;font-weight:800;color:var(--c-text-2);letter-spacing:.2px;margin-bottom:8px;}
 .wh-temp{font-size:56px;font-weight:900;color:var(--c-text);line-height:1;letter-spacing:-2px;}
+/* Temperature tone, shared by the Weather screen and the Home weather line. */
+.wx-t-rain{color:var(--c-rain);}
+.wx-t-hot{color:var(--c-hot);}
+.wx-t-mild{color:var(--c-mild);}
 .wh-cond{font-size:17px;color:var(--c-text);font-weight:600;margin:6px 0 2px;}
 .wh-sub{font-size:13px;color:var(--c-text-2);margin-bottom:14px;}
 .wh-divider{height:1px;background:var(--c-line);margin:12px 0;}
@@ -645,7 +693,7 @@ input,textarea{font-family:var(--font);}
   <div class="bnav">
     <button class="bnav-btn on" id="nb-home" onclick="nav('home')">
       <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <span class="bnav-lbl" style="color:var(--accent)">Home</span>
+      <span class="bnav-lbl">Home</span>
     </button>
     <button class="bnav-btn" id="nb-weather" onclick="nav('weather')">
       <svg class="bnav-ico ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6 1.6A3.7 3.7 0 0 0 6.5 19z"/></svg>
@@ -1165,16 +1213,33 @@ function abDataSig(){
   return c+'||'+w;
 }
 
+// Temperature tone from condition + precipitation + temperature.
+// Single source of truth so the Weather screen and the Home line agree.
+//   'rain' : 40%+ chance, or a wet condition
+//   'hot'  : otherwise 85F and above
+//   'mild' : everything else
+function wxTempTone(d){
+  d=d||((typeof weatherData!=='undefined')?weatherData:null);
+  if(!d)return 'mild';
+  var rain=(d.precipMax&&d.precipMax[0]!=null)?parseFloat(d.precipMax[0]):null;
+  if(rain!=null&&rain>=40)return 'rain';
+  if(/rain|drizzle|thunderstorm|showers/i.test(d.cond||''))return 'rain';
+  var t=parseFloat(d.temp);
+  if(!isNaN(t)&&t>=85)return 'hot';
+  return 'mild';
+}
+
 function abRenderWeatherLine(){
   var el=document.getElementById('h-wx-line');if(!el)return;
   var d=(typeof weatherData!=='undefined')?weatherData:null;
   if(!d){el.innerHTML='&mdash;';return;}
   var parts=[];
-  if(d.temp)parts.push(d.temp+'° now');
+  // Only the temperature figure is toned; the rest stays secondary text.
+  if(d.temp)parts.push('<span class="wx-t-'+wxTempTone(d)+'">'+d.temp+'° now</span>');
   if(d.high)parts.push('High '+d.high+'°');
   var rain=(d.precipMax&&d.precipMax[0]!=null)?d.precipMax[0]:null;
   if(rain!=null)parts.push(rain+'% rain');
-  el.textContent=parts.length?parts.join('  ·  '):'—';
+  el.innerHTML=parts.length?parts.join('  ·  '):'—';
 }
 
 // calSummary.allEvents spans the next 7 days, so narrow it to today.
@@ -1456,11 +1521,16 @@ var AB_MOON_SVG='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" str
 function setGreeting(){
   var n=new Date();
   var h=n.getHours();
-  var word=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  var band=h<12?'morning':h<17?'afternoon':'evening';
+  var word=band==='morning'?'Good morning':band==='afternoon'?'Good afternoon':'Good evening';
   var el=document.getElementById('h-greeting');
   if(el)el.textContent=word+', Chris';
   var ico=document.getElementById('h-greet-ico');
-  if(ico)ico.innerHTML=(h<17)?AB_SUN_SVG:AB_MOON_SVG;
+  // Afternoon keeps the sun -- there is no sun-high glyph in this file.
+  if(ico)ico.innerHTML=(band==='evening')?AB_MOON_SVG:AB_SUN_SVG;
+  // Colour lives in CSS; JS only names the band.
+  var wrap=document.querySelector('.hgreet');
+  if(wrap)wrap.className='hgreet tod-'+band;
   var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   var mons=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var de=document.getElementById('h-date');
@@ -1502,7 +1572,9 @@ function paintNav(){
     b.querySelector('.ni').setAttribute('stroke','currentColor');
   });
   var b=document.getElementById('nb-'+CUR);
-  if(b){b.classList.add('on');b.querySelector('.bnav-lbl').style.color='var(--accent)';b.querySelector('.ni').setAttribute('stroke','currentColor');}
+  // No inline colour here: the per-screen #nb-*.on rules own the active
+  // colours, and an inline style would outrank every one of them.
+  if(b){b.classList.add('on');b.querySelector('.ni').setAttribute('stroke','currentColor');}
 }
 
 function afterNav(){
@@ -2439,7 +2511,7 @@ function renderWeatherCard(){
         +'<div class="wh-loc" style="margin-bottom:0">'+cityName+'</div>'
         +'<div>'+changeBtn+resetBtn+'</div>'
       +'</div>'
-      +'<div class="wh-temp">'+d.temp+'°</div>'
+      +'<div class="wh-temp wx-t-'+wxTempTone(d)+'">'+d.temp+'°</div>'
       +'<div class="wh-cond">'+(d.icon?d.icon+' ':'')+d.cond+'</div>'
       +'<div class="wh-sub">'+(d.high&&d.low?'H: '+d.high+'°  L: '+d.low+'°':'')+'</div>'
       +'<div class="wh-divider"></div>'
