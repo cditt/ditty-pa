@@ -1061,8 +1061,28 @@ function briefOpenWeather(){
    ================================================================== */
 var AB_KEY='dpa_ab_v1';
 var AB_MAXAGE=4*60*60*1000; // 4 hours
+var AB_BACKSTOP=10000;      // only covers "connected but calendar still in flight"
 var AB_BUSY=false;
-var AB_AUTO_DONE=false;
+// Signature of the calendar state the ON-SCREEN brief was built from.
+// null = built with the calendar still unknown (provisional, never cached).
+var AB_RENDERED_SIG=null;
+
+function abCalReady(){return typeof calSummary!=='undefined'&&calSummary!==null;}
+
+// Three distinct states -- "still loading" must never be confused with
+// "loaded and empty", which is what made the brief claim an empty day.
+//   <string> : calendar known ('none' when today is genuinely clear)
+//   'nocal'  : definitively unavailable (not signed in)
+//   null     : not loaded yet
+function abCalSig(){
+  if(abCalReady()){
+    var evs=abTodayEvents();
+    if(!evs.length)return 'none';
+    return evs.length+'|'+evs.map(function(e){return e.time+'~'+e.title;}).join(';');
+  }
+  if(typeof GT==='undefined'||!GT)return 'nocal';
+  return null;
+}
 
 function abRenderWeatherLine(){
   var el=document.getElementById('h-wx-line');if(!el)return;
@@ -1126,9 +1146,16 @@ function abBuildPrompt(){
   L.push('Today is '+n.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})
     +'. Local time '+n.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'.');
   L.push('');
-  L.push('CALENDAR TODAY ('+d.events.length+'):');
-  if(!d.events.length)L.push('  (nothing scheduled)');
-  else d.events.forEach(function(e){L.push('  - '+e.time+' '+e.title+(e.loc?' @ '+e.loc:''));});
+  var calSig=abCalSig();
+  if(calSig===null){
+    L.push('CALENDAR: still loading, schedule unknown.');
+  }else if(calSig==='nocal'){
+    L.push('CALENDAR: not connected.');
+  }else{
+    L.push('CALENDAR TODAY ('+d.events.length+'):');
+    if(!d.events.length)L.push('  (nothing scheduled)');
+    else d.events.forEach(function(e){L.push('  - '+e.time+' '+e.title+(e.loc?' @ '+e.loc:''));});
+  }
   L.push('');
   var over=d.tasks.filter(function(t){return t.over;});
   L.push('TASKS ('+d.tasks.length+' open, '+over.length+' overdue):');
@@ -1160,6 +1187,8 @@ function abBuildPrompt(){
     +'Cover what is on his calendar today, which tasks are due or overdue, anything worth knowing '
     +'about the weather, and the priority email count only if it is above zero. '
     +'Skip any category that is empty rather than announcing that it is empty. '
+    +'If CALENDAR says still loading or not connected, do not mention his schedule '
+    +'at all -- do not say he has nothing on, because that is not known. '
     +'Finish with one short encouraging sentence.\n\n'
     +'Rules: Do not use any tools or search. Everything you need is in DATA above. '
     +'No headings, no bullets, no markdown, no bold. Plain sentences only. '
@@ -1168,8 +1197,8 @@ function abBuildPrompt(){
 }
 
 function abCacheGet(){try{return JSON.parse(localStorage.getItem(AB_KEY)||'null');}catch(e){return null;}}
-function abCacheSet(text){
-  try{localStorage.setItem(AB_KEY,JSON.stringify({text:text,ts:Date.now(),day:tfDayKey()}));}catch(e){}
+function abCacheSet(text,sig){
+  try{localStorage.setItem(AB_KEY,JSON.stringify({text:text,ts:Date.now(),day:tfDayKey(),sig:sig}));}catch(e){}
 }
 function abCacheFresh(c){
   return !!(c&&c.text&&c.day===tfDayKey()&&(Date.now()-c.ts)<AB_MAXAGE);
@@ -1187,14 +1216,19 @@ function abShowLoading(){abSetHTML('<div class="ab-load">Putting your brief toge
 // Never surfaces an error -- just the plain counts.
 function abFallback(){
   var d=abCollect();
+  var sig=abCalSig();
   var over=d.tasks.filter(function(t){return t.over;}).length;
   var bits=[];
-  bits.push(d.events.length
-    ?d.events.length+(d.events.length===1?' event':' events')+' on your calendar today'
-    :'Nothing on your calendar today');
+  // Only speak about the calendar when we actually have it.
+  if(sig!==null&&sig!=='nocal'){
+    bits.push(d.events.length
+      ?d.events.length+(d.events.length===1?' event':' events')+' on your calendar today'
+      :'Nothing on your calendar today');
+  }
   if(d.tasks.length)bits.push(d.tasks.length+(d.tasks.length===1?' open task':' open tasks')+(over?' ('+over+' overdue)':''));
   if(d.priorityEmail)bits.push(d.priorityEmail+' priority email');
   if(d.weather&&d.weather.high)bits.push('high '+d.weather.high+'°');
+  if(!bits.length)bits.push('Nothing to report yet');
   abShowText(bits.join(' · ')+'.');
 }
 
@@ -1214,8 +1248,12 @@ function abBadResponse(txt){
 
 function abFetch(force){
   if(AB_BUSY)return;
+  var sig=abCalSig();
   var cached=abCacheGet();
-  if(!force&&abCacheFresh(cached)){abShowText(cached.text);return;}
+  // Reuse only when the cache was built from this same calendar state.
+  if(!force&&sig!==null&&abCacheFresh(cached)&&cached.sig===sig){
+    abShowText(cached.text);AB_RENDERED_SIG=sig;return;
+  }
   AB_BUSY=true;
   var g=document.getElementById('ab-refresh');if(g)g.classList.add('spin');
   abShowLoading();
@@ -1227,31 +1265,37 @@ function abFetch(force){
       // The UI never shows an error, but the reason should not be invisible.
       if(window.console&&console.warn)console.warn('Daily brief unavailable: '+bad);
       abFallback();
-      return;
+    }else{
+      var clean=txt.trim().replace(/^```[a-z]*\s*/i,'').replace(/```$/,'').trim();
+      // Never persist a brief written while the calendar was still unknown.
+      if(sig!==null)abCacheSet(clean,sig);
+      abShowText(clean);
     }
-    var clean=txt.trim().replace(/^```[a-z]*\s*/i,'').replace(/```$/,'').trim();
-    abCacheSet(clean);
-    abShowText(clean);
+    AB_RENDERED_SIG=sig;
+    // If the calendar landed mid-flight, AB_BUSY blocked the retry; re-check now.
+    // Terminates: once rendered for the current sig, abMaybeAuto is a no-op.
+    setTimeout(abMaybeAuto,0);
   });
 }
 
 function abMaybeAuto(){
-  if(AB_AUTO_DONE)return;
-  if(typeof calSummary==='undefined'||calSummary===null)return; // wait for real data
-  AB_AUTO_DONE=true;
+  var sig=abCalSig();
+  if(sig===null)return;             // calendar still loading -- backstop covers it
+  if(AB_RENDERED_SIG===sig)return;  // on-screen brief already reflects this state
   abFetch(false);
 }
 
 function abInit(){
   var c=abCacheGet();
-  if(abCacheFresh(c)){abShowText(c.text);AB_AUTO_DONE=true;}
+  if(abCacheFresh(c)){abShowText(c.text);AB_RENDERED_SIG=(typeof c.sig==='string')?c.sig:null;}
   else abShowLoading();
   abRenderWeatherLine();
-  // Backstop: loadCal() returns early without setting calSummary when Google is
-  // disconnected, so the calSummary gate alone would never fire for a signed-out user.
+  // Only covers "signed in but calendar still in flight" -- the signed-out case
+  // resolves immediately via the 'nocal' signature, and a failed calendar fetch
+  // still sets calSummary through applyCalData(null).
   setTimeout(function(){
-    if(!AB_AUTO_DONE){AB_AUTO_DONE=true;abFetch(false);}
-  },6000);
+    if(AB_RENDERED_SIG===null&&!AB_BUSY)abFetch(false);
+  },AB_BACKSTOP);
 }
 function renderDailyBrief(){
   // Piggyback on the existing render cycle (weather, email and task renders all
@@ -1812,6 +1856,12 @@ function applyCalData(data){
   }
   renderCalCard();
   if(window.tfSyncCalendar)tfSyncCalendar(data&&data.items?data.items:[]);
+  // Tell the assistant brief the calendar has landed. This used to arrive via
+  // renderCalCard()'s trailing renderDailyBrief(), but that call is unreachable
+  // since #next-event-card was removed, so the brief was being built before the
+  // calendar existed. Called directly here so it cannot be stranded again --
+  // and placed after tfSyncCalendar so calendar-derived tasks are included.
+  if(typeof abMaybeAuto==='function')abMaybeAuto();
   // Update Calendar screen
   var el=document.getElementById('cal-content');if(!el)return;
   if(!data||!data.items||!data.items.length){el.innerHTML='<div class="cal-empty">No events in the next 7 days</div>';return;}
