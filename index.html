@@ -23,11 +23,6 @@
     navigator.serviceWorker.getRegistrations().then(function(rs){
       rs.forEach(function(r){ r.unregister(); });
     });
-    if (window.caches) {
-      caches.keys().then(function(keys){
-        keys.forEach(function(k){ caches.delete(k); });
-      });
-    }
   }
   var hash = location.hash || '';
   if (hash.indexOf('access_token=') > -1) {
@@ -46,9 +41,7 @@
     .then(function(html){
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
-        '<link rel="stylesheet" href="portfolio-poster.css?v=21">'+
-        '<link rel="stylesheet" href="vault-look.css?v=14">'+
-        '<link rel="stylesheet" href="portfolio-clean.css?v=2">'+
+        '<link rel="stylesheet" href="portfolio-poster.css?v=22">'+
         '</head>');
       document.open();
       document.write(html);
