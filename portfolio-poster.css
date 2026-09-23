@@ -1,0 +1,30 @@
+#scr-portfolio{background:#070a07;color:#9dff9d}
+#scr-portfolio .screen-header{background:transparent;border:none;padding:16px 18px 4px}
+#scr-portfolio .sh-title{color:#39ff6a;letter-spacing:.28em;text-transform:uppercase;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
+#scr-portfolio .sh-title::after{content:'  ▶ PLAY ACCOUNT';color:#2bb34f;letter-spacing:.18em;font-size:10px}
+#scr-portfolio .sh-sub{color:#7dffa0;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+#scr-portfolio .sh-sub span{color:#39ff6a!important}
+#scr-portfolio #port-content.hcard,
+#scr-portfolio #port-content{
+  background:linear-gradient(180deg,#0b140b 0%,#050705 100%);
+  border:1px solid #1e5c2a;
+  box-shadow:none;
+  border-radius:12px;
+  color:#c8ffc8;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+}
+#scr-portfolio .port-row{border-bottom:1px solid #16351c;min-height:58px}
+#scr-portfolio .port-row.up-row .port-bar{background:#39ff6a}
+#scr-portfolio .port-row.dn-row .port-bar{background:#ff3b3b}
+#scr-portfolio .port-row.up-row .port-ticker{color:#39ff6a}
+#scr-portfolio .port-row.dn-row .port-ticker{color:#ff5a5a}
+#scr-portfolio .port-ticker{letter-spacing:.12em}
+#scr-portfolio .port-shares{color:#6e9f6e}
+#scr-portfolio .port-price{color:#e8ffe8}
+#scr-portfolio .port-row.up-row .port-chg{color:#39ff6a}
+#scr-portfolio .port-row.dn-row .port-chg{color:#ff5a5a}
+#scr-portfolio .port-footer{color:#4d7a4d;letter-spacing:.16em;text-transform:uppercase}
+#scr-portfolio .hcard-empty{color:#7dffa0}
+#aapl-watch{display:grid;grid-template-columns:5px 72px 1fr 92px;align-items:center;min-height:58px;padding:10px 10px 10px 0;border-bottom:1px solid #2a6b34;background:rgba(57,255,106,.06)}
+#aapl-watch .port-ticker{color:#39ff6a;font-weight:900}
+#aapl-watch .tag{font-size:9px;letter-spacing:.16em;color:#7dffa0;text-transform:uppercase}
