@@ -1,4 +1,4 @@
-/* BUILD71 clean calendar poster */
+/* BUILD72 events under weekday row */
 #scr-cal.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -17,7 +17,7 @@
 }
 #scr-cal #cal-content{
   background:transparent!important;
-  padding:29% 9% 140px 9%!important;
+  padding:36% 9% 140px 9%!important;
 }
 #scr-cal .cal-empty,
 #scr-cal .spin-txt{
