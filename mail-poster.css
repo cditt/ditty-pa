@@ -1,4 +1,4 @@
-/* BUILD57 */
+/* BUILD58 */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -47,11 +47,12 @@
   display:block!important;
   background:transparent!important;
   color:#0a2a7a!important;
-  font-family:Georgia,serif!important;
-  font-size:18px!important;
-  font-weight:800!important;
-  padding:0 0 2px 0!important;
-  text-shadow:0 0 4px #fff,0 1px 0 #fff3!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:22px!important;
+  font-weight:900!important;
+  line-height:1.15!important;
+  padding:0 0 3px 0!important;
+  text-shadow:0 0 3px #fff,0 1px 0 rgba(255,255,255,.4)!important;
 }
 #scr-mail .mail-subj{
   display:block!important;
