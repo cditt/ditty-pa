@@ -4,52 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ditty PA</title>
-<style>
-  html,body{margin:0;height:100%;background:#111;color:#fff;font-family:-apple-system,sans-serif}
-  #m{padding:24px}
-  iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#111}
-</style>
 </head>
-<body>
+<body style="font-family:-apple-system,sans-serif;padding:28px;background:#111;color:#fff">
 <p id="m">Loading Ditty PA…</p>
-<iframe id="frame" title="Ditty PA"></iframe>
+<p style="opacity:.7;font-size:14px">If this stays blank, close this sheet and open the link in Chrome.</p>
 <script>
 (function(){
-  function wipeSW(){
-    var p = Promise.resolve();
-    if (navigator.serviceWorker) {
-      p = navigator.serviceWorker.getRegistrations().then(function(rs){
-        return Promise.all(rs.map(function(r){ return r.unregister(); }));
-      });
-    }
-    return p.then(function(){
-      if (!window.caches) return;
-      return caches.keys().then(function(keys){
-        return Promise.all(keys.map(function(k){ return caches.delete(k); }));
-      });
+  var hash = location.hash;
+  fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html')
+    .then(function(r){ if(!r.ok) throw new Error('fetch'); return r.text(); })
+    .then(function(html){
+      html = html.replace('</head>',
+        '<link rel="stylesheet" href="weather-poster.css?v=3">'+
+        '<link rel="stylesheet" href="portfolio-poster.css?v=18">'+
+        '<link rel="stylesheet" href="vault-look.css?v=3">'+
+        '</head>');
+      document.open();
+      document.write(html);
+      document.close();
+      if(hash){
+        try{ history.replaceState(null,'',location.pathname+location.search+hash); }catch(e){}
+      }
+    })
+    .catch(function(){
+      var el=document.getElementById('m');
+      if(el) el.textContent='Load failed. Open this URL in Chrome.';
     });
-  }
-  var hash = location.hash || '';
-  wipeSW().then(function(){
-    return fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html');
-  }).then(function(r){
-    if(!r.ok) throw new Error('fetch');
-    return r.text();
-  }).then(function(html){
-    html = html.replace('</head>',
-      '<link rel="stylesheet" href="https://cditt.github.io/ditty-pa/weather-poster.css?v=3">'+
-      '<link rel="stylesheet" href="https://cditt.github.io/ditty-pa/portfolio-poster.css?v=18">'+
-      '<link rel="stylesheet" href="https://cditt.github.io/ditty-pa/vault-look.css?v=3">'+
-      '</head>');
-    var frame = document.getElementById('frame');
-    frame.srcdoc = html;
-    document.getElementById('m').style.display = 'none';
-    if (hash) {
-      try { history.replaceState(null,'',location.pathname+location.search+hash); } catch(e) {}
-    }
-  }).catch(function(){
-    document.getElementById('m').innerHTML = 'Load failed. Open this in Chrome.';
-  });
 })();
 </script>
 </body>
