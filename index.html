@@ -39,10 +39,20 @@
   fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html')
     .then(function(r){ if(!r.ok) throw new Error('fetch'); return r.text(); })
     .then(function(html){
+      var force = '<style id="tasks-force">'
+        +'#scr-tasks.screen{background:#1a1c1a url("grok_1790172222397.jpg") no-repeat center 16% !important;background-size:125% auto !important;}'
+        +'#scr-tasks .screen-header{background:transparent !important;padding:22px 20% 0 !important;}'
+        +'#scr-tasks .tf-progress{display:none !important;}'
+        +'#scr-tasks .tf-wrap{padding:4px 20% 80px !important;}'
+        +'#scr-tasks .tf-fg{background:transparent !important;box-shadow:none !important;padding:8px 0 !important;}'
+        +'#scr-tasks .tf-item{margin:0 !important;background:transparent !important;}'
+        +'#scr-tasks .tf-under{display:none !important;}'
+        +'</style>';
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
         '<link rel="stylesheet" href="portfolio-poster.css?v=24">'+
-        '<link rel="stylesheet" href="tasks-poster.css?v=9">'+
+        '<link rel="stylesheet" href="tasks-poster.css?v=10">'
+        + force +
         '</head>');
       html = html.replace('</body>', '<script src="google-stay.js?v=2"><\/script></body>');
       document.open();
