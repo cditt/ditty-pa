@@ -7,10 +7,10 @@
   content:"";
   display:block!important;
   width:100%;
-  min-height:320px;
-  height:46vh;
-  flex:1 0 320px;
-  background:#070806 url(vault-door.jpg?v=1) no-repeat center top;
+  min-height:340px;
+  height:48vh;
+  flex:1 0 340px;
+  background:#070806 url("vault-door.svg?v=1") no-repeat center top;
   background-size:cover;
   pointer-events:none;
 }
