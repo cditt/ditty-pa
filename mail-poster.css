@@ -1,0 +1,54 @@
+/* BUILD46 mail cork */
+#scr-mail.screen{
+  overflow-y:scroll!important;
+  -webkit-overflow-scrolling:touch!important;
+  touch-action:pan-y!important;
+  padding:0!important;
+  color:#f3ead6!important;
+  background-color:#2a2018!important;
+  background-image:url("1790177471161.jpeg")!important;
+  background-repeat:no-repeat!important;
+  background-position:center center!important;
+  background-size:cover!important;
+}
+#scr-mail .screen-header{
+  background:transparent!important;
+  border:none!important;
+  padding:18px 16px 4px!important;
+}
+#scr-mail .sh-title{font-size:0!important;line-height:0!important}
+#scr-mail .sh-title::before{
+  content:"DITTY MAIL";
+  display:block;text-align:center;
+  font-size:22px;color:#f3ead6;letter-spacing:.18em;
+  font-family:Georgia,serif;font-weight:700;
+  text-shadow:0 2px 6px #000;
+}
+#scr-mail .sh-sub{display:none!important}
+#scr-mail #mail-content{
+  background:transparent!important;
+  padding:6px 18px 80px!important;
+}
+#scr-mail .mail-item,
+#scr-mail .mail-urgent{
+  background:transparent!important;
+  box-shadow:none!important;
+  border:none!important;
+  border-bottom:1px solid rgba(243,234,214,.18)!important;
+  border-radius:0!important;
+  margin:0!important;
+  padding:10px 4px!important;
+}
+#scr-mail .mail-from,
+#scr-mail .mail-subj,
+#scr-mail .mail-snip,
+#scr-mail .mail-section-lbl{
+  color:#f3ead6!important;
+  font-family:Georgia,serif!important;
+  text-shadow:0 1px 3px #000!important;
+  background:transparent!important;
+}
+#scr-mail .mail-from{font-size:13px!important;letter-spacing:.04em!important}
+#scr-mail .mail-subj{font-size:18px!important;font-weight:700!important}
+#scr-mail .mail-snip{font-size:13px!important;opacity:.85!important}
+#scr-mail .spin-txt{color:#f3ead6!important;text-shadow:0 1px 3px #000!important}
