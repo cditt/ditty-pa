@@ -1,11 +1,26 @@
-#scr-portfolio{background:#050705 url(portfolio-vault.jpg) no-repeat center 70%/cover!important;color:#9dff9d;overflow:visible!important}
-#scr-portfolio .screen-header{background:transparent;border:none;padding:16px 18px 4px}
+#scr-portfolio{
+  background:
+    radial-gradient(circle at 50% 92%, #8a7340 0 7%, #2a2418 8% 11%, #3b341f 12% 18%, #1c1810 19% 28%, transparent 29%),
+    radial-gradient(circle at 50% 92%, transparent 20%, #050705 55%),
+    #050705 !important;
+  color:#9dff9d;
+  overflow:visible!important;
+}
+#scr-portfolio .screen-header{background:transparent!important;border:none;padding:16px 18px 4px}
 #scr-portfolio .sh-title{color:#39ff6a;letter-spacing:.28em;text-transform:uppercase;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
 #scr-portfolio .sh-title::after{content:"  \25b6 PLAY ACCOUNT";color:#2bb34f;letter-spacing:.18em;font-size:10px}
 #scr-portfolio .sh-sub{color:#7dffa0;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
 #scr-portfolio .sh-sub span{color:#39ff6a!important}
-#scr-portfolio #port-content.hcard,#scr-portfolio #port-content{background:rgba(4,8,4,.40)!important;border:1px solid #1e5c2a;box-shadow:none;border-radius:12px;color:#c8ffc8;font-family:ui-monospace,Menlo,Consolas,monospace}
-#scr-portfolio .port-row{border-bottom:1px solid rgba(22,53,28,.65);min-height:52px;background:transparent}
+#scr-portfolio .hcard,
+#scr-portfolio #port-content,
+#scr-portfolio #port-content.hcard{
+  background:transparent!important;
+  box-shadow:none!important;
+  border:1px solid rgba(57,255,106,.25)!important;
+  color:#c8ffc8;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+}
+#scr-portfolio .port-row{border-bottom:1px solid rgba(22,53,28,.55);min-height:50px;background:transparent!important}
 #scr-portfolio .port-row.up-row .port-bar{background:#39ff6a}
 #scr-portfolio .port-row.dn-row .port-bar{background:#ff3b3b}
 #scr-portfolio .port-row.up-row .port-ticker{color:#39ff6a}
