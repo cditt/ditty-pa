@@ -15,9 +15,9 @@
     .then(function(html){
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
-        '<link rel="stylesheet" href="portfolio-poster.css?v=15">'+
+        '<link rel="stylesheet" href="portfolio-poster.css?v=16">'+
+        '<script defer src="portfolio-extra.js?v=7"><\\/script>'+
         '</head>');
-      html = html.replace('</body>', '<script src="portfolio-extra.js?v=6"><\\/script></body>');
       document.open();
       document.write(html);
       document.close();
