@@ -1,4 +1,4 @@
-/* BUILD78 home hide porch */
+/* BUILD79 type stays on hide */
 #scr-home.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -14,35 +14,48 @@
 }
 #scr-home .home-scroll{
   background:transparent!important;
-  padding:20% 24% 26% 24%!important;
+  padding:24% 31% 32% 31%!important;
 }
-#scr-home .hgreet,
+#scr-home .hgreet{
+  margin-bottom:4px!important;
+  align-items:flex-start!important;
+}
+#scr-home .hgreet-ico{
+  display:none!important;
+}
 #scr-home .hgreet-txt,
 #scr-home .hdate,
 #scr-home .hwx,
+#scr-home .hwx *,
 #scr-home .ab-body,
-#scr-home .ab-body p{
+#scr-home .ab-body *,
+#scr-home .htile-lbl,
+#scr-home .htile-sub,
+#scr-home .htile-val,
+#scr-home .htile-unit{
   color:#2a1c12!important;
   font-family:Georgia,serif!important;
   text-shadow:none!important;
 }
 #scr-home .hgreet-txt{
-  font-size:22px!important;
+  font-size:20px!important;
   font-weight:800!important;
+  line-height:1.15!important;
 }
 #scr-home .hdate,
 #scr-home .hwx{
-  font-size:13px!important;
+  font-size:12px!important;
   font-weight:600!important;
-  margin-bottom:8px!important;
+  margin-bottom:6px!important;
 }
 #scr-home .ab-wrap{
   background:transparent!important;
+  margin-bottom:10px!important;
 }
 #scr-home .ab-body{
-  font-size:15px!important;
-  line-height:1.45!important;
-  padding-right:28px!important;
+  font-size:13px!important;
+  line-height:1.4!important;
+  padding-right:0!important;
 }
 #scr-home .ab-refresh{
   color:#2a1c12!important;
@@ -53,12 +66,5 @@
   border:none!important;
   border-top:1px solid rgba(42,28,18,.25)!important;
   border-radius:0!important;
-  padding:10px 0!important;
-}
-#scr-home .htile-lbl,
-#scr-home .htile-sub,
-#scr-home .htile-val,
-#scr-home .htile-unit{
-  color:#2a1c12!important;
-  font-family:Georgia,serif!important;
+  padding:8px 0!important;
 }
