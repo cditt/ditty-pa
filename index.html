@@ -15,9 +15,8 @@
     .then(function(html){
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
-        '<link rel="stylesheet" href="portfolio-poster.css?v=17">'+
-        '<link rel="stylesheet" href="vault-look.css?v=2">'+
-        '<script defer src="portfolio-extra.js?v=8"><\\/script>'+
+        '<link rel="stylesheet" href="portfolio-poster.css?v=18">'+
+        '<link rel="stylesheet" href="vault-look.css?v=3">'+
         '</head>');
       document.open();
       document.write(html);
@@ -27,7 +26,8 @@
       }
     })
     .catch(function(){
-      document.getElementById('m').textContent='Load failed. Pull to refresh.';
+      var el=document.getElementById('m');
+      if(el) el.textContent='Load failed. Pull to refresh.';
     });
 })();
 </script>
