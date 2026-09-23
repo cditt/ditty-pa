@@ -1,4 +1,4 @@
-/* BUILD86 jug on deck */
+/* BUILD87 jug no white card */
 #scr-home.screen{
   overflow:hidden!important;
   padding:0!important;
@@ -53,19 +53,17 @@
 }
 #home-listen{
   position:fixed!important;
-  left:10px!important;
-  bottom:80px!important;
-  width:58px!important;
-  height:90px!important;
+  left:12px!important;
+  bottom:82px!important;
+  width:54px!important;
+  height:88px!important;
   padding:0!important;
   margin:0!important;
   border:0!important;
-  background-color:transparent!important;
-  background-image:url("xxx-jug.svg?v=BUILD86")!important;
-  background-repeat:no-repeat!important;
-  background-position:center bottom!important;
-  background-size:contain!important;
+  border-radius:0!important;
+  background:transparent url("xxx-jug.svg?v=BUILD87") center bottom / contain no-repeat!important;
   box-shadow:none!important;
+  outline:0!important;
   z-index:9999!important;
   cursor:pointer!important;
 }
