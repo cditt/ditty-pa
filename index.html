@@ -2,12 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="0;url=https://htmlpreview.github.io/?https://github.com/cditt/ditty-pa/blob/ba1cec9f0debe7697261c4188235c86422819583/index.html">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ditty PA</title>
 </head>
-<body style="font-family:sans-serif;padding:24px">
-<p>Opening Ditty PA…</p>
-<p><a href="https://htmlpreview.github.io/?https://github.com/cditt/ditty-pa/blob/ba1cec9f0debe7697261c4188235c86422819583/index.html">Tap here if it does not open</a></p>
+<body style="font-family:-apple-system,sans-serif;padding:28px;background:#111;color:#fff">
+<p id="m">Loading Ditty PA…</p>
+<script>
+(function(){
+  var hash = location.hash;
+  fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html')
+    .then(function(r){ if(!r.ok) throw new Error('fetch'); return r.text(); })
+    .then(function(html){
+      document.open();
+      document.write(html);
+      document.close();
+      if(hash){
+        try{ history.replaceState(null,'',location.pathname+location.search+hash); }catch(e){}
+      }
+    })
+    .catch(function(){
+      document.getElementById('m').innerHTML='Load failed. <a href="https://htmlpreview.github.io/?https://github.com/cditt/ditty-pa/blob/ba1cec9f0debe7697261c4188235c86422819583/index.html" style="color:#4ec4ff">Open preview</a>';
+    });
+})();
+</script>
 </body>
 </html>
