@@ -1,0 +1,64 @@
+/* BUILD78 home hide porch */
+#scr-home.screen{
+  overflow-y:scroll!important;
+  -webkit-overflow-scrolling:touch!important;
+  touch-action:pan-y!important;
+  padding:0!important;
+  color:#2a1c12!important;
+  background-color:#3d2a1a!important;
+  background-image:url("grok_1790191179772.jpg")!important;
+  background-repeat:no-repeat!important;
+  background-position:center top!important;
+  background-size:100% 100%!important;
+  background-attachment:scroll!important;
+}
+#scr-home .home-scroll{
+  background:transparent!important;
+  padding:20% 24% 26% 24%!important;
+}
+#scr-home .hgreet,
+#scr-home .hgreet-txt,
+#scr-home .hdate,
+#scr-home .hwx,
+#scr-home .ab-body,
+#scr-home .ab-body p{
+  color:#2a1c12!important;
+  font-family:Georgia,serif!important;
+  text-shadow:none!important;
+}
+#scr-home .hgreet-txt{
+  font-size:22px!important;
+  font-weight:800!important;
+}
+#scr-home .hdate,
+#scr-home .hwx{
+  font-size:13px!important;
+  font-weight:600!important;
+  margin-bottom:8px!important;
+}
+#scr-home .ab-wrap{
+  background:transparent!important;
+}
+#scr-home .ab-body{
+  font-size:15px!important;
+  line-height:1.45!important;
+  padding-right:28px!important;
+}
+#scr-home .ab-refresh{
+  color:#2a1c12!important;
+}
+#scr-home .htile{
+  background:transparent!important;
+  box-shadow:none!important;
+  border:none!important;
+  border-top:1px solid rgba(42,28,18,.25)!important;
+  border-radius:0!important;
+  padding:10px 0!important;
+}
+#scr-home .htile-lbl,
+#scr-home .htile-sub,
+#scr-home .htile-val,
+#scr-home .htile-unit{
+  color:#2a1c12!important;
+  font-family:Georgia,serif!important;
+}
