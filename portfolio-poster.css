@@ -1,33 +1,42 @@
 #scr-portfolio{
   background:
-    radial-gradient(circle at 50% 92%, #8a7340 0 7%, #2a2418 8% 11%, #3b341f 12% 18%, #1c1810 19% 28%, transparent 29%),
-    radial-gradient(circle at 50% 92%, transparent 20%, #050705 55%),
+    radial-gradient(circle at 50% 108%, #8a7340 0 6%, #2a2418 7% 10%, #3b341f 11% 16%, #1c1810 17% 24%, transparent 25%),
     #050705 !important;
   color:#9dff9d;
-  overflow:visible!important;
+  overflow:auto!important;
 }
-#scr-portfolio .screen-header{background:transparent!important;border:none;padding:16px 18px 4px}
-#scr-portfolio .sh-title{color:#39ff6a;letter-spacing:.28em;text-transform:uppercase;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
+#scr-portfolio .screen-header{background:transparent!important;border:none;padding:10px 14px 2px}
+#scr-portfolio .sh-title{color:#39ff6a;letter-spacing:.28em;text-transform:uppercase;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
 #scr-portfolio .sh-title::after{content:"  \25b6 PLAY ACCOUNT";color:#2bb34f;letter-spacing:.18em;font-size:10px}
-#scr-portfolio .sh-sub{color:#7dffa0;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+#scr-portfolio .sh-sub{color:#7dffa0;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;font-size:10px}
 #scr-portfolio .sh-sub span{color:#39ff6a!important}
 #scr-portfolio .hcard,
 #scr-portfolio #port-content,
 #scr-portfolio #port-content.hcard{
   background:transparent!important;
   box-shadow:none!important;
-  border:1px solid rgba(57,255,106,.25)!important;
+  border:1px solid rgba(57,255,106,.22)!important;
   color:#c8ffc8;
   font-family:ui-monospace,Menlo,Consolas,monospace;
+  padding:4px 8px 8px!important;
 }
-#scr-portfolio .port-row{border-bottom:1px solid rgba(22,53,28,.55);min-height:50px;background:transparent!important}
-#scr-portfolio .port-row.up-row .port-bar{background:#39ff6a}
-#scr-portfolio .port-row.dn-row .port-bar{background:#ff3b3b}
-#scr-portfolio .port-row.up-row .port-ticker{color:#39ff6a}
-#scr-portfolio .port-row.dn-row .port-ticker{color:#ff5a5a}
-#scr-portfolio .port-ticker{letter-spacing:.12em}
+#scr-portfolio .port-row,
+#scr-portfolio #aapl-watch{
+  min-height:42px!important;
+  padding:4px 6px 4px 0!important;
+  border-bottom:1px solid rgba(22,53,28,.55);
+  background:transparent!important;
+}
+#scr-portfolio .port-ticker{font-size:15px!important;letter-spacing:.12em}
+#scr-portfolio .port-shares{font-size:10px!important;margin-top:1px!important}
+#scr-portfolio .port-price{font-size:14px!important}
+#scr-portfolio .port-chg{font-size:11px!important}
+#scr-portfolio .port-row.up-row .port-bar,#scr-portfolio #aapl-watch.up-row .port-bar{background:#39ff6a}
+#scr-portfolio .port-row.dn-row .port-bar,#scr-portfolio #aapl-watch.dn-row .port-bar{background:#ff3b3b}
+#scr-portfolio .port-row.up-row .port-ticker,#scr-portfolio #aapl-watch.up-row .port-ticker{color:#39ff6a}
+#scr-portfolio .port-row.dn-row .port-ticker,#scr-portfolio #aapl-watch.dn-row .port-ticker{color:#ff5a5a}
 #scr-portfolio .port-shares{color:#6e9f6e}
 #scr-portfolio .port-price{color:#e8ffe8}
-#scr-portfolio .port-row.up-row .port-chg{color:#39ff6a}
-#scr-portfolio .port-row.dn-row .port-chg{color:#ff5a5a}
-#scr-portfolio .port-footer{color:#4d7a4d;letter-spacing:.16em;text-transform:uppercase}
+#scr-portfolio .port-row.up-row .port-chg,#scr-portfolio #aapl-watch.up-row .port-chg{color:#39ff6a}
+#scr-portfolio .port-row.dn-row .port-chg,#scr-portfolio #aapl-watch.dn-row .port-chg{color:#ff5a5a}
+#scr-portfolio .port-footer{color:#4d7a4d;letter-spacing:.16em;text-transform:uppercase;padding:6px 0 2px;font-size:10px}
