@@ -1,22 +1,35 @@
-#scr-weather{background:#071018;color:#e8f4ff}
+#scr-weather{background:#071018!important;color:#e8f4ff}
 #scr-weather .screen-header{background:transparent;border:none;padding:16px 18px 4px}
 #scr-weather .sh-title{color:#f4f8ff;letter-spacing:.28em;text-transform:uppercase;font-size:13px}
 #scr-weather .sh-sub{color:#4ec4ff;text-transform:uppercase;letter-spacing:.16em;font-size:11px}
-#scr-weather .weather-hero{background:radial-gradient(circle at 82% 8%,rgba(40,140,255,.45),transparent 42%),repeating-radial-gradient(circle at 82% 8%,transparent 0 38px,rgba(80,180,255,.08) 38px 40px),linear-gradient(180deg,#0a2a4a 0%,#071018 75%);border:none;border-radius:18px;box-shadow:none;color:#e8f4ff;padding:22px 18px 18px}
+#scr-weather .weather-hero{
+  background:
+    radial-gradient(circle at 82% 8%,rgba(40,140,255,.45),transparent 42%),
+    repeating-radial-gradient(circle at 82% 8%,transparent 0 38px,rgba(80,180,255,.08) 38px 40px),
+    linear-gradient(180deg,#0a2a4a 0%,#071018 75%)!important;
+  border:none!important;border-radius:18px;box-shadow:none!important;color:#e8f4ff;
+  padding:22px 18px 18px;min-height:72vh
+}
 #scr-weather .wh-loc{color:#8ec8ff;letter-spacing:.2em;text-transform:uppercase}
 #scr-weather .wh-city-btn{color:#4ec4ff!important}
-#scr-weather .wh-temp{font-size:84px;letter-spacing:-4px;color:#f4f8ff!important}
-#scr-weather .wh-cond{color:#4ec4ff;font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
-#scr-weather .wh-sub{color:#d5e9ff;font-size:16px;font-weight:700}
-#scr-weather .wh-divider{background:rgba(78,196,255,.25)}
-#scr-weather .wh-stat{background:rgba(255,255,255,.07)}
-#scr-weather .wh-stat-lbl{color:#7eb7e6;letter-spacing:.16em;text-transform:uppercase}
-#scr-weather .wh-stat-val{color:#f4f8ff;font-size:16px}
-#scr-weather .wh-day-name{color:#7eb7e6}
-#scr-weather .wh-day-temp{color:#f4f8ff}
-#scr-weather .wh-day-low{color:#8ec8ff}
-#scr-weather .wh-day-rain{color:#4ec4ff}
-#scr-weather .wh-alert{background:#8b1111;border-color:#ff4d4d;color:#fff}
-#scr-weather .wh-loading{color:#8ec8ff}
-#scr-weather .wh-detail,#scr-weather .wh-detail-val{color:#e8f4ff}
-#scr-weather .wh-detail-lbl{color:#7eb7e6}
+#scr-weather .wh-temp,
+#scr-weather .wh-temp.wx-t-rain,
+#scr-weather .wh-temp.wx-t-hot,
+#scr-weather .wh-temp.wx-t-mild{
+  font-size:84px!important;letter-spacing:-4px;color:#f4f8ff!important;line-height:.85;font-weight:900
+}
+#scr-weather .wh-cond{color:#4ec4ff!important;font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+#scr-weather .wh-sub{color:#d5e9ff!important;font-size:16px;font-weight:700}
+#scr-weather .wh-divider{background:rgba(78,196,255,.25)!important}
+#scr-weather .wh-grid{grid-template-columns:1fr 1fr;gap:10px 12px}
+#scr-weather .wh-stat{background:rgba(255,255,255,.07)!important}
+#scr-weather .wh-stat-lbl{color:#7eb7e6!important;letter-spacing:.16em;text-transform:uppercase}
+#scr-weather .wh-stat-val{color:#f4f8ff!important;font-size:16px}
+#scr-weather .wh-day-name{color:#7eb7e6!important}
+#scr-weather .wh-day-temp{color:#f4f8ff!important}
+#scr-weather .wh-day-low{color:#8ec8ff!important}
+#scr-weather .wh-day-rain{color:#4ec4ff!important}
+#scr-weather .wh-alert{background:#8b1111!important;border-color:#ff4d4d!important;color:#fff!important}
+#scr-weather .wh-loading{color:#8ec8ff!important}
+#scr-weather .wh-detail,#scr-weather .wh-detail-val{color:#e8f4ff!important}
+#scr-weather .wh-detail-lbl{color:#7eb7e6!important}
