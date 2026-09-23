@@ -7,14 +7,14 @@
   display:flex!important;
   flex-direction:column!important;
   min-height:100%!important;
-  background:#1a1c1a url("grok_1790172222397.jpg") no-repeat center 28%!important;
-  background-size:cover!important;
+  background:#1a1c1a url("grok_1790172222397.jpg") no-repeat center 18%!important;
+  background-size:118% auto!important;
 }
 #scr-tasks .screen-header{
-  background:linear-gradient(to bottom,rgba(10,12,10,.82),rgba(10,12,10,.2))!important;
+  background:transparent!important;
   border:none!important;
-  padding:10px 14px 4px!important;
-  position:sticky;top:0;z-index:10;
+  padding:18px 18% 0!important;
+  position:relative;z-index:10;
 }
 #scr-tasks .sh-title{font-size:0!important;line-height:0!important}
 #scr-tasks .sh-title::before{
@@ -24,13 +24,29 @@
   letter-spacing:.34em;text-transform:uppercase;
   font-family:Georgia,"Palatino Linotype",serif;font-weight:700;
   text-shadow:0 1px 0 #000;
+  text-align:center;
 }
 #scr-tasks .sh-sub{
   color:#c9b89a!important;
   font-family:ui-monospace,Menlo,Consolas,monospace!important;
   letter-spacing:.08em;text-transform:uppercase;font-size:10px!important;
+  text-align:center!important;
 }
-#scr-tasks .tf-progress,
+#scr-tasks .tf-progress{
+  background:transparent!important;
+  box-shadow:none!important;
+  padding:4px 18% 2px!important;
+  color:#f0e6d0!important;
+  text-shadow:0 1px 2px #000;
+  font-size:11px!important;
+}
+#scr-tasks .tf-progress > div,
+#scr-tasks .tf-progress bar,
+#scr-tasks .tf-progress [style*="width"]{
+  background:rgba(240,230,208,.25)!important;
+  height:3px!important;
+  border-radius:0!important;
+}
 #scr-tasks .tf-wrap,
 #scr-tasks .tf-err,
 #scr-tasks #tf-farm,
@@ -39,11 +55,13 @@
   background:transparent!important;
   box-shadow:none!important;
 }
-#scr-tasks .tf-progress{color:#f0e6d0!important;padding:6px 16px!important;text-shadow:0 1px 2px #000}
+#scr-tasks .tf-wrap{
+  padding:2px 16% 70px!important;
+}
 #scr-tasks .tf-item{
   background:transparent!important;
   box-shadow:none!important;
-  margin:0 14px 0!important;
+  margin:0!important;
   border-radius:0!important;
   overflow:visible!important;
 }
@@ -52,12 +70,12 @@
 #scr-tasks .tf-fg.p-high,
 #scr-tasks .tf-fg.p-medium,
 #scr-tasks .tf-fg.p-low{
-  background:rgba(8,10,8,.35)!important;
+  background:transparent!important;
   box-shadow:none!important;
   border:none!important;
-  border-bottom:1px solid rgba(240,230,208,.2)!important;
+  border-bottom:1px solid rgba(240,230,208,.16)!important;
   border-radius:0!important;
-  padding:10px 8px!important;
+  padding:8px 2px!important;
 }
 #scr-tasks .tf-text,
 #scr-tasks .tf-note,
@@ -67,32 +85,35 @@
   font-family:Georgia,"Palatino Linotype",serif!important;
   font-weight:600!important;
   letter-spacing:.04em!important;
-  text-shadow:0 1px 2px #000,0 0 8px rgba(0,0,0,.65)!important;
+  text-shadow:0 1px 2px #000!important;
 }
+#scr-tasks .tf-grouphead{padding:6px 16%!important}
 #scr-tasks .tf-fg.done .tf-text{color:#9e9278!important;text-decoration:line-through!important}
 #scr-tasks .tf-chip{
   background:transparent!important;
   color:#e8dcc0!important;
   border:1px solid rgba(232,220,180,.35)!important;
-  text-shadow:0 1px 2px #000!important;
 }
 #scr-tasks .tf-check{
   background:transparent!important;
   border:2px solid #e8dcc0!important;
   border-radius:3px!important;
-  box-shadow:0 1px 0 #000!important;
 }
 #scr-tasks .tf-add{
   background:transparent!important;
   color:#e8dcc0!important;
-  border:1px dashed rgba(232,220,180,.4)!important;
+  border:1px dashed rgba(232,220,180,.35)!important;
   box-shadow:none!important;
+  margin:8px 0 0!important;
 }
+#scr-tasks > div[style],
 #scr-tasks #med-card,
 #scr-tasks .hcard{
   background:transparent!important;
   box-shadow:none!important;
   border:none!important;
   color:#e8dcc0!important;
+  margin:0 16%!important;
+  padding:0!important;
 }
 #scr-tasks .hcard-empty{color:#c9b89a!important}
