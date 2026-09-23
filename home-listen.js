@@ -1,4 +1,4 @@
-/* BUILD91 CPAP yesterday line */
+/* BUILD92 CPAP yesterday wording */
 (function(){
   var KEY='dpa_cpap';
   function pad(n){ return (n<10?'0':'')+n; }
@@ -23,7 +23,7 @@
     if(!rec || !(rec.h||rec.s)) return 'Log last night when you have it.';
     var hrs=parseFloat(rec.h);
     var sc=parseFloat(rec.s);
-    var line='Yesterday you ran '+(rec.h||'?')+' hours, score '+(rec.s||'?')+'.';
+    var line='Yesterday your score was '+(rec.s||'?')+' and '+(rec.h||'?')+' hours.';
     var ok=(!isNaN(hrs) && hrs>=4) && (!isNaN(sc) ? sc>=70 : true);
     if(isNaN(hrs) && !isNaN(sc)) ok = sc>=70;
     return line+' '+(ok ? 'Good job.' : 'Tighten up, pal.');
@@ -74,7 +74,7 @@
     var y=t('#cpap-yest');
     if(y) parts.push(y);
     var rec=load()[today()]||{};
-    if(rec.h||rec.s) parts.push('Today logged '+((rec.h||'?')+' hours, score '+(rec.s||'?')));
+    if(rec.h||rec.s) parts.push('Today '+((rec.h||'?')+' hours, score '+(rec.s||'?')));
     if(brief) parts.push(brief);
     return parts.join('. ');
   }
