@@ -1,4 +1,4 @@
-/* BUILD58 */
+/* BUILD59 */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -46,13 +46,13 @@
 #scr-mail .mail-from{
   display:block!important;
   background:transparent!important;
-  color:#0a2a7a!important;
+  color:#d10f0f!important;
   font-family:Georgia,"Times New Roman",serif!important;
   font-size:22px!important;
   font-weight:900!important;
   line-height:1.15!important;
   padding:0 0 3px 0!important;
-  text-shadow:0 0 3px #fff,0 1px 0 rgba(255,255,255,.4)!important;
+  text-shadow:0 1px 2px #000!important;
 }
 #scr-mail .mail-subj{
   display:block!important;
