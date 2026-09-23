@@ -14,7 +14,7 @@
 <body>
 <div id="boot">
   <p id="m">Loading Ditty PA…</p>
-  <p class="note">Open this in Chrome. Google blocks the Grok in-app browser.</p>
+  <p class="note">Open this in Chrome.</p>
   <a class="btn" href="https://accounts.google.com/o/oauth2/v2/auth?client_id=397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fcditt.github.io%2Fditty-pa%2F&response_type=token&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly&prompt=consent">Connect Google</a>
 </div>
 <script>
@@ -37,7 +37,9 @@
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
         '<link rel="stylesheet" href="portfolio-poster.css?v=18">'+
-        '<link rel="stylesheet" href="vault-look.css?v=6">'+
+        '<link rel="stylesheet" href="vault-look.css?v=7">'+
+        '<script src="vault-a.js?v=6"><\/script>'+
+        '<script src="portfolio-extra.js?v=6"><\/script>'+
         '</head>');
       document.open();
       document.write(html);

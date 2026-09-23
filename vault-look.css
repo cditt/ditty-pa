@@ -4,13 +4,18 @@
   flex-direction:column!important;
 }
 #scr-portfolio.screen::after{
-  content:"";
-  display:block!important;
+  display:none!important;
+  content:none!important;
+  height:0!important;
+  min-height:0!important;
+}
+#vault-art-wrap{
   width:100%;
-  min-height:340px;
-  height:48vh;
-  flex:1 0 340px;
-  background:#070806 url("vault.svg?v=2") no-repeat center top;
-  background-size:contain;
-  pointer-events:none;
+  margin-top:6px;
+  flex:1 0 auto;
+}
+#vault-art-wrap img,#vault-art{
+  width:100%;
+  height:auto;
+  display:block;
 }
