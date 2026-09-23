@@ -1,4 +1,4 @@
-/* BUILD62 */
+/* BUILD63 */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -45,16 +45,19 @@
 }
 #scr-mail .mail-from{
   display:block!important;
-  background:transparent!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  background:rgba(255,255,255,.28)!important;
+  backdrop-filter:blur(6px)!important;
+  -webkit-backdrop-filter:blur(6px)!important;
   color:#0a2a7a!important;
   font-family:Georgia,"Times New Roman",serif!important;
   font-size:22px!important;
   font-weight:900!important;
   line-height:1.15!important;
-  padding:0 0 3px 0!important;
-  -webkit-text-stroke:1.5px #fff!important;
-  text-shadow:0 0 2px #fff,1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff!important;
-  paint-order:stroke fill!important;
+  padding:6px 10px!important;
+  -webkit-text-stroke:0!important;
+  text-shadow:none!important;
 }
 #scr-mail .mail-subj{
   display:block!important;
@@ -64,6 +67,6 @@
   font-size:17px!important;
   font-weight:700!important;
   line-height:1.25!important;
-  padding:0!important;
+  padding:6px 0 0!important;
   text-shadow:0 2px 4px #000!important;
 }
