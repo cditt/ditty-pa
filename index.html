@@ -1,1 +1,23 @@
-SEE_FILE
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ditty PA</title>
+</head>
+<body style="font-family:sans-serif;padding:24px;background:#111;color:#fff">
+<p>Restoring app…</p>
+<script>
+fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html')
+  .then(function(r){return r.text();})
+  .then(function(html){
+    document.open();
+    document.write(html);
+    document.close();
+  })
+  .catch(function(){
+    location.replace('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html');
+  });
+</script>
+</body>
+</html>
