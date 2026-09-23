@@ -1,12 +1,12 @@
-/* BUILD79 type stays on hide */
+/* BUILD80 big hide + bold */
 #scr-home.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
   touch-action:pan-y!important;
   padding:0!important;
-  color:#2a1c12!important;
+  color:#1a120c!important;
   background-color:#3d2a1a!important;
-  background-image:url("grok_1790191179772.jpg")!important;
+  background-image:url("grok_1790191731360.jpg")!important;
   background-repeat:no-repeat!important;
   background-position:center top!important;
   background-size:100% 100%!important;
@@ -14,15 +14,14 @@
 }
 #scr-home .home-scroll{
   background:transparent!important;
-  padding:24% 31% 32% 31%!important;
+  padding:16% 20% 24% 20%!important;
+  text-align:center!important;
 }
 #scr-home .hgreet{
-  margin-bottom:4px!important;
-  align-items:flex-start!important;
+  justify-content:center!important;
+  margin-bottom:8px!important;
 }
-#scr-home .hgreet-ico{
-  display:none!important;
-}
+#scr-home .hgreet-ico{display:none!important;}
 #scr-home .hgreet-txt,
 #scr-home .hdate,
 #scr-home .hwx,
@@ -33,38 +32,36 @@
 #scr-home .htile-sub,
 #scr-home .htile-val,
 #scr-home .htile-unit{
-  color:#2a1c12!important;
-  font-family:Georgia,serif!important;
+  color:#1a120c!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-weight:800!important;
   text-shadow:none!important;
 }
 #scr-home .hgreet-txt{
-  font-size:20px!important;
-  font-weight:800!important;
+  font-size:22px!important;
   line-height:1.15!important;
 }
 #scr-home .hdate,
 #scr-home .hwx{
-  font-size:12px!important;
-  font-weight:600!important;
-  margin-bottom:6px!important;
+  font-size:14px!important;
+  margin-bottom:8px!important;
 }
 #scr-home .ab-wrap{
   background:transparent!important;
-  margin-bottom:10px!important;
+  margin:12px 0 10px!important;
 }
 #scr-home .ab-body{
-  font-size:13px!important;
-  line-height:1.4!important;
+  font-size:15px!important;
+  line-height:1.45!important;
   padding-right:0!important;
+  text-align:center!important;
 }
-#scr-home .ab-refresh{
-  color:#2a1c12!important;
-}
+#scr-home .ab-refresh{color:#1a120c!important;}
 #scr-home .htile{
   background:transparent!important;
   box-shadow:none!important;
   border:none!important;
-  border-top:1px solid rgba(42,28,18,.25)!important;
+  border-top:1px solid rgba(26,18,12,.25)!important;
   border-radius:0!important;
   padding:8px 0!important;
 }
