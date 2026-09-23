@@ -13,7 +13,11 @@
   fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html')
     .then(function(r){ if(!r.ok) throw new Error('fetch'); return r.text(); })
     .then(function(html){
-      html = html.replace('</head>', '<link rel="stylesheet" href="weather-poster.css?v=2"></head>');
+      html = html.replace('</head>',
+        '<link rel="stylesheet" href="weather-poster.css?v=2">'+
+        '<link rel="stylesheet" href="portfolio-poster.css?v=1">'+
+        '</head>');
+      html = html.replace('</body>', '<script src="portfolio-extra.js?v=1"><\/script></body>');
       document.open();
       document.write(html);
       document.close();
