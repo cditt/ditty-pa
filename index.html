@@ -39,12 +39,11 @@
   fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html')
     .then(function(r){ if(!r.ok) throw new Error('fetch'); return r.text(); })
     .then(function(html){
-      var patch = '<script>(function(){function authUrl(prompt){return "https://accounts.google.com/o/oauth2/v2/auth?client_id="+GID+"&redirect_uri="+encodeURIComponent("https://cditt.github.io/ditty-pa/")+"&response_type=token&scope="+encodeURIComponent(GSCOPE)+"&include_granted_scopes=true"+(prompt?"&prompt="+prompt:"");}window.gConnect=function(){location.href=authUrl();};var tries=0;setInterval(function(){if(window.GAUTH==="expired"&&tries<2){tries++;location.href=authUrl("none");}},2500);})();<\/script>';
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
         '<link rel="stylesheet" href="portfolio-poster.css?v=24">'+
         '</head>');
-      html = html.replace('</body>', patch + '</body>');
+      html = html.replace('</body>', '<script src="google-stay.js?v=1"><\/script></body>');
       document.open();
       document.write(html);
       document.close();
