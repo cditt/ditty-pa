@@ -1,12 +1,12 @@
-/* BUILD64 */
+/* BUILD65 paper sheet */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
   touch-action:pan-y!important;
   padding:0!important;
-  color:#fff!important;
-  background-color:#1a1410!important;
-  background-image:url("grok_1790179842506.jpg")!important;
+  color:#111!important;
+  background-color:#2a1c12!important;
+  background-image:url("paper-mail.jpg")!important;
   background-repeat:no-repeat!important;
   background-position:center top!important;
   background-size:cover!important;
@@ -17,15 +17,14 @@
   top:auto!important;
   background:transparent!important;
   border:none!important;
-  padding:22% 6% 4px 6%!important;
+  padding:18% 12% 2px 12%!important;
 }
 #scr-mail .sh-title{font-size:0!important;line-height:0!important}
 #scr-mail .sh-title::before{
   content:"DITTY MAIL";
   display:block;text-align:center;
-  font-size:24px;color:#fff;letter-spacing:.16em;
-  font-family:Georgia,serif;font-weight:700;
-  text-shadow:0 2px 8px #000;
+  font-size:26px;color:#111;letter-spacing:.12em;
+  font-family:Georgia,"Times New Roman",serif;font-weight:800;
 }
 #scr-mail .sh-sub,
 #scr-mail .mail-section-lbl,
@@ -34,40 +33,40 @@
 }
 #scr-mail #mail-content{
   background:transparent!important;
-  padding:4px 6% 96px 6%!important;
+  padding:4px 12% 110px 12%!important;
 }
 #scr-mail .mail-item,
 #scr-mail .mail-urgent{
   background:transparent!important;
   box-shadow:none!important;
   border:none!important;
-  border-bottom:1px solid rgba(255,255,255,.15)!important;
+  border-bottom:1px solid rgba(0,0,0,.28)!important;
   border-radius:0!important;
   margin:0!important;
-  padding:8px 0!important;
+  padding:10px 0!important;
 }
 #scr-mail .mail-from{
   display:block!important;
   width:100%!important;
   box-sizing:border-box!important;
-  background:rgba(255,255,255,.28)!important;
-  color:#5eb0ff!important;
+  background:transparent!important;
+  color:#111!important;
   font-family:Georgia,"Times New Roman",serif!important;
-  font-size:22px!important;
-  font-weight:900!important;
+  font-size:20px!important;
+  font-weight:800!important;
   line-height:1.15!important;
-  padding:6px 10px!important;
+  padding:0!important;
   -webkit-text-stroke:0!important;
   text-shadow:none!important;
 }
 #scr-mail .mail-subj{
   display:block!important;
   background:transparent!important;
-  color:#fff!important;
+  color:#222!important;
   font-family:Georgia,serif!important;
-  font-size:17px!important;
-  font-weight:700!important;
+  font-size:16px!important;
+  font-weight:600!important;
   line-height:1.25!important;
-  padding:6px 0 0!important;
-  text-shadow:0 2px 4px #000!important;
+  padding:4px 0 0!important;
+  text-shadow:none!important;
 }
