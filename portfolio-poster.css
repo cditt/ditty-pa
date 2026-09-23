@@ -10,63 +10,47 @@
   min-height:100%!important;
 }
 #scr-portfolio > div[style]{
-  padding:0!important;
-  margin:0!important;
-  flex:0 0 auto;
-  background:transparent!important;
+  padding:0!important;margin:0!important;flex:0 0 auto;background:transparent!important;
 }
 #scr-portfolio .screen-header{
-  background:transparent!important;
-  border:none!important;
-  padding:14px 14px 4px!important;
-  position:sticky;top:0;z-index:10;
-  flex:0 0 auto;
+  background:transparent!important;border:none!important;
+  padding:14px 14px 4px!important;position:sticky;top:0;z-index:10;flex:0 0 auto;
 }
 #scr-portfolio .sh-title{
-  color:#d4b56a!important;
+  font-size:0!important;line-height:0!important;
+}
+#scr-portfolio .sh-title::before{
+  content:"DITTY MONEY";
+  display:block;
+  font-size:12px;
+  line-height:1.4;
+  color:#d4b56a;
   letter-spacing:.32em;
   text-transform:uppercase;
-  font-size:12px!important;
-  font-family:Georgia,Times,serif!important;
+  font-family:Georgia,Times,serif;
   font-weight:700;
 }
 #scr-portfolio .sh-title::after{content:none!important;display:none!important}
 #scr-portfolio .sh-sub{
   color:#b9a57a!important;
   font-family:ui-monospace,Menlo,Consolas,monospace!important;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  font-size:10px!important;
+  letter-spacing:.08em;text-transform:uppercase;font-size:10px!important;
 }
-#scr-portfolio .sh-sub span{color:#e8dcc0!important}
 #scr-portfolio .hcard,
 #scr-portfolio #port-content,
 #scr-portfolio #port-content.hcard,
 #scr-portfolio #port-body{
-  background:transparent!important;
-  box-shadow:none!important;
-  overflow:visible!important;
-  border:none!important;
-  border-top:1px solid #5a4a28!important;
-  border-radius:0!important;
-  color:#e8dcc0!important;
-  font-family:ui-sans-serif,system-ui,-apple-system,sans-serif!important;
-  padding:2px 12px 4px!important;
-  margin:0!important;
-  flex:0 0 auto;
+  background:transparent!important;box-shadow:none!important;overflow:visible!important;
+  border:none!important;border-top:1px solid #5a4a28!important;border-radius:0!important;
+  color:#e8dcc0!important;padding:2px 12px 4px!important;margin:0!important;flex:0 0 auto;
 }
 #scr-portfolio .port-row,
 #scr-portfolio #aapl-watch{
   display:grid!important;
-  grid-template-columns:78px 1fr 64px 68px!important;
-  align-items:center!important;
-  min-height:28px!important;
-  height:auto!important;
-  padding:2px 2px!important;
-  gap:0 6px!important;
+  grid-template-columns:72px 1fr 70px 64px!important;
+  align-items:center!important;min-height:28px!important;
   border-bottom:1px solid rgba(90,74,40,.25)!important;
-  background:transparent!important;
-  box-shadow:none!important;
+  background:transparent!important;box-shadow:none!important;
 }
 #scr-portfolio .port-bar,
 #scr-portfolio .port-sparkline,
@@ -75,30 +59,9 @@
 #scr-portfolio .hcard-empty{display:none!important}
 #scr-portfolio .port-left{display:block!important;grid-column:1!important}
 #scr-portfolio .port-right{display:contents!important}
-#scr-portfolio .port-ticker{
-  font-size:13px!important;
-  letter-spacing:.1em;
-  font-weight:700;
-  color:#f3ead6!important;
-}
-#scr-portfolio .port-name,
-#scr-portfolio .port-left span:not(.port-ticker){
-  color:#c4a35a!important;
-  font-size:11px!important;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-}
-#scr-portfolio .port-price{
-  font-size:13px!important;
-  color:#f3ead6!important;
-  text-align:right!important;
-  font-variant-numeric:tabular-nums;
-}
-#scr-portfolio .port-chg{
-  font-size:12px!important;
-  text-align:right!important;
-  font-variant-numeric:tabular-nums;
-}
+#scr-portfolio .port-ticker{font-size:13px!important;letter-spacing:.1em;font-weight:700;color:#f3ead6!important}
+#scr-portfolio .port-price{font-size:13px!important;color:#f3ead6!important;text-align:right!important;font-variant-numeric:tabular-nums}
+#scr-portfolio .port-chg{font-size:12px!important;text-align:right!important;font-variant-numeric:tabular-nums}
 #scr-portfolio .port-row.up-row .port-chg,
 #scr-portfolio #aapl-watch.up-row .port-chg{color:#3dff7a!important}
 #scr-portfolio .port-row.dn-row .port-chg,
