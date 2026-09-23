@@ -1,28 +1,28 @@
-/* BUILD52 */
+/* BUILD53 */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
   touch-action:pan-y!important;
   padding:0!important;
   color:#f3ead6!important;
-  background-color:#2a2018!important;
-  background-image:url("1790177471161.jpeg")!important;
+  background-color:#1a1410!important;
+  background-image:url("grok_1790179842506.jpg")!important;
   background-repeat:no-repeat!important;
-  background-position:0% 38%!important;
-  background-size:145% auto!important;
+  background-position:center top!important;
+  background-size:cover!important;
 }
 #scr-mail .screen-header{
   background:transparent!important;
   border:none!important;
-  padding:14px 6% 2px 42%!important;
+  padding:10px 10% 0 34%!important;
 }
 #scr-mail .sh-title{font-size:0!important;line-height:0!important}
 #scr-mail .sh-title::before{
   content:"DITTY MAIL";
-  display:block;text-align:left;
-  font-size:20px;color:#f3ead6;letter-spacing:.12em;
+  display:block;text-align:center;
+  font-size:22px;color:#f3ead6;letter-spacing:.16em;
   font-family:Georgia,serif;font-weight:700;
-  text-shadow:0 2px 6px #000;
+  text-shadow:0 2px 8px #000;
 }
 #scr-mail .sh-sub,
 #scr-mail .mail-section-lbl,
@@ -31,7 +31,7 @@
 }
 #scr-mail #mail-content{
   background:transparent!important;
-  padding:2px 6% 90px 42%!important;
+  padding:8px 10% 96px 34%!important;
 }
 #scr-mail .mail-item,
 #scr-mail .mail-urgent{
@@ -41,7 +41,7 @@
   border-bottom:1px solid rgba(243,234,214,.2)!important;
   border-radius:0!important;
   margin:0!important;
-  padding:8px 0!important;
+  padding:10px 0!important;
 }
 #scr-mail .mail-from{
   color:#e8a54b!important;
