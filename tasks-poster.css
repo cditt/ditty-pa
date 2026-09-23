@@ -1,4 +1,4 @@
-/* BUILD42 */
+/* BUILD43 */
 #scr-tasks.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -17,7 +17,7 @@
 #scr-tasks .screen-header{
   background:transparent!important;
   border:none!important;
-  padding:11% 18% 0!important;
+  padding:17% 18% 0!important;
 }
 #scr-tasks .sh-title{font-size:0!important;line-height:0!important}
 #scr-tasks .sh-title::before{
@@ -29,24 +29,23 @@
 #scr-tasks .sh-sub,
 #scr-tasks .tf-progress,
 #scr-tasks .tf-grouphead,
-#scr-tasks .tf-caret{
+#scr-tasks .tf-caret,
+#scr-tasks #med-card,
+#scr-tasks .hcard{
   display:none!important;
 }
 #scr-tasks .tf-wrap{
-  padding:1% 16% 0!important;
+  padding:2% 16% 0!important;
   background:transparent!important;
   display:flex!important;
   flex-direction:column!important;
-  flex:1!important;
-  min-height:58%!important;
+  min-height:46%!important;
 }
 #scr-tasks .tf-item,#scr-tasks .tf-fg{
   background:transparent!important;box-shadow:none!important;border:none!important;margin:0!important;
 }
 #scr-tasks .tf-under{display:none!important}
-#scr-tasks .tf-text,#scr-tasks .hcard-label{
-  color:#f3ead6!important;font-family:Georgia,serif!important;text-shadow:0 1px 2px #000!important;
-}
+#scr-tasks .tf-text{color:#f3ead6!important;font-family:Georgia,serif!important;text-shadow:0 1px 2px #000!important}
 #scr-tasks .tf-check{background:transparent!important;border:2px solid #e8dcc0!important;border-radius:3px!important}
 #scr-tasks .tf-chip{background:transparent!important;color:#e8dcc0!important;border:1px solid rgba(232,220,180,.35)!important}
 #scr-tasks .tf-add{
@@ -55,9 +54,6 @@
   border:none!important;
   box-shadow:none!important;
   margin-top:auto!important;
-  margin-bottom:8%!important;
-  padding:10px 0 0!important;
-}
-#scr-tasks #med-card,#scr-tasks .hcard{
-  display:none!important;
+  margin-bottom:0!important;
+  padding:6px 0 0!important;
 }

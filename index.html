@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ditty PA BUILD42</title>
+<title>Ditty PA BUILD43</title>
 </head>
 <body>
 <div id="boot" style="font-family:-apple-system,sans-serif;padding:28px;background:#111;color:#fff">
-  <p id="m">Loading Ditty PA BUILD42…</p>
+  <p id="m">Loading Ditty PA BUILD43…</p>
 </div>
 <script>
 (function(){
@@ -33,17 +33,17 @@
     .then(function(html){
       var force = '<style id="tasks-force">'
         +'#scr-tasks.screen{background-color:#2a2a28 !important;background-image:url("grok_1790172222397.jpg") !important;background-repeat:no-repeat !important;background-position:center center !important;background-size:contain !important;}'
-        +'#scr-tasks .screen-header{background:transparent !important;padding:11% 18% 0 !important;}'
+        +'#scr-tasks .screen-header{background:transparent !important;padding:17% 18% 0 !important;}'
         +'#scr-tasks .sh-sub,#scr-tasks .tf-progress,#scr-tasks .tf-grouphead,#scr-tasks .tf-caret,#scr-tasks #med-card,#scr-tasks .hcard{display:none !important;}'
-        +'#scr-tasks .tf-wrap{padding:1% 16% 0 !important;display:flex !important;flex-direction:column !important;min-height:58% !important;}'
-        +'#scr-tasks .tf-add{border:none !important;margin-top:auto !important;margin-bottom:8% !important;background:transparent !important;}'
+        +'#scr-tasks .tf-wrap{padding:2% 16% 0 !important;display:flex !important;flex-direction:column !important;min-height:46% !important;}'
+        +'#scr-tasks .tf-add{border:none !important;margin-top:auto !important;margin-bottom:0 !important;background:transparent !important;}'
         +'#scr-tasks .tf-fg,#scr-tasks .tf-item{background:transparent !important;box-shadow:none !important;}'
         +'#scr-tasks .tf-under{display:none !important;}'
         +'</style>';
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
         '<link rel="stylesheet" href="portfolio-poster.css?v=24">'+
-        '<link rel="stylesheet" href="tasks-poster.css?v=42">'
+        '<link rel="stylesheet" href="tasks-poster.css?v=43">'
         + force +
         '</head>');
       html = html.replace('</body>', '<script src="google-stay.js?v=2"><\/script></body>');
