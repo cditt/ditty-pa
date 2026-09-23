@@ -4,13 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ditty PA</title>
+<style>
+  html,body{margin:0;background:#111;color:#fff;font-family:-apple-system,sans-serif}
+  #boot{padding:28px 22px}
+  a.btn,button.btn{display:inline-block;margin-top:16px;background:#fff;color:#111;padding:14px 18px;border-radius:10px;font-weight:800;text-decoration:none;border:0}
+  .note{opacity:.7;font-size:14px;margin-top:12px;line-height:1.4}
+</style>
 </head>
-<body style="font-family:-apple-system,sans-serif;padding:28px;background:#111;color:#fff">
-<p id="m">Loading Ditty PA…</p>
-<p style="opacity:.7;font-size:14px">If this stays blank, close this sheet and open the link in Chrome.</p>
+<body>
+<div id="boot">
+  <p id="m">Loading Ditty PA…</p>
+  <p class="note">Open this in Chrome. Google blocks the Grok in-app browser.</p>
+  <a class="btn" id="gbtn" href="https://accounts.google.com/o/oauth2/v2/auth?client_id=397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fcditt.github.io%2Fditty-pa%2F&response_type=token&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly&prompt=consent">Connect Google</a>
+</div>
 <script>
 (function(){
-  var hash = location.hash;
+  var hash = location.hash || '';
+  if (hash.indexOf('access_token') === -1 && hash.indexOf('error') !== -1) {
+    document.getElementById('m').textContent = 'Google blocked this browser. Open the same link in Chrome.';
+    return;
+  }
   fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html')
     .then(function(r){ if(!r.ok) throw new Error('fetch'); return r.text(); })
     .then(function(html){
@@ -27,8 +40,7 @@
       }
     })
     .catch(function(){
-      var el=document.getElementById('m');
-      if(el) el.textContent='Load failed. Open this URL in Chrome.';
+      document.getElementById('m').textContent='App load failed. Use the Connect Google button on this page, in Chrome.';
     });
 })();
 </script>
