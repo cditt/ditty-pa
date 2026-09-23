@@ -1,4 +1,4 @@
-/* BUILD69 burnt pine calendar */
+/* BUILD70 empty burnt calendar */
 #scr-cal.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -6,7 +6,7 @@
   padding:0!important;
   color:#111!important;
   background-color:#6b5340!important;
-  background-image:url("grok_cal_blank.jpg")!important;
+  background-image:url("grok_1790186344679.jpg")!important;
   background-repeat:no-repeat!important;
   background-position:center top!important;
   background-size:100% 100%!important;
