@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 140" width="90" height="140">
+  <defs>
+    <linearGradient id="cream" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#cbb892"/>
+      <stop offset="35%" stop-color="#e8d7b4"/>
+      <stop offset="70%" stop-color="#f3e6c8"/>
+      <stop offset="100%" stop-color="#d4c09a"/>
+    </linearGradient>
+    <linearGradient id="brown" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a140c"/>
+      <stop offset="40%" stop-color="#5a2a16"/>
+      <stop offset="70%" stop-color="#3d1c10"/>
+      <stop offset="100%" stop-color="#1a0c06"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#fff" stop-opacity=".35"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="45" cy="134" rx="26" ry="5" fill="rgba(0,0,0,.35)"/>
+  <rect x="16" y="62" width="58" height="68" rx="10" fill="url(#cream)"/>
+  <text x="45" y="108" text-anchor="middle" font-size="18" font-family="Georgia,Times,serif" font-weight="700" fill="#1a120c">XXX</text>
+  <path d="M28 64 L45 18 L62 64 Z" fill="url(#brown)"/>
+  <path d="M33 62 L45 24 L57 62 Z" fill="url(#shine)"/>
+  <ellipse cx="45" cy="20" rx="9" ry="5" fill="#1a0c06"/>
+  <path d="M54 26c12 6 16 20 10 32" fill="none" stroke="#2a140c" stroke-width="8" stroke-linecap="round"/>
+  <rect x="41" y="8" width="8" height="14" rx="1.5" fill="#6b5340"/>
+  <path d="M41 10 h20 v3 h-12 l12-1.5 v3" fill="#8a7358"/>
+</svg>

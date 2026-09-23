@@ -1,4 +1,4 @@
-/* BUILD85 jug fixed on deck */
+/* BUILD86 jug on deck */
 #scr-home.screen{
   overflow:hidden!important;
   padding:0!important;
@@ -55,19 +55,17 @@
   position:fixed!important;
   left:10px!important;
   bottom:80px!important;
-  width:56px!important;
-  height:auto!important;
+  width:58px!important;
+  height:90px!important;
   padding:0!important;
   margin:0!important;
   border:0!important;
-  background:transparent!important;
+  background-color:transparent!important;
+  background-image:url("xxx-jug.svg?v=BUILD86")!important;
+  background-repeat:no-repeat!important;
+  background-position:center bottom!important;
+  background-size:contain!important;
   box-shadow:none!important;
   z-index:9999!important;
   cursor:pointer!important;
-}
-#home-listen img{
-  display:block!important;
-  width:56px!important;
-  height:auto!important;
-  pointer-events:none!important;
 }
