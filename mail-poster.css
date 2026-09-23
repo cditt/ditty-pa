@@ -1,4 +1,4 @@
-/* BUILD67 paper to the top, no lamp */
+/* BUILD68 shift down onto the paper */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -17,7 +17,7 @@
   top:auto!important;
   background:transparent!important;
   border:none!important;
-  padding:8% 10% 2px 10%!important;
+  padding:12% 12% 4px 12%!important;
 }
 #scr-mail .sh-title{font-size:0!important;line-height:0!important}
 #scr-mail .sh-title::before{
@@ -33,7 +33,7 @@
 }
 #scr-mail #mail-content{
   background:transparent!important;
-  padding:4px 10% 110px 10%!important;
+  padding:8px 12% 130px 12%!important;
 }
 #scr-mail .mail-item,
 #scr-mail .mail-urgent{
