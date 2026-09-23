@@ -1,4 +1,4 @@
-/* BUILD48 */
+/* BUILD49 */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -8,13 +8,13 @@
   background-color:#2a2018!important;
   background-image:url("1790177471161.jpeg")!important;
   background-repeat:no-repeat!important;
-  background-position:center top!important;
-  background-size:cover!important;
+  background-position:50% 42%!important;
+  background-size:160% auto!important;
 }
 #scr-mail .screen-header{
   background:transparent!important;
   border:none!important;
-  padding:14px 18% 0 18%!important;
+  padding:16px 16% 0 16%!important;
 }
 #scr-mail .sh-title{font-size:0!important;line-height:0!important}
 #scr-mail .sh-title::before{
@@ -31,7 +31,7 @@
 }
 #scr-mail #mail-content{
   background:transparent!important;
-  padding:8px 16% 90px 22%!important;
+  padding:10px 18% 90px 24%!important;
 }
 #scr-mail .mail-item,
 #scr-mail .mail-urgent{
