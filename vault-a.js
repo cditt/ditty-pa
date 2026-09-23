@@ -1,1 +1,1 @@
-window.DITTY_VAULT_A="ok";
+window.DITTY_VAULT_A='placeholder-will-replace';
