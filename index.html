@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ditty PA BUILD68</title>
+<title>Ditty PA BUILD69</title>
 <style>
   html,body{margin:0;background:#111;color:#fff;font-family:-apple-system,sans-serif}
   #boot{padding:28px 22px}
@@ -13,7 +13,7 @@
 </head>
 <body>
 <div id="boot">
-  <p id="m">Loading Ditty PA BUILD68…</p>
+  <p id="m">Loading Ditty PA BUILD69…</p>
   <p class="note">Open this in Chrome. Close old tabs first.</p>
   <a class="btn" href="https://accounts.google.com/o/oauth2/v2/auth?client_id=397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fcditt.github.io%2Fditty-pa%2F&response_type=token&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly&include_granted_scopes=true">Connect Google</a>
 </div>
@@ -44,6 +44,7 @@
         '<link rel="stylesheet" href="portfolio-poster.css?v=24">'+
         '<link rel="stylesheet" href="tasks-poster.css?v=10">'+
         '<link rel="stylesheet" href="mail-poster.css?v=BUILD68">'+
+        '<link rel="stylesheet" href="calendar-poster.css?v=BUILD69">'+
         '</head>');
       html = html.replace('</body>', '<script src="google-stay.js?v=2"><\/script></body>');
       document.open();
@@ -51,7 +52,7 @@
       document.close();
     })
     .catch(function(){
-      document.getElementById('m').textContent = 'BUILD68 load failed. Open this in Chrome.';
+      document.getElementById('m').textContent = 'BUILD69 load failed. Open this in Chrome.';
     });
 })();
 </script>

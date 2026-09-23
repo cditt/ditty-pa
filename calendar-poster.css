@@ -1,0 +1,94 @@
+/* BUILD69 burnt pine calendar */
+#scr-cal.screen{
+  overflow-y:scroll!important;
+  -webkit-overflow-scrolling:touch!important;
+  touch-action:pan-y!important;
+  padding:0!important;
+  color:#111!important;
+  background-color:#6b5340!important;
+  background-image:url("grok_cal_blank.jpg")!important;
+  background-repeat:no-repeat!important;
+  background-position:center top!important;
+  background-size:100% 100%!important;
+  background-attachment:scroll!important;
+}
+#scr-cal .screen-header{
+  position:static!important;
+  top:auto!important;
+  background:transparent!important;
+  border:none!important;
+  padding:7% 10% 0 10%!important;
+}
+#scr-cal .sh-title{font-size:0!important;line-height:0!important}
+#scr-cal .sh-title::before{
+  content:"CALENDAR";
+  display:block;text-align:center;
+  font-size:28px;color:#2a241c;letter-spacing:.18em;
+  font-family:Georgia,"Times New Roman",serif;font-weight:700;
+}
+#scr-cal .sh-sub{
+  display:none!important;
+}
+#scr-cal #cal-content{
+  background:transparent!important;
+  padding:18% 9% 140px 9%!important;
+}
+#scr-cal .cal-empty,
+#scr-cal .spin-txt{
+  color:#111!important;
+  font-family:Georgia,serif!important;
+}
+#scr-cal .agenda-day{
+  margin-top:10px!important;
+}
+#scr-cal .agenda-day-label{
+  background:transparent!important;
+  border:none!important;
+  border-bottom:1px solid rgba(0,0,0,.28)!important;
+  color:#111!important;
+  font-family:Georgia,serif!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  letter-spacing:.08em!important;
+  padding:0 0 6px!important;
+  margin:12px 0 6px!important;
+}
+#scr-cal .agenda-day-label.is-today{
+  color:#111!important;
+}
+#scr-cal .agenda-row{
+  background:transparent!important;
+  box-shadow:none!important;
+  border:none!important;
+  border-bottom:1px solid rgba(0,0,0,.18)!important;
+  border-radius:0!important;
+  margin:0!important;
+  padding:8px 0!important;
+}
+#scr-cal .agenda-time,
+#scr-cal .agenda-title,
+#scr-cal .agenda-loc{
+  color:#111!important;
+  font-family:Georgia,serif!important;
+  text-shadow:none!important;
+}
+#scr-cal .agenda-time{
+  font-size:13px!important;
+  font-weight:800!important;
+}
+#scr-cal .agenda-title{
+  font-size:16px!important;
+  font-weight:700!important;
+}
+#scr-cal .agenda-allday-badge{
+  background:transparent!important;
+  border:1px solid #111!important;
+  color:#111!important;
+  border-radius:0!important;
+}
+#scr-cal .agenda-pill{
+  background:transparent!important;
+  border:1px solid #111!important;
+  color:#111!important;
+  border-radius:0!important;
+}
