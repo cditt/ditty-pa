@@ -3,11 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ditty PA BUILD66</title>
+<title>Ditty PA BUILD67</title>
+<style>
+  html,body{margin:0;background:#111;color:#fff;font-family:-apple-system,sans-serif}
+  #boot{padding:28px 22px}
+  a.btn{display:inline-block;margin-top:16px;background:#fff;color:#111;padding:14px 18px;border-radius:10px;font-weight:800;text-decoration:none}
+  .note{opacity:.7;font-size:14px;margin-top:12px;line-height:1.4}
+</style>
 </head>
 <body>
-<div id="boot" style="font-family:-apple-system,sans-serif;padding:28px;background:#111;color:#fff">
-  <p id="m">Loading Ditty PA BUILD66…</p>
+<div id="boot">
+  <p id="m">Loading Ditty PA BUILD67…</p>
+  <p class="note">Open this in Chrome. Close old tabs first.</p>
+  <a class="btn" href="https://accounts.google.com/o/oauth2/v2/auth?client_id=397827765559-qop8itod6qnfdtf6si2pl1481a2itael.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fcditt.github.io%2Fditty-pa%2F&response_type=token&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly&include_granted_scopes=true">Connect Google</a>
 </div>
 <script>
 (function(){
@@ -31,18 +39,11 @@
   fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html')
     .then(function(r){ if(!r.ok) throw new Error('fetch'); return r.text(); })
     .then(function(html){
-      var force = '<style id="mail-force">'
-        +'#scr-mail .screen-header{position:static !important;top:auto !important;background:transparent !important;}'
-        +'#scr-mail .sh-sub,#scr-mail .mail-section-lbl,#scr-mail .mail-snip{display:none !important;}'
-        +'#scr-mail .mail-from{display:block !important;width:100% !important;background:transparent !important;color:#111 !important;font-size:20px !important;font-weight:800 !important;}'
-        +'#scr-mail .mail-subj{color:#222 !important;background:transparent !important;}'
-        +'</style>';
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
         '<link rel="stylesheet" href="portfolio-poster.css?v=24">'+
-        '<link rel="stylesheet" href="tasks-poster.css?v=45">'+
-        '<link rel="stylesheet" href="mail-poster.css?v=66">'
-        + force +
+        '<link rel="stylesheet" href="tasks-poster.css?v=10">'+
+        '<link rel="stylesheet" href="mail-poster.css?v=BUILD67">'+
         '</head>');
       html = html.replace('</body>', '<script src="google-stay.js?v=2"><\/script></body>');
       document.open();
@@ -50,7 +51,7 @@
       document.close();
     })
     .catch(function(){
-      document.getElementById('m').textContent = 'App load failed.';
+      document.getElementById('m').textContent = 'BUILD67 load failed. Open this in Chrome.';
     });
 })();
 </script>
