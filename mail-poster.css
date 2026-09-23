@@ -1,4 +1,4 @@
-/* BUILD55 */
+/* BUILD56 */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -14,7 +14,7 @@
 #scr-mail .screen-header{
   background:transparent!important;
   border:none!important;
-  padding:10px 6% 4px 6%!important;
+  padding:8px 0 4px 0!important;
 }
 #scr-mail .sh-title{font-size:0!important;line-height:0!important}
 #scr-mail .sh-title::before{
@@ -31,30 +31,32 @@
 }
 #scr-mail #mail-content{
   background:transparent!important;
-  padding:4px 6% 96px 6%!important;
+  padding:0 0 96px 0!important;
+  margin:0!important;
+  width:100%!important;
 }
 #scr-mail .mail-item,
 #scr-mail .mail-urgent{
   background:transparent!important;
   box-shadow:none!important;
   border:none!important;
-  border-bottom:none!important;
   border-radius:0!important;
-  margin:0 0 8px 0!important;
+  margin:0 0 10px 0!important;
   padding:0!important;
+  width:100%!important;
 }
 #scr-mail .mail-from{
   display:block!important;
   width:100%!important;
+  max-width:none!important;
   box-sizing:border-box!important;
   background:#0d2b5c!important;
   color:#fff!important;
   font-family:Georgia,serif!important;
   font-size:14px!important;
   font-weight:800!important;
-  letter-spacing:.03em!important;
-  padding:7px 10px!important;
-  text-shadow:none!important;
+  padding:8px 12px!important;
+  margin:0!important;
 }
 #scr-mail .mail-subj{
   display:block!important;
@@ -65,6 +67,6 @@
   font-size:16px!important;
   font-weight:700!important;
   line-height:1.25!important;
-  padding:6px 10px 8px!important;
+  padding:8px 12px 10px!important;
   text-shadow:0 2px 4px #000!important;
 }
