@@ -9,6 +9,18 @@
   flex-direction:column!important;
   min-height:100%!important;
 }
+#scr-portfolio.screen::after{
+  content:"";
+  display:block!important;
+  width:100%;
+  min-height:280px;
+  height:42vh;
+  flex:1 0 260px;
+  margin-top:8px;
+  background:#0a0806 url("grok_1790169044816.jpg") no-repeat center bottom;
+  background-size:cover;
+  pointer-events:none;
+}
 #scr-portfolio > div[style]{
   padding:0!important;margin:0!important;flex:0 0 auto;background:transparent!important;
 }
