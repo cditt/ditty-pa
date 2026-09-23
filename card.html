@@ -4,13 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ditty Card">
-<meta name="theme-color" content="#0a1220">
+<meta name="theme-color" content="#071018">
 <title>Ditty Day Card</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:#0a1220;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Impact,sans-serif;overflow:hidden}
+html,body{height:100%;background:#071018;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Impact,sans-serif;overflow:hidden}
 .scroller{height:100dvh;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch}
 .plate{min-height:100dvh;scroll-snap-align:start;scroll-snap-stop:always;padding:calc(28px + env(safe-area-inset-top)) 22px calc(36px + env(safe-area-inset-bottom));display:flex;flex-direction:column;justify-content:space-between}
 .kicker{font-size:13px;letter-spacing:.28em;text-transform:uppercase;opacity:.75;font-weight:800}
@@ -18,8 +17,9 @@ html,body{height:100%;background:#0a1220;color:#fff;font-family:-apple-system,Bl
 .sub{font-size:22px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-top:14px}
 .list{margin-top:22px;font-size:22px;font-weight:700;line-height:1.35}
 .foot{font-size:13px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
-#p-wx{background:radial-gradient(circle at 70% 20%,#1b4d8f 0%,#071018 55%)}
-#p-wx .huge{font-size:28vw}#p-wx .sub{color:#4ec4ff}
+#p-wx{background:radial-gradient(circle at 78% 18%,rgba(40,140,255,.35),transparent 42%),repeating-radial-gradient(circle at 78% 18%,transparent 0 38px,rgba(80,180,255,.08) 38px 40px),linear-gradient(180deg,#0a2a4a 0%,#071018 70%);position:relative}
+#p-wx .huge{font-size:26vw;color:#f4f8ff}#p-wx .sub{color:#4ec4ff;font-size:7vw}
+#p-wx .meta{margin-top:18px;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:#c9e7ff;line-height:1.5}
 #p-gym{background:#120e0b;color:#f3e6d0}#p-gym .huge{font-size:22vw}#p-gym .day{color:#c23b2a}
 #p-board{background:#e2b400;color:#14110a}#p-board .huge{font-size:22vw;color:#111}
 #p-board .stamp{display:inline-block;border:5px solid #9b1c14;color:#9b1c14;padding:8px 16px;font-size:28px;letter-spacing:.2em;transform:rotate(-6deg);margin-top:24px}
@@ -31,24 +31,45 @@ html,body{height:100%;background:#0a1220;color:#fff;font-family:-apple-system,Bl
 </style></head><body>
 <div class="hint">SWIPE UP</div>
 <div class="scroller">
-<section class="plate" id="p-wx"><div class="kicker">Ditty weather</div><div><div class="huge" id="wx-temp">67/60</div><div class="sub" id="wx-cond">Mostly cloudy</div><div class="list" id="wx-sub">NE wind</div></div><div class="foot" id="wx-date"></div></section>
+<section class="plate" id="p-wx">
+  <div class="kicker">Ditty weather · 46151</div>
+  <div>
+    <div class="huge" id="wx-temp">--/--</div>
+    <div class="sub" id="wx-cond">Loading</div>
+    <div class="meta" id="wx-sub">Martinsville</div>
+  </div>
+  <div class="foot" id="wx-date"></div>
+</section>
 <section class="plate" id="p-gym"><div class="kicker">Ditty gym</div><div><div class="huge day" id="gym-day">Day 3</div><div class="huge" id="gym-name">Legs</div><div class="list" id="gym-list"></div></div><div class="foot">Log in DFJ</div></section>
 <section class="plate" id="p-board"><div class="kicker">Ditty board</div><div><div class="huge">Emily</div><div class="sub">Phyllis shower all day</div><div class="stamp">CLEAR</div></div><div class="foot">Clipboard</div></section>
 <section class="plate" id="p-sports"><div class="kicker">Ditty sports</div><div><div class="huge">No bell</div><div class="sub">Today</div><div class="next">IU Fri 8pm<br>Colts Sun 1pm</div></div><div class="foot">Scoreboard</div></section>
 <section class="plate" id="p-money"><div class="kicker">Ditty portfolio</div><div><div class="huge">AAPL</div><div class="price">339.75</div><div class="sub">Hands off</div></div><div class="foot">Play account</div></section>
-<section class="plate" id="p-do"><div class="inner"><div class="huge" id="do-line">At work</div><div class="sub" id="do-sub">Home ~5:10</div></div></section>
+<section class="plate" id="p-do"><div class="inner"><div class="huge" id="do-line">At work</div><div class="sub" id="do-sub">Home 5:10</div></div></section>
 </div>
 <script>
+var WX_URL='https://api.open-meteo.com/v1/forecast?latitude=39.4278&longitude=-86.4283&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FIndiana%2FIndianapolis&forecast_days=1';
+function wxCode(code){if(code===0)return'Clear';if(code<=2)return'Partly Cloudy';if(code===3)return'Overcast';if(code<=49)return'Foggy';if(code<=55)return'Drizzle';if(code<=67)return'Rain';if(code<=77)return'Snow';if(code<=82)return'Showers';if(code>=95)return'Thunder';return'Cloudy';}
+function dir(d){var pts=['N','NE','E','SE','S','SW','W','NW'];return pts[Math.round(((d%360)/45))%8];}
+fetch(WX_URL).then(function(r){return r.json();}).then(function(j){
+  var hi=Math.round(j.daily.temperature_2m_max[0]);
+  var lo=Math.round(j.daily.temperature_2m_min[0]);
+  var now=Math.round(j.current.temperature_2m);
+  var feel=Math.round(j.current.apparent_temperature);
+  var rain=j.daily.precipitation_probability_max[0];
+  var uv=Math.round(j.current.uv_index||j.daily.uv_index_max[0]||0);
+  document.getElementById('wx-temp').textContent=hi+'/'+lo;
+  document.getElementById('wx-cond').textContent=wxCode(j.current.weather_code);
+  document.getElementById('wx-sub').innerHTML='Now '+now+' · Feels '+feel+'<br>'+dir(j.current.wind_direction_10m)+' '+Math.round(j.current.wind_speed_10m)+' mph<br>Rain '+rain+'% · UV '+uv+' · No alert<br>Martinsville';
+}).catch(function(){document.getElementById('wx-cond').textContent='Weather offline';});
 const PLAN=[{n:'Day 1',t:'Push',lifts:['Incline DB 4x6-10','Chest Press 3x8-12']},{n:'Day 2',t:'Pull',lifts:['Lat Pulldown 4x8-12','Row 3x8-12']},{n:'Day 3',t:'Legs',lifts:['Back Squat 4x5-8','Leg Press 3x10-12','RDL 3x8-10','Leg Curl 3x12-15','Calf 4x12-15']},{n:'Day 4',t:'Upper',lifts:['Incline 3x10-12','Pulldown 3x10-12']},{n:'Day 5',t:'Lower',lifts:['Hack Squat 3x6-10']},{n:'Rest',t:'Off',lifts:[]},{n:'Rest',t:'Off',lifts:[]}];
 const i=(new Date().getDay()+6)%7,d=PLAN[i];
 document.getElementById('gym-day').textContent=d.n;
 document.getElementById('gym-name').textContent=d.t;
-document.getElementById('gym-list').innerHTML=d.lifts.map(x=>'<div>- '+x+'</div>').join('')||'No lift';
+document.getElementById('gym-list').innerHTML=d.lifts.length?d.lifts.map(function(x){return '<div>— '+x+'</div>';}).join(''):'<div>No lift</div>';
 const mins=new Date().getHours()*60+new Date().getMinutes();
 const line=document.getElementById('do-line'),sub=document.getElementById('do-sub');
 if(mins<255){line.textContent='Train now';sub.textContent='Roll 4:15';}
 else if(mins<330){line.textContent='Leave 5:30';sub.textContent='Window closed';}
 else{line.textContent='At work';sub.textContent='Home 5:10';}
 document.getElementById('wx-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
-fetch('https://api.open-meteo.com/v1/forecast?latitude=39.428&longitude=-86.428&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America%2FIndiana%2FIndianapolis').then(r=>r.json()).then(j=>{document.getElementById('wx-temp').textContent=Math.round(j.daily.temperature_2m_max[0])+'/'+Math.round(j.daily.temperature_2m_min[0]);});
 </script></body></html>
