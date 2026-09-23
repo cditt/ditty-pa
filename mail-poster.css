@@ -1,10 +1,10 @@
-/* BUILD54 */
+/* BUILD55 */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
   touch-action:pan-y!important;
   padding:0!important;
-  color:#f3ead6!important;
+  color:#fff!important;
   background-color:#1a1410!important;
   background-image:url("grok_1790179842506.jpg")!important;
   background-repeat:no-repeat!important;
@@ -14,13 +14,13 @@
 #scr-mail .screen-header{
   background:transparent!important;
   border:none!important;
-  padding:10px 10% 0 34%!important;
+  padding:10px 6% 4px 6%!important;
 }
 #scr-mail .sh-title{font-size:0!important;line-height:0!important}
 #scr-mail .sh-title::before{
   content:"DITTY MAIL";
   display:block;text-align:center;
-  font-size:22px;color:#f3ead6;letter-spacing:.16em;
+  font-size:22px;color:#fff;letter-spacing:.16em;
   font-family:Georgia,serif;font-weight:700;
   text-shadow:0 2px 8px #000;
 }
@@ -31,31 +31,40 @@
 }
 #scr-mail #mail-content{
   background:transparent!important;
-  padding:8px 10% 96px 34%!important;
+  padding:4px 6% 96px 6%!important;
 }
 #scr-mail .mail-item,
 #scr-mail .mail-urgent{
   background:transparent!important;
   box-shadow:none!important;
   border:none!important;
-  border-bottom:1px solid rgba(243,234,214,.2)!important;
+  border-bottom:none!important;
   border-radius:0!important;
-  margin:0!important;
-  padding:10px 0!important;
+  margin:0 0 8px 0!important;
+  padding:0!important;
 }
 #scr-mail .mail-from{
-  color:#ff7a18!important;
+  display:block!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  background:#0d2b5c!important;
+  color:#fff!important;
   font-family:Georgia,serif!important;
   font-size:14px!important;
   font-weight:800!important;
   letter-spacing:.03em!important;
-  text-shadow:0 0 6px #000,0 2px 4px #000!important;
+  padding:7px 10px!important;
+  text-shadow:none!important;
 }
 #scr-mail .mail-subj{
-  color:#fff6e4!important;
+  display:block!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  color:#fff!important;
   font-family:Georgia,serif!important;
   font-size:16px!important;
   font-weight:700!important;
   line-height:1.25!important;
+  padding:6px 10px 8px!important;
   text-shadow:0 2px 4px #000!important;
 }
