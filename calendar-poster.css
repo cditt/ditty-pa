@@ -1,4 +1,4 @@
-/* BUILD76 list starts below SUN-SAT row */
+/* BUILD77 Today under SUN-SAT */
 #scr-cal.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -17,7 +17,7 @@
 }
 #scr-cal #cal-content{
   background:transparent!important;
-  padding:42% 8% 160px 8%!important;
+  padding:46% 8% 160px 8%!important;
 }
 #scr-cal .cal-empty,
 #scr-cal .spin-txt{
