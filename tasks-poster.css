@@ -1,4 +1,4 @@
-/* BUILD43 */
+/* BUILD44 */
 #scr-tasks.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -17,7 +17,7 @@
 #scr-tasks .screen-header{
   background:transparent!important;
   border:none!important;
-  padding:17% 18% 0!important;
+  padding:20% 18% 0!important;
 }
 #scr-tasks .sh-title{font-size:0!important;line-height:0!important}
 #scr-tasks .sh-title::before{
@@ -35,11 +35,11 @@
   display:none!important;
 }
 #scr-tasks .tf-wrap{
-  padding:2% 16% 0!important;
+  padding:4% 16% 0!important;
   background:transparent!important;
   display:flex!important;
   flex-direction:column!important;
-  min-height:46%!important;
+  min-height:50%!important;
 }
 #scr-tasks .tf-item,#scr-tasks .tf-fg{
   background:transparent!important;box-shadow:none!important;border:none!important;margin:0!important;
@@ -54,6 +54,5 @@
   border:none!important;
   box-shadow:none!important;
   margin-top:auto!important;
-  margin-bottom:0!important;
-  padding:6px 0 0!important;
+  margin-bottom:2%!important;
 }
