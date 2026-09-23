@@ -1,25 +1,2 @@
-#scr-portfolio.screen{
-  background:#070806!important;
-  display:flex!important;
-  flex-direction:column!important;
-}
-#scr-portfolio.screen::after{
-  content:"";
-  display:block!important;
-  width:100%;
-  min-height:280px;
-  height:42vh;
-  flex:1 0 280px;
-  background:#070806 url("vault.svg?v=2") no-repeat center top;
-  background-size:contain;
-  pointer-events:none;
-}
-#vault-art-wrap{
-  width:100%;
-  margin-top:4px;
-}
-#vault-art-wrap img,#vault-art{
-  width:100%;
-  height:auto;
-  display:block;
-}
+#scr-portfolio.screen{background:#070806!important;display:flex!important;flex-direction:column!important;}
+#scr-portfolio.screen::after{content:"";display:block!important;width:100%;min-height:300px;height:44vh;flex:1 0 300px;background:#070806 url("vault.svg?v=2") no-repeat center top;background-size:contain;pointer-events:none;}
