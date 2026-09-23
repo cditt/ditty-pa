@@ -1,4 +1,4 @@
-/* BUILD84 jug pinned on deck, brief scrolls */
+/* BUILD85 jug fixed on deck */
 #scr-home.screen{
   overflow:hidden!important;
   padding:0!important;
@@ -8,7 +8,6 @@
   background-repeat:no-repeat!important;
   background-position:center top!important;
   background-size:100% 100%!important;
-  background-attachment:scroll!important;
   position:relative!important;
 }
 #scr-home .home-scroll{
@@ -21,10 +20,7 @@
   height:100%!important;
   max-height:100%!important;
 }
-#scr-home .hgreet{
-  justify-content:center!important;
-  margin-bottom:6px!important;
-}
+#scr-home .hgreet{justify-content:center!important;margin-bottom:6px!important;}
 #scr-home .hgreet-ico{display:none!important;}
 #scr-home .hgreet-txt,
 #scr-home .hdate,
@@ -41,25 +37,11 @@
   font-weight:800!important;
   text-shadow:none!important;
 }
-#scr-home .hgreet-txt{
-  font-size:20px!important;
-  line-height:1.15!important;
-}
+#scr-home .hgreet-txt{font-size:20px!important;line-height:1.15!important;}
 #scr-home .hdate,
-#scr-home .hwx{
-  font-size:13px!important;
-  margin-bottom:6px!important;
-}
-#scr-home .ab-wrap{
-  background:transparent!important;
-  margin:8px 0 8px!important;
-}
-#scr-home .ab-body{
-  font-size:14px!important;
-  line-height:1.4!important;
-  padding-right:0!important;
-  text-align:center!important;
-}
+#scr-home .hwx{font-size:13px!important;margin-bottom:6px!important;}
+#scr-home .ab-wrap{background:transparent!important;margin:8px 0!important;}
+#scr-home .ab-body{font-size:14px!important;line-height:1.4!important;text-align:center!important;}
 #scr-home .ab-refresh{color:#1a120c!important;}
 #scr-home .htile{
   background:transparent!important;
@@ -70,26 +52,22 @@
   padding:8px 0!important;
 }
 #home-listen{
-  position:absolute!important;
-  left:6px!important;
-  bottom:4px!important;
-  width:48px!important;
+  position:fixed!important;
+  left:10px!important;
+  bottom:80px!important;
+  width:56px!important;
   height:auto!important;
   padding:0!important;
   margin:0!important;
   border:0!important;
   background:transparent!important;
   box-shadow:none!important;
-  z-index:40!important;
+  z-index:9999!important;
   cursor:pointer!important;
-  -webkit-tap-highlight-color:transparent!important;
 }
 #home-listen img{
   display:block!important;
-  width:48px!important;
+  width:56px!important;
   height:auto!important;
   pointer-events:none!important;
-}
-#home-listen.talking{
-  transform:rotate(-6deg)!important;
 }
