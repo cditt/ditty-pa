@@ -1,6 +1,6 @@
-/* BUILD82 jug reads greeting + date + weather + brief */
+/* BUILD83 cream + brown XXX jug. Reads brief. */
 (function(){
-  var JUG='<svg viewBox="0 0 80 110" width="72" height="96" aria-hidden="true"><ellipse cx="40" cy="102" rx="22" ry="5" fill="rgba(0,0,0,.25)"/><path d="M28 18c0-6 4-10 12-10s12 4 12 10v6H28z" fill="#6b3a1e"/><rect x="36" y="6" width="8" height="14" rx="2" fill="#c4a574"/><path d="M22 28c0-6 8-10 18-10s18 4 18 10v8c12 6 14 22 8 38-6 16-22 26-26 26s-20-10-26-26c-6-16-4-32 8-38z" fill="#6b3a1e"/><path d="M24 36c2-4 10-8 16-8 8 0 16 3 18 8 2 14-2 30-10 40-6 8-16 12-18 8-8-14-10-32-6-48z" fill="#8a4e28" opacity=".55"/><path d="M56 34c10 4 14 16 10 28-2 8-8 12-8 12" fill="none" stroke="#4a2a14" stroke-width="5" stroke-linecap="round"/><circle cx="30" cy="52" r="6" fill="#c4a574" opacity=".25"/></svg>';
+  var JUG='<svg viewBox="0 0 90 130" width="52" height="74" aria-hidden="true"><ellipse cx="45" cy="124" rx="24" ry="4" fill="rgba(0,0,0,.28)"/><rect x="18" y="58" width="54" height="62" rx="8" fill="#e6d3b3"/><rect x="18" y="58" width="54" height="62" rx="8" fill="none" stroke="#c4ad8a" stroke-width="1.5"/><path d="M28 62c2 18 4 36 4 50h26c0-14 2-32 4-50z" fill="#f3e6cc" opacity=".35"/><text x="45" y="98" text-anchor="middle" font-size="20" font-family="Georgia,serif" font-weight="700" fill="#1a120c">XXX</text><path d="M30 62 L45 22 L60 62z" fill="#5a2e16"/><path d="M34 58 L45 26 L56 58z" fill="#3d1c0e"/><ellipse cx="45" cy="22" rx="8" ry="5" fill="#2a1208"/><path d="M52 28c10 4 14 16 8 26" fill="none" stroke="#3d1c0e" stroke-width="7" stroke-linecap="round"/><rect x="42" y="12" width="7" height="12" rx="1" fill="#6b5340"/><path d="M42 14h18v3H49l11-1v3" fill="#8a7358"/></svg>';
   function grab(){
     var home=document.getElementById('scr-home');
     if(!home) return '';
@@ -31,7 +31,6 @@
     if(!txt) return;
     var u=new SpeechSynthesisUtterance(txt);
     u.rate=0.95;
-    u.pitch=1;
     var btn=document.getElementById('home-listen');
     u.onstart=function(){ if(btn) btn.classList.add('talking'); };
     u.onend=function(){ if(btn) btn.classList.remove('talking'); };

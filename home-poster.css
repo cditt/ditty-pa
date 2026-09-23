@@ -1,4 +1,4 @@
-/* BUILD82 big hide + bold + jug */
+/* BUILD83 jug on deck, not hide */
 #scr-home.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -11,6 +11,7 @@
   background-position:center top!important;
   background-size:100% 100%!important;
   background-attachment:scroll!important;
+  position:relative!important;
 }
 #scr-home .home-scroll{
   background:transparent!important;
@@ -67,21 +68,19 @@
 }
 #home-listen{
   position:absolute!important;
-  left:6px!important;
-  bottom:8px!important;
-  width:72px!important;
-  height:96px!important;
+  left:10px!important;
+  bottom:4px!important;
+  width:52px!important;
+  height:74px!important;
   padding:0!important;
   margin:0!important;
   border:0!important;
   background:transparent!important;
   box-shadow:none!important;
-  z-index:30!important;
+  z-index:25!important;
   cursor:pointer!important;
   -webkit-tap-highlight-color:transparent!important;
 }
 #home-listen.talking{
-  filter:brightness(1.15)!important;
-  transform:rotate(-8deg)!important;
+  transform:rotate(-6deg)!important;
 }
-#scr-home{position:relative!important;}
