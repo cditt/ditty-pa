@@ -67,18 +67,14 @@
 }
 #home-listen{
   position:absolute!important;
-  left:8px!important;
-  bottom:10px!important;
+  left:6px!important;
+  bottom:8px!important;
   width:72px!important;
   height:96px!important;
   padding:0!important;
   margin:0!important;
   border:0!important;
-  background-color:transparent!important;
-  background-image:url("moonshine-jug.jpg")!important;
-  background-repeat:no-repeat!important;
-  background-position:center bottom!important;
-  background-size:contain!important;
+  background:transparent!important;
   box-shadow:none!important;
   z-index:30!important;
   cursor:pointer!important;
