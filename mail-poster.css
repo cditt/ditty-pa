@@ -1,4 +1,4 @@
-/* BUILD51 */
+/* BUILD52 */
 #scr-mail.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -8,19 +8,19 @@
   background-color:#2a2018!important;
   background-image:url("1790177471161.jpeg")!important;
   background-repeat:no-repeat!important;
-  background-position:18% 40%!important;
-  background-size:170% auto!important;
+  background-position:0% 38%!important;
+  background-size:145% auto!important;
 }
 #scr-mail .screen-header{
   background:transparent!important;
   border:none!important;
-  padding:12px 8% 2px 30%!important;
+  padding:14px 6% 2px 42%!important;
 }
 #scr-mail .sh-title{font-size:0!important;line-height:0!important}
 #scr-mail .sh-title::before{
   content:"DITTY MAIL";
   display:block;text-align:left;
-  font-size:22px;color:#f3ead6;letter-spacing:.14em;
+  font-size:20px;color:#f3ead6;letter-spacing:.12em;
   font-family:Georgia,serif;font-weight:700;
   text-shadow:0 2px 6px #000;
 }
@@ -31,17 +31,17 @@
 }
 #scr-mail #mail-content{
   background:transparent!important;
-  padding:4px 8% 90px 30%!important;
+  padding:2px 6% 90px 42%!important;
 }
 #scr-mail .mail-item,
 #scr-mail .mail-urgent{
   background:transparent!important;
   box-shadow:none!important;
   border:none!important;
-  border-bottom:1px solid rgba(243,234,214,.22)!important;
+  border-bottom:1px solid rgba(243,234,214,.2)!important;
   border-radius:0!important;
   margin:0!important;
-  padding:9px 0!important;
+  padding:8px 0!important;
 }
 #scr-mail .mail-from{
   color:#e8a54b!important;
