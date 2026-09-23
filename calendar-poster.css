@@ -1,4 +1,4 @@
-/* BUILD74 faint grid — grok_1790188912053.jpg */
+/* BUILD75 events under days, tighter */
 #scr-cal.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -17,7 +17,7 @@
 }
 #scr-cal #cal-content{
   background:transparent!important;
-  padding:28% 8% 140px 8%!important;
+  padding:34% 8% 140px 8%!important;
 }
 #scr-cal .cal-empty,
 #scr-cal .spin-txt{
@@ -25,7 +25,7 @@
   font-family:Georgia,serif!important;
 }
 #scr-cal .agenda-day{
-  margin-top:8px!important;
+  margin-top:4px!important;
 }
 #scr-cal .agenda-day:first-child{
   margin-top:0!important;
@@ -33,23 +33,23 @@
 #scr-cal .agenda-day-label{
   background:transparent!important;
   border:none!important;
-  border-bottom:1px solid rgba(0,0,0,.18)!important;
+  border-bottom:1px solid rgba(0,0,0,.16)!important;
   color:#111!important;
   font-family:Georgia,serif!important;
-  font-size:13px!important;
+  font-size:12px!important;
   font-weight:800!important;
   letter-spacing:.08em!important;
-  padding:0 0 6px!important;
-  margin:10px 0 4px!important;
+  padding:0 0 3px!important;
+  margin:6px 0 2px!important;
 }
 #scr-cal .agenda-row{
   background:transparent!important;
   box-shadow:none!important;
   border:none!important;
-  border-bottom:1px solid rgba(0,0,0,.12)!important;
+  border-bottom:1px solid rgba(0,0,0,.10)!important;
   border-radius:0!important;
   margin:0!important;
-  padding:8px 0!important;
+  padding:4px 0!important;
 }
 #scr-cal .agenda-time,
 #scr-cal .agenda-title,
@@ -59,11 +59,11 @@
   text-shadow:none!important;
 }
 #scr-cal .agenda-time{
-  font-size:13px!important;
+  font-size:12px!important;
   font-weight:800!important;
 }
 #scr-cal .agenda-title{
-  font-size:16px!important;
+  font-size:15px!important;
   font-weight:700!important;
 }
 #scr-cal .agenda-allday-badge{
@@ -78,5 +78,5 @@
   display:none!important;
 }
 #scr-cal .agenda-loc{
-  font-size:12px!important;
+  font-size:11px!important;
 }
