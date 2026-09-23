@@ -1,20 +1,10 @@
-/* BUILD89 jug + CPAP to Calendar */
+/* BUILD90 jug + CPAP local only */
 (function(){
   var KEY='dpa_cpap';
   function today(){
     var d=new Date();
     var m=d.getMonth()+1, day=d.getDate();
     return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day;
-  }
-  function tomorrow(iso){
-    var p=iso.split('-');
-    var d=new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
-    d.setDate(d.getDate()+1);
-    var m=d.getMonth()+1, day=d.getDate();
-    return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day;
-  }
-  function token(){
-    try{ return localStorage.getItem('dpa3_g')||''; }catch(e){ return ''; }
   }
   function load(){
     try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; }
@@ -29,41 +19,6 @@
       var r=log[k]||{};
       return k.slice(5)+' '+((r.h||'—')+'h/'+(r.s||'—'));
     }).join(' · ');
-  }
-  function pushCal(h,s){
-    var tok=token();
-    if(!tok || !(h||s)) return;
-    var day=today();
-    var title='CPAP '+((h||'?')+'h / '+(s||'?'));
-    var hdr={Authorization:'Bearer '+tok,'Content-Type':'application/json'};
-    var q='https://www.googleapis.com/calendar/v3/calendars/primary/events'
-      +'?timeMin='+encodeURIComponent(day+'T00:00:00-05:00')
-      +'&timeMax='+encodeURIComponent(day+'T23:59:59-05:00')
-      +'&singleEvents=true&maxResults=20';
-    fetch(q,{headers:{Authorization:'Bearer '+tok}})
-      .then(function(r){ return r.ok ? r.json() : {items:[]}; })
-      .then(function(data){
-        var items=data.items||[];
-        var hit=null;
-        for(var i=0;i<items.length;i++){
-          if((items[i].summary||'').indexOf('CPAP ')===0){ hit=items[i]; break; }
-        }
-        var body=JSON.stringify({
-          summary:title,
-          description:'Ditty PA CPAP log',
-          start:{date:day},
-          end:{date:tomorrow(day)}
-        });
-        if(hit && hit.id){
-          return fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/'+encodeURIComponent(hit.id),{
-            method:'PUT', headers:hdr, body:body
-          });
-        }
-        return fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
-          method:'POST', headers:hdr, body:body
-        });
-      })
-      .catch(function(){});
   }
   function mountCpap(home){
     if(document.getElementById('cpap-row')) return;
@@ -85,13 +40,10 @@
     if(rec.s) is.value=rec.s;
     hist.textContent=last7(log);
     function persist(){
-      var h=(ih.value||'').trim();
-      var s=(is.value||'').trim();
       var all=load();
-      all[today()]={h:h,s:s};
+      all[today()]={h:(ih.value||'').trim(), s:(is.value||'').trim()};
       saveAll(all);
       hist.textContent=last7(all);
-      pushCal(h,s);
     }
     ih.addEventListener('change', persist);
     is.addEventListener('change', persist);
