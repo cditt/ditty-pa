@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ditty PA BUILD46</title>
+<title>Ditty PA BUILD47</title>
 </head>
 <body>
 <div id="boot" style="font-family:-apple-system,sans-serif;padding:28px;background:#111;color:#fff">
-  <p id="m">Loading Ditty PA BUILD46…</p>
+  <p id="m">Loading Ditty PA BUILD47…</p>
 </div>
 <script>
 (function(){
@@ -32,18 +32,17 @@
     .then(function(r){ if(!r.ok) throw new Error('fetch'); return r.text(); })
     .then(function(html){
       var force = '<style id="mail-force">'
-        +'#scr-mail.screen{background-color:#2a2018 !important;background-image:url("1790177471161.jpeg") !important;background-repeat:no-repeat !important;background-position:center center !important;background-size:cover !important;}'
-        +'#scr-mail .screen-header{background:transparent !important;}'
-        +'#scr-mail .sh-sub{display:none !important;}'
-        +'#scr-mail .mail-item,#scr-mail .mail-urgent{background:transparent !important;box-shadow:none !important;border:none !important;border-bottom:1px solid rgba(243,234,214,.18) !important;margin:0 !important;}'
-        +'#scr-mail .mail-from,#scr-mail .mail-subj,#scr-mail .mail-snip{color:#f3ead6 !important;text-shadow:0 1px 3px #000 !important;font-family:Georgia,serif !important;}'
-        +'#scr-mail #mail-content{background:transparent !important;}'
+        +'#scr-mail.screen{background-image:url("1790177471161.jpeg") !important;background-size:cover !important;background-position:center top !important;}'
+        +'#scr-mail .sh-sub,#scr-mail .mail-section-lbl,#scr-mail .mail-snip{display:none !important;}'
+        +'#scr-mail #mail-content{padding:8px 16% 90px 22% !important;background:transparent !important;}'
+        +'#scr-mail .mail-item,#scr-mail .mail-urgent{background:transparent !important;box-shadow:none !important;margin:0 !important;}'
+        +'#scr-mail .mail-from,#scr-mail .mail-subj{color:#f3ead6 !important;text-shadow:0 2px 4px #000 !important;}'
         +'</style>';
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
         '<link rel="stylesheet" href="portfolio-poster.css?v=24">'+
         '<link rel="stylesheet" href="tasks-poster.css?v=45">'+
-        '<link rel="stylesheet" href="mail-poster.css?v=46">'
+        '<link rel="stylesheet" href="mail-poster.css?v=47">'
         + force +
         '</head>');
       html = html.replace('</body>', '<script src="google-stay.js?v=2"><\/script></body>');
