@@ -19,6 +19,16 @@
 </div>
 <script>
 (function(){
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.getRegistrations().then(function(rs){
+      rs.forEach(function(r){ r.unregister(); });
+    });
+    if (window.caches) {
+      caches.keys().then(function(keys){
+        keys.forEach(function(k){ caches.delete(k); });
+      });
+    }
+  }
   var hash = location.hash || '';
   if (hash.indexOf('access_token=') > -1) {
     var p = {};
@@ -37,7 +47,8 @@
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
         '<link rel="stylesheet" href="portfolio-poster.css?v=21">'+
-        '<link rel="stylesheet" href="portfolio-clean.css?v=1">'+
+        '<link rel="stylesheet" href="vault-look.css?v=14">'+
+        '<link rel="stylesheet" href="portfolio-clean.css?v=2">'+
         '</head>');
       document.open();
       document.write(html);

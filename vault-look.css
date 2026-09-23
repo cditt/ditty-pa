@@ -1,10 +1,9 @@
-#scr-portfolio.screen{
-  background:#0a0806!important;
-}
 #scr-portfolio.screen::after,
 #scr-portfolio.screen::before{
   content:none!important;
   display:none!important;
   background:none!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
 }
-#vault-art-wrap,#vault-art{display:none!important}
