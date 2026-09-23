@@ -1,5 +1,5 @@
 #scr-portfolio.screen{
-  background:#050705!important;
+  background:#070806!important;
   display:flex!important;
   flex-direction:column!important;
 }
@@ -7,10 +7,10 @@
   content:"";
   display:block!important;
   width:100%;
-  min-height:280px;
-  height:42vh;
-  flex:1 0 280px;
-  background:#050705 url("vault.svg?v=1") no-repeat center bottom;
-  background-size:contain;
+  min-height:320px;
+  height:46vh;
+  flex:1 0 320px;
+  background:#070806 url(vault-door.jpg?v=1) no-repeat center top;
+  background-size:cover;
   pointer-events:none;
 }
