@@ -1,4 +1,4 @@
-/* BUILD73 faint gray grid calendar */
+/* BUILD74 faint grid — grok_1790188912053.jpg */
 #scr-cal.screen{
   overflow-y:scroll!important;
   -webkit-overflow-scrolling:touch!important;
@@ -6,7 +6,7 @@
   padding:0!important;
   color:#111!important;
   background-color:#6b5340!important;
-  background-image:url("grok_cal_faint.jpg")!important;
+  background-image:url("grok_1790188912053.jpg")!important;
   background-repeat:no-repeat!important;
   background-position:center top!important;
   background-size:100% 100%!important;
