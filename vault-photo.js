@@ -1,0 +1,1 @@
+window.DITTY_VAULT='ok';
