@@ -10,7 +10,7 @@
   min-height:340px;
   height:48vh;
   flex:1 0 340px;
-  background:#070806 url("vault-door.svg?v=1") no-repeat center top;
-  background-size:cover;
+  background:#070806 url("vault.svg?v=2") no-repeat center top;
+  background-size:contain;
   pointer-events:none;
 }
