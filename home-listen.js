@@ -1,11 +1,10 @@
-/* BUILD90 jug + CPAP local only */
+/* BUILD91 CPAP yesterday line */
 (function(){
   var KEY='dpa_cpap';
-  function today(){
-    var d=new Date();
-    var m=d.getMonth()+1, day=d.getDate();
-    return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day;
-  }
+  function pad(n){ return (n<10?'0':'')+n; }
+  function ymd(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function today(){ return ymd(new Date()); }
+  function yesterday(){ var d=new Date(); d.setDate(d.getDate()-1); return ymd(d); }
   function load(){
     try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; }
   }
@@ -20,24 +19,35 @@
       return k.slice(5)+' '+((r.h||'—')+'h/'+(r.s||'—'));
     }).join(' · ');
   }
+  function coach(rec){
+    if(!rec || !(rec.h||rec.s)) return 'Log last night when you have it.';
+    var hrs=parseFloat(rec.h);
+    var sc=parseFloat(rec.s);
+    var line='Yesterday you ran '+(rec.h||'?')+' hours, score '+(rec.s||'?')+'.';
+    var ok=(!isNaN(hrs) && hrs>=4) && (!isNaN(sc) ? sc>=70 : true);
+    if(isNaN(hrs) && !isNaN(sc)) ok = sc>=70;
+    return line+' '+(ok ? 'Good job.' : 'Tighten up, pal.');
+  }
   function mountCpap(home){
     if(document.getElementById('cpap-row')) return;
-    var row=document.createElement('div');
-    row.id='cpap-row';
-    row.innerHTML='<span class="cpap-lbl">CPAP</span> Hours <input id="cpap-h" inputmode="decimal" maxlength="5" placeholder="____"> Score <input id="cpap-s" inputmode="numeric" maxlength="3" placeholder="____"><div id="cpap-hist"></div>';
+    var wrap=document.createElement('div');
+    wrap.id='cpap-wrap';
+    wrap.innerHTML='<div id="cpap-yest"></div><div id="cpap-row"><span class="cpap-lbl">CPAP</span> Hours <input id="cpap-h" inputmode="decimal" maxlength="5" placeholder="____"> Score <input id="cpap-s" inputmode="numeric" maxlength="3" placeholder="____"></div><div id="cpap-hist"></div>';
     var brief=home.querySelector('#ab-body') || home.querySelector('.ab-wrap');
-    if(brief && brief.parentNode) brief.parentNode.insertBefore(row, brief.nextSibling);
+    if(brief && brief.parentNode) brief.parentNode.insertBefore(wrap, brief);
     else {
       var sc=home.querySelector('.home-scroll');
-      if(sc) sc.appendChild(row);
+      if(sc) sc.insertBefore(wrap, sc.firstChild);
     }
     var log=load();
     var rec=log[today()]||{};
     var ih=document.getElementById('cpap-h');
     var is=document.getElementById('cpap-s');
     var hist=document.getElementById('cpap-hist');
+    var y=document.getElementById('cpap-yest');
     if(rec.h) ih.value=rec.h;
     if(rec.s) is.value=rec.s;
+    y.textContent=coach(log[yesterday()]);
     hist.textContent=last7(log);
     function persist(){
       var all=load();
@@ -61,9 +71,10 @@
     if(g) parts.push(g);
     if(d) parts.push(d);
     if(w) parts.push(w);
+    var y=t('#cpap-yest');
+    if(y) parts.push(y);
     var rec=load()[today()]||{};
-    if(rec.h||rec.s) parts.push('CPAP '+((rec.h||'blank')+' hours, score '+(rec.s||'blank')));
-    else parts.push('CPAP not logged today.');
+    if(rec.h||rec.s) parts.push('Today logged '+((rec.h||'?')+' hours, score '+(rec.s||'?')));
     if(brief) parts.push(brief);
     return parts.join('. ');
   }

@@ -1,4 +1,4 @@
-/* BUILD88 CPAP line on hide */
+/* BUILD91 CPAP yesterday on hide */
 #scr-home.screen{
   overflow:hidden!important;
   padding:0!important;
@@ -67,15 +67,22 @@
   z-index:9999!important;
   cursor:pointer!important;
 }
+#cpap-wrap{margin:6px 0 8px!important;}
+#cpap-yest{
+  color:#1a120c!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-weight:800!important;
+  font-size:14px!important;
+  line-height:1.35!important;
+  margin-bottom:6px!important;
+}
 #cpap-row{
-  margin:10px 0 6px!important;
   color:#1a120c!important;
   font-family:Georgia,"Times New Roman",serif!important;
   font-weight:800!important;
   font-size:15px!important;
   text-align:center!important;
 }
-#cpap-row .cpap-lbl{margin-right:8px!important;}
 #cpap-row input{
   width:52px!important;
   border:0!important;
