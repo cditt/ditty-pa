@@ -28,12 +28,8 @@
     });
     if (p.access_token) {
       try { localStorage.setItem('dpa3_g', p.access_token); } catch(e) {}
-      document.getElementById('m').textContent = 'Google token saved. Loading app…';
     }
     try { history.replaceState(null, '', location.pathname + location.search); } catch(e) {}
-  } else if (hash.indexOf('error=') > -1) {
-    document.getElementById('m').textContent = 'Google returned an error. Open this page in Chrome and tap Connect Google.';
-    return;
   }
   fetch('https://cdn.jsdelivr.net/gh/cditt/ditty-pa@ba1cec9f0debe7697261c4188235c86422819583/index.html')
     .then(function(r){ if(!r.ok) throw new Error('fetch'); return r.text(); })
@@ -41,14 +37,14 @@
       html = html.replace('</head>',
         '<link rel="stylesheet" href="weather-poster.css?v=3">'+
         '<link rel="stylesheet" href="portfolio-poster.css?v=18">'+
-        '<link rel="stylesheet" href="vault-look.css?v=3">'+
+        '<link rel="stylesheet" href="vault-look.css?v=5">'+
         '</head>');
       document.open();
       document.write(html);
       document.close();
     })
     .catch(function(){
-      document.getElementById('m').textContent = 'App load failed. Stay on this page and tap Connect Google in Chrome.';
+      document.getElementById('m').textContent = 'App load failed. Open this in Chrome.';
     });
 })();
 </script>
