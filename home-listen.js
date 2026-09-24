@@ -1,4 +1,4 @@
-/* BUILD93 CPAP, bills due, stocks up/down */
+/* BUILD94 fat journey lbs */
 (function(){
   var KEY='dpa_cpap';
   var BILLS=[
@@ -47,8 +47,8 @@
     if(!keys.length) return '';
     return keys.map(function(k){
       var r=log[k]||{};
-      return k.slice(5)+' '+((r.h||'—')+'h/'+(r.s||'—'));
-    }).join(' · ');
+      return k.slice(5)+' '+((r.h||'\u2014')+'h/'+(r.s||'\u2014'));
+    }).join(' \u00b7 ');
   }
   function coach(rec){
     if(!rec || !(rec.h||rec.s)) return 'Log last night when you have it.';
@@ -121,7 +121,7 @@
     if(!home) return '';
     function t(sel){
       var el=home.querySelector(sel);
-      return el ? String(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim() : '';
+      return el ? String(el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim() : '';
     }
     var parts=[], g=t('.hgreet-txt'), d=t('.hdate'), w=t('.hwx');
     var y=t('#cpap-yest'), bills=t('#bills-line'), mkt=t('#mkt-line'), brief=t('#ab-body');
@@ -143,6 +143,38 @@
     u.rate=0.95;
     speechSynthesis.speak(u);
   }
+  var fjW=null, fjG=205, fjAsked=false;
+  function applyFj(){
+    if(fjW==null) return;
+    var card=document.getElementById('fj-card');
+    if(!card) return;
+    var val=card.querySelector('.htile-val');
+    if(val){
+      if((val.textContent||'').indexOf(String(fjW))===0) return;
+      val.innerHTML=String(fjW)+'<span class="htile-unit"> lb</span>';
+    } else {
+      card.innerHTML='<div class="htile-lbl">Fat Journey</div><div class="htile-val">'+fjW+'<span class="htile-unit"> lb</span></div><div class="htile-sub">Goal '+fjG+' lb</div>';
+    }
+  }
+  function paintFj(){
+    applyFj();
+    if(fjAsked) return;
+    var card=document.getElementById('fj-card');
+    if(!card) return;
+    fjAsked=true;
+    fetch('https://ditty-pa-proxy.hddittemore.workers.dev/fatjourney')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d) return;
+        var w=d.weight;
+        var h=d.weightHistory && d.weightHistory[0];
+        if((w==null || w==='') && h) w = (h.lbs!=null ? h.lbs : h.weight);
+        if(w==null || w==='') return;
+        fjW=w;
+        fjG=d.goalWeight||205;
+        applyFj();
+      }).catch(function(){});
+  }
   function sync(){
     var home=document.getElementById('scr-home');
     var btn=document.getElementById('home-listen');
@@ -157,7 +189,7 @@
       document.body.appendChild(btn);
     }
     btn.style.display = (home && home.classList.contains('active')) ? 'block' : 'none';
-    if(home) mountCpap(home);
+    if(home){ mountCpap(home); paintFj(); }
   }
   setInterval(sync, 400);
   sync();
