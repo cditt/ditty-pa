@@ -1,4 +1,4 @@
-/* BUILD94 fat journey lbs */
+/* BUILD95 task list, no farm defaults */
 (function(){
   var KEY='dpa_cpap';
   var BILLS=[
@@ -175,6 +175,60 @@
         applyFj();
       }).catch(function(){});
   }
+
+  var DITTY_DEFAULTS={'chicken water':1,'chicken food':1,'check bees':1,'garden check':1};
+  function dittyDay(ts){return new Date(ts).toDateString();}
+  function dittyIsDefault(t){
+    var k=String(t&&t.text||'').trim().toLowerCase();
+    return !!DITTY_DEFAULTS[k] && (t.source==='farm' || t.recur==='daily');
+  }
+  function dittyListFix(){
+    if(typeof TF==='undefined'||!TF.tasks) return;
+    try{ localStorage.removeItem('dpa_farm_checks'); }catch(e){}
+    try{ if(typeof FARM_DEFAULTS!=='undefined') FARM_DEFAULTS=[]; }catch(e){}
+    var today=new Date().toDateString();
+    var next=TF.tasks.filter(function(t){
+      if(dittyIsDefault(t)) return false;
+      if(t.done){
+        if(!t.completedAt) return false;
+        return dittyDay(t.completedAt)===today;
+      }
+      return true;
+    });
+    var changed=next.length!==TF.tasks.length;
+    TF.tasks=next;
+    if(typeof tfShowActive==='function' && !tfShowActive._ditty){
+      var orig=tfShowActive;
+      tfShowActive=function(t){
+        if(t.done){
+          if(!t.completedAt) return false;
+          return dittyDay(t.completedAt)===new Date().toDateString();
+        }
+        return orig(t);
+      };
+      tfShowActive._ditty=1;
+    }
+    if(typeof tfDone==='function' && !tfDone._ditty){
+      tfDone=function(){
+        var today=new Date().toDateString();
+        return TF.tasks.filter(function(t){
+          if(!t.done) return false;
+          if(t.completedAt && dittyDay(t.completedAt)===today) return false;
+          return true;
+        }).sort(function(a,b){return (b.completedAt||0)-(a.completedAt||0);});
+      };
+      tfDone._ditty=1;
+    }
+    if(typeof tfResetRecurring==='function' && !tfResetRecurring._ditty){
+      tfResetRecurring=function(){ dittyListFix(); };
+      tfResetRecurring._ditty=1;
+    }
+    if(changed){
+      try{ localStorage.setItem(typeof TF_KEY!=='undefined'?TF_KEY:'dpa_focus_v1', JSON.stringify(TF)); }catch(e){}
+      if(typeof tfRender==='function') tfRender();
+    }
+  }
+
   function sync(){
     var home=document.getElementById('scr-home');
     var btn=document.getElementById('home-listen');
@@ -190,7 +244,13 @@
     }
     btn.style.display = (home && home.classList.contains('active')) ? 'block' : 'none';
     if(home){ mountCpap(home); paintFj(); }
+    dittyListFix();
   }
   setInterval(sync, 400);
   sync();
+  (function dittyMidnight(){
+    var n=new Date();
+    var next=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1,0,0,1);
+    setTimeout(function(){ dittyListFix(); dittyMidnight(); }, next-n);
+  })();
 })();
